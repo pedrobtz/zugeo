@@ -1,0 +1,24 @@
+# zugeo
+
+The goal of zugeo is to …
+
+## Installation
+
+You can install the development version of zugeo from
+[GitHub](https://github.com/) with:
+
+``` r
+
+# install.packages("pak")
+pak::pak("pedrobtz/zugeo")
+```
+
+## Example
+
+This is a basic example which shows you how to solve a common problem:
+
+``` r
+
+library(zugeo)
+## basic example code
+```
