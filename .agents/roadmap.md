@@ -122,6 +122,9 @@ and leave unchanged.
 - `to` and `from` registrations for the eleven names and `geo_vctr` in
   `.onLoad()`.
 - `zugeo_crs_error` for `c()` across CRS or edges.
+- A union-encoded `geoarrow.geometry` IPC fixture, which `geoarrow-data`
+  lacks, made with pyarrow by a script in `tools/`; offered to
+  `geoarrow-data` (design Q7).
 
 **Exit criteria.**
 
@@ -152,6 +155,12 @@ spatial packages by WKB and coordinates, exactly.
 - The `oracles` workflow and `tests/testthat/test-ci-*.R`, run with
   `ZUGEO_ORACLES=true`.
 - Truncated and malformed WKB and WKT tests.
+- `LinkingTo: zufast` and the local patch of D18 (zugeo's first:
+  `tools/patches/`, applied by `tools/derive-vendor`, listed in
+  `PROVENANCE`, with a modification notice in each patched file).
+- The EWKB SRID read before `geoarrow-c` sees the bytes (§6.6, Q8).
+- Oracle comparisons with `sf`, `geos` and `s2` by WKB, never by WKT
+  text: `sf::st_as_text()` prints 7 significant digits by default.
 
 **Exit criteria.**
 
@@ -232,7 +241,7 @@ read unchanged.
 **Work.**
 
 - `geo_rtree()`, `geo_kdtree()`, `geo_query_box()`,
-  `geo_query_radius()`, `geo_nearest()`.
+  `geo_query_radius()`, `geo_query_nearest()` (D19).
 - `geo_join_box()` against a vector and against a second index.
 - `geo_index_raw()`, `geo_index_from_raw()`, `zugeo_index_error`.
 - `node` (flatbush, kdbush) and Python (`geo-index`) CI legs.
@@ -380,9 +389,8 @@ blocking finding fixed.
   zuarrow hands a dense union to a registered handler. Asked in
   [pedrobtz/zuarrow#171](https://github.com/pedrobtz/zuarrow/issues/171)
   on 2026-11-06, with zugeo's preference that zuarrow does it.
-- Q2, Q5, Q8 and Q11 (WKT printing precision, found in Stage 0) are
-  answered in Stage 3.
-- Q9 is answered in Stage 5.
-- Q10 blocks Stage 6: whether `geo_nearest()`, which `geoops` also
-  exports, is renamed.
-- Q4 blocks Stage 7: whether `qio` or zugeo owns the `geo` key.
+- Stage 3 verifies the assumptions behind Q2 and Q5 and implements
+  the answers to Q8 and Q11.
+- Stage 5 records Q9's answer.
+- Q4 blocks Stage 7: what qio 0.2.0 exposes, proposed in
+  [pedrobtz/qio#21](https://github.com/pedrobtz/qio/issues/21).

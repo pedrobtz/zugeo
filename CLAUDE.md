@@ -22,7 +22,8 @@ memory as a `geo_vctr`, computes bounds, Hilbert keys and spatial sorts
 over the coordinate buffers, builds flatbush- and kdbush-format packed
 indexes, and, with `qio` 0.2.0, reads and writes GeoParquet. Every
 conversion is exact or an error; a CRS is carried, never resolved or
-invented. `Imports` are `zuarrow` and `zujson` only. No package outside
+invented. `Imports` are `zuarrow` and `zujson` only, and `LinkingTo` is
+`zufast` (from Stage 3, design D18). No package outside
 the family appears in `DESCRIPTION`: `sf`, `wk`, `geos`, `s2`,
 `geoarrow`, `nanoarrow`, `arrow` and `duckdb` are CI-only oracles. No
 system library. It is not a geometry engine, not a projection library
