@@ -10,3 +10,8 @@
 * `geo_crs()` carries a coordinate reference system exactly as given, typed
   as GeoArrow asks, and `geo_crs_equal()` compares two at three levels
   without PROJ.
+
+* `geo_vctr` holds geometries in the Arrow arrays they were read in, as
+  positions, so subsetting, `rev()` and `c()` copy no buffer. With zugeo
+  loaded, zuarrow reads every GeoArrow column as one and writes it back
+  with its extension metadata unchanged; `format()` gives WKT.

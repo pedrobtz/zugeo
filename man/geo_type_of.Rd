@@ -8,7 +8,7 @@ geo_type_of(x)
 }
 \arguments{
 \item{x}{An Arrow schema, array or stream handle, from zuarrow or
-nanoarrow. A field with a \verb{geoarrow.*} extension name is described
+nanoarrow, or a \code{geo_vctr}. A field with a \verb{geoarrow.*} extension name is described
 directly; a struct, such as a stream's schema, has each of its
 GeoArrow fields described.}
 }

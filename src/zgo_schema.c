@@ -517,3 +517,37 @@ SEXP zgo_c_type_of_children(SEXP schema) {
   UNPROTECT(2);
   return out;
 }
+
+/* ---- For the array layer (zgo_array.c) -------------------------------- */
+
+/* The geometry code of a GeoArrow field: 1 to 6 native, 7 collection, 0
+   geometry union, ZGO_CODE_WKB, ZGO_CODE_WKT, ZGO_CODE_BOX; -1 otherwise. */
+int zgo_extension_code(const struct ArrowSchema *s) {
+  static const char *names[] = {"geoarrow.geometry", "geoarrow.point",
+                                "geoarrow.linestring", "geoarrow.polygon",
+                                "geoarrow.multipoint", "geoarrow.multilinestring",
+                                "geoarrow.multipolygon", "geoarrow.geometrycollection"};
+  struct ArrowStringView name, metadata;
+  zgo_extension(s, &name, &metadata);
+  if (name.data == NULL) return -1;
+  for (int i = 0; i < 8; i++) {
+    if ((size_t)name.size_bytes == strlen(names[i]) &&
+        strncmp(name.data, names[i], (size_t)name.size_bytes) == 0) {
+      return i;
+    }
+  }
+  if (name.size_bytes == 12 && strncmp(name.data, "geoarrow.wkb", 12) == 0) return ZGO_CODE_WKB;
+  if (name.size_bytes == 12 && strncmp(name.data, "geoarrow.wkt", 12) == 0) return ZGO_CODE_WKT;
+  if (name.size_bytes == 12 && strncmp(name.data, "geoarrow.box", 12) == 0) return ZGO_CODE_BOX;
+  return -1;
+}
+
+/* Dimensions (1 XY to 4 XYZM) of a native field of geometry type 1 to 6,
+   from its coordinates; 0 if the layout is not valid. */
+int zgo_native_dims(const struct ArrowSchema *s, int geometry_type) {
+  zgo_view v;
+  zgo_err err;
+  memset(&v, 0, sizeof(v));
+  if (zgo_parse_nested(s, zgo_levels(geometry_type), &v, &err)) return 0;
+  return v.dimensions;
+}

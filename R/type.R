@@ -9,7 +9,7 @@
 #' `zugeo_metadata_error`.
 #'
 #' @param x An Arrow schema, array or stream handle, from zuarrow or
-#'   nanoarrow. A field with a `geoarrow.*` extension name is described
+#'   nanoarrow, or a `geo_vctr`. A field with a `geoarrow.*` extension name is described
 #'   directly; a struct, such as a stream's schema, has each of its
 #'   GeoArrow fields described.
 #' @return A `zugeo_type`, a list of `extension`, `encoding` (`"native"`,
@@ -57,10 +57,15 @@ zgo_single_type <- function(x, call) {
 }
 
 zgo_is_handle <- function(x) {
-  inherits(x, c("nanoarrow_schema", "nanoarrow_array", "nanoarrow_array_stream"))
+  inherits(x, c(
+    "nanoarrow_schema", "nanoarrow_array", "nanoarrow_array_stream", "geo_vctr"
+  ))
 }
 
 zgo_as_schema <- function(x, call) {
+  if (inherits(x, "geo_vctr")) {
+    return(attr(x, "schema"))
+  }
   if (inherits(x, "nanoarrow_schema")) {
     return(x)
   }
