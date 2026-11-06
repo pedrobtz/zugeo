@@ -13,3 +13,5 @@
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
+^tools$
+^tests/testthat/(test|helper)-ci-.*\.R$

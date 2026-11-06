@@ -1,3 +1,4 @@
-# zugeo (development version)
+# zugeo 0.0.0.9000
 
-* Initial CRAN submission.
+* `zugeo_info()` reports the bundled geoarrow-c and nanoarrow versions and
+  the GeoArrow specification version implemented.

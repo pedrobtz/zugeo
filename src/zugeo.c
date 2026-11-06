@@ -1,3 +1,34 @@
-#define R_NO_REMAP
-#include <R.h>
-#include <Rinternals.h>
+#include "zgo.h"
+
+#include <R_ext/Rdynload.h>
+#include <R_ext/Visibility.h>
+
+#include "geoarrow/geoarrow.h"
+#include "nanoarrow/nanoarrow.h"
+
+/* Versions of everything the shared object is built from, for
+   zugeo_info(). Calling each library's version function, rather than
+   reading a macro, proves the vendored objects are linked. */
+SEXP zgo_c_info(void) {
+  const char *names[] = {"geoarrow_c", "geoarrow_c_commit", "nanoarrow",
+                         "geoarrow", ""};
+  SEXP out = PROTECT(Rf_mkNamed(VECSXP, names));
+  SET_VECTOR_ELT(out, 0, Rf_mkString(GeoArrowVersion()));
+  SET_VECTOR_ELT(out, 1, Rf_mkString(ZGO_GEOARROW_C_COMMIT));
+  SET_VECTOR_ELT(out, 2, Rf_mkString(ArrowNanoarrowVersion()));
+  SET_VECTOR_ELT(out, 3, Rf_mkString(ZGO_GEOARROW_SPEC));
+  UNPROTECT(1);
+  return out;
+}
+
+#define ZGO_CALL(name, n) {#name, (DL_FUNC)&name, n}
+
+static const R_CallMethodDef zgo_call_methods[] = {
+    ZGO_CALL(zgo_c_info, 0),
+    {NULL, NULL, 0}};
+
+void attribute_visible R_init_zugeo(DllInfo *dll) {
+  R_registerRoutines(dll, NULL, zgo_call_methods, NULL, NULL);
+  R_useDynamicSymbols(dll, FALSE);
+  R_forceSymbols(dll, TRUE);
+}
