@@ -20,12 +20,12 @@ memory as a `geo_vctr`, computes bounds, Hilbert keys and spatial sorts
 over the coordinate buffers, builds flatbush- and kdbush-format packed
 indexes, and, with `qio` 0.2.0, reads and writes GeoParquet. Every
 conversion is exact or an error; a CRS is carried, never resolved or
-invented. `Imports` are `zuarrow` and `zujson` only. No package outside
-the family appears in `DESCRIPTION`: `sf`, `wk`, `geos`, `s2`,
-`geoarrow`, `nanoarrow`, `arrow` and `duckdb` are CI-only oracles. No
-system library. It is not a geometry engine, not a projection library
-and not an `sf` replacement; WKB and a CRS string are the bridge to
-those.
+invented. `Imports` are `zuarrow` and `zujson` only, and `LinkingTo` is
+`zufast` (from Stage 3, design D18). No package outside the family
+appears in `DESCRIPTION`: `sf`, `wk`, `geos`, `s2`, `geoarrow`,
+`nanoarrow`, `arrow` and `duckdb` are CI-only oracles. No system
+library. It is not a geometry engine, not a projection library and not
+an `sf` replacement; WKB and a CRS string are the bridge to those.
 
 The specification is
 [`.agents/design.md`](https://pedrobtz.github.io/zugeo/.agents/design.md),
@@ -33,9 +33,11 @@ adopted from RFC 0071. It outranks this file.
 
 ## Current state
 
-Scaffolded 2026-11-05 with `create-pkg.sh` (C, through `use_c()`); no
-functionality yet. The roadmap in `.agents/roadmap.md` takes it to
-v0.1.0.
+Stage 0 (2026-11-06): package identity, CI, and `geoarrow-c` with its
+nanoarrow core vendored, namespaced and hidden;
+[`zugeo_info()`](https://pedrobtz.github.io/zugeo/reference/zugeo_info.md)
+is the only function. No geometry functionality yet. The roadmap in
+`.agents/roadmap.md` takes it to v0.1.0.
 
 ## Versions and dependents
 
@@ -46,13 +48,23 @@ consumers (design §3).
 
 ## Commands
 
-None beyond the shared ones yet.
+- `tools/verify-vendor`: re-derives `src/vendor/` from the pinned commit
+  and fails on any difference. CI runs it (`vendor.yaml`). Needs
+  `cmake`, `curl` and `shasum`.
+- `tools/update-vendor`: after changing a pin in `tools/derive-vendor`,
+  re-derives the tree and rewrites `src/vendor/PROVENANCE`; then update
+  the commit in `src/zgo.h` and the versions in `test-info.R`,
+  `inst/COPYRIGHTS` and `DESCRIPTION`.
+- `ZUGEO_ORACLES=true Rscript -e 'devtools::test(filter = "^ci-")'`: the
+  CI-only oracle tests, with a missing oracle as a failure.
 
 ## Architecture
 
-To be written as stages land; see `.agents/design.md` §4. The scaffold
-has the C layer from `use_c()`: `src/zugeo.c` and
-`@useDynLib zugeo, .registration = TRUE` in `R/zugeo-package.R`.
+To be written as stages land; see `.agents/design.md` §4. So far:
+`src/zugeo.c` registers the `.Call` routines (`R_forceSymbols`, so R
+calls them by symbol object, `.Call(zgo_c_info)`); `src/zgo.h` is the
+internal header; `src/vendor/` is the vendored C, built by the objects
+listed in `src/Makevars` (and its copy `Makevars.win`).
 
 ## Invariants that are easy to break
 
@@ -68,23 +80,45 @@ has the C layer from `use_c()`: `src/zugeo.c` and
   zugeo use `geo_crs_equal(level = "identical")` only (D14).
 - **Subsetting and sorting a `geo_vctr` never copy buffers** (D5).
 - **Index bytes stay flatbush- and kdbush-compatible** (D13).
+- **Never edit `src/vendor/` by hand.** It is `tools/derive-vendor`’s
+  output, byte for byte; `vendor.yaml` fails otherwise. A change to
+  vendored code is a patch the derivation applies, recorded in
+  `src/vendor/PROVENANCE`.
+- **`R_init_zugeo` is the only exported symbol, and no `assert`, `abort`
+  or `printf` is imported.** Keep `$(C_VISIBILITY)`, `-DNANOARROW_DLL=`
+  and `src/zugeo-win.def`. Don’t rely on `-DNDEBUG`: the gctorture build
+  ignores it, which is why ryu is not vendored. `test-abi.R` checks both
+  tables.
+- **`src/Makevars` and `src/Makevars.win` stay identical.**
 
 ## Testing
 
 The conformance corpus is `geoarrow-data` `v0.2.0` (design §9), with
 `geoarrow`, `arrow`/pyarrow, DuckDB spatial, `sf`, `geos`, `s2`, `wk`,
-`gpq`, and flatbush/kdbush under `node` as oracles. None is wired up
-yet. No helpers yet.
+`gpq`, and flatbush/kdbush under `node` as oracles. The corpus has no
+union-encoded `geoarrow.geometry` file; Stage 2 makes one. Helpers:
+`helper-abi.R` reads the shared object’s export and import tables (`nm`,
+or `objdump` on Windows; a failure on CI, a skip elsewhere);
+`helper-ci-oracles.R` has `skip_without_oracle()`, which fails under
+`ZUGEO_ORACLES=true`.
 
 ## Continuous integration
 
-Calls the shared `r-cmd-check.yml` and `coverage.yml` from
-`pedrobtz/r-actions@v1`, and its own `pkgdown.yaml`. The design plans an
-`oracles` workflow (Stage 3) that runs the CI-only tests with
-`ZUGEO_ORACLES=true`. Stages 2, 6 and 9 are `full`.
+Calls from `pedrobtz/r-actions@v1`: `r-cmd-check.yml` (with Windows
+R-devel added to `runners`), `coverage.yml`, the native checks in
+`native-checks.yaml` (sanitizers with ASan, valgrind, LTO, rchk,
+analyzers, cran-special), `gctorture.yml` (quick step on pushes, step 20
+on a daily schedule), `vendor.yml`, and `vendor-upstream.yml` weekly.
+Its own workflows: `pkgdown.yaml`, and `oracles.yaml`, which runs the
+`test-ci-*.R` files with `ZUGEO_ORACLES=true` because r-actions has no
+workflow for tests outside the tarball. Stages 2, 3 and 6 are `full`,
+with the closing three.
 
 ## Vendored native code
 
-`geoarrow-c` and the nanoarrow core it builds on, both Apache-2.0,
-pinned in Stage 0 (design §7). Not vendored yet; fill in the version and
-local patches when it is.
+`geoarrow-c` at commit `b3db89f` (0.2.0-SNAPSHOT, Apache-2.0), bundled
+by upstream’s CMake bundler with `GEOARROW_NAMESPACE=Zugeo` and without
+fast_float or ryu, and the nanoarrow 0.8.0 core `geoarrow-c` vendors,
+namespaced as `ZugeoNanoarrow` in `src/Makevars`. No local patches.
+`src/vendor/PROVENANCE` has the pins and checksums; `inst/COPYRIGHTS`
+the notices.

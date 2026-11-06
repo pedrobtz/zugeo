@@ -2,17 +2,27 @@
 
 ## Authors
 
-- **First Last**. Author, maintainer.
+- **Pedro Baltazar**. Author, maintainer, copyright holder.
+
+- **Dewey Dunnington**. Copyright holder.  
+  geoarrow-c, bundled in src/vendor/geoarrow
+
+- **The Apache Software Foundation**. Copyright holder.  
+  nanoarrow, bundled in src/vendor/nanoarrow
 
 ## Citation
 
-Last F (2026). *zugeo: What the Package Does (One Line, Title Case)*. R
-package version 0.0.0.9000, <https://pedrobtz.github.io/zugeo/>.
+Source:
+[`DESCRIPTION`](https://github.com/pedrobtz/zugeo/blob/main/DESCRIPTION)
+
+Baltazar P (2026). *zugeo: 'GeoArrow' Geometry Columns, Exact or an
+Error*. R package version 0.0.0.9000,
+<https://github.com/pedrobtz/zugeo>.
 
     @Manual{,
-      title = {zugeo: What the Package Does (One Line, Title Case)},
-      author = {First Last},
+      title = {zugeo: 'GeoArrow' Geometry Columns, Exact or an Error},
+      author = {Pedro Baltazar},
       year = {2026},
       note = {R package version 0.0.0.9000},
-      url = {https://pedrobtz.github.io/zugeo/},
+      url = {https://github.com/pedrobtz/zugeo},
     }
