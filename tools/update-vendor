@@ -1,0 +1,53 @@
+#!/bin/sh
+# Re-derive src/vendor/ from the pins in tools/derive-vendor and rewrite
+# src/vendor/PROVENANCE to match. Run from the package root after changing
+# a pin, then update ZGO_GEOARROW_C_COMMIT in src/zgo.h and the versions
+# in tests/testthat/test-info.R, inst/COPYRIGHTS and DESCRIPTION.
+#
+#   tools/update-vendor
+set -eu
+
+tools/derive-vendor src/vendor
+
+COMMIT=$(sed -n 's/^COMMIT=//p' tools/derive-vendor)
+VERSION=$(sed -n 's/^VERSION=//p' tools/derive-vendor)
+SHA256=$(sed -n 's/^SHA256=//p' tools/derive-vendor)
+NANOARROW_COMMIT=$(sed -n 's/^NANOARROW_COMMIT=//p' tools/derive-vendor)
+NANOARROW_VERSION=$(sed -n 's/^#define NANOARROW_VERSION "\(.*\)"$/\1/p' \
+  src/vendor/nanoarrow/nanoarrow.h)
+
+{
+  cat <<HEADER
+Vendored dependency: geoarrow-c, with the ryu printer and the nanoarrow
+core it ships
+
+  Upstream:      https://github.com/geoarrow/geoarrow-c
+  Version:       $VERSION
+  Commit:        $COMMIT
+  Archive:       https://github.com/geoarrow/geoarrow-c/archive/$COMMIT.tar.gz
+  SHA-256:       $SHA256
+  nanoarrow:     $NANOARROW_VERSION, geoarrow-c's own copy (src/vendor/nanoarrow
+                 in the archive); LICENSE.txt and NOTICE.txt from
+                 apache/arrow-nanoarrow at $NANOARROW_COMMIT
+  License:       Apache-2.0 (geoarrow-c, nanoarrow); ryu Apache-2.0 or
+                 BSL-1.0
+  Local patches: none
+
+src/vendor/geoarrow/geoarrow.h and geoarrow.c are the output of
+upstream's CMake bundler (GEOARROW_BUNDLE=ON) with
+GEOARROW_NAMESPACE=Zugeo, GEOARROW_USE_FAST_FLOAT=OFF (fast_float is
+C++) and GEOARROW_USE_RYU=ON; the C++ geoarrow.hpp is left out.
+src/vendor/geoarrow/ryu/ is upstream's src/geoarrow/ryu unchanged.
+src/vendor/geoarrow/geoarrow_type.h is not upstream's: a one-line header
+tools/derive-vendor writes, because ryu/common.h includes that name and
+the bundle folds it into geoarrow.h. tools/derive-vendor is the
+derivation; tools/verify-vendor re-runs it and fails on any difference.
+
+SHA-256 of every vendored file:
+HEADER
+  (cd src/vendor && find . -type f ! -name '*.o' ! -name PROVENANCE |
+    LC_ALL=C sort | while read -r f; do
+      printf '  %s  %s\n' "$(shasum -a 256 "$f" | cut -d' ' -f1)" "${f#./}"
+    done)
+} > src/vendor/PROVENANCE
+echo "==> src/vendor/ re-derived; PROVENANCE rewritten"

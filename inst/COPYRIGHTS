@@ -1,0 +1,57 @@
+zugeo package
+=============
+
+Copyright (c) 2026 Pedro Baltazar.
+Licensed under the MIT license; see DESCRIPTION and the file LICENSE for
+license and copyright details. The MIT license covers only the code written
+for this package: everything outside src/vendor/.
+
+Bundled third-party code
+========================
+
+The checksum of every vendored file, and how the tree is derived from
+upstream, are recorded in src/vendor/PROVENANCE.
+
+src/vendor/geoarrow/ (except ryu/)
+----------------------------------
+
+The geoarrow-c library, version 0.2.0-SNAPSHOT, upstream commit
+b3db89fec68043ade505fffb62a668043812884a, from
+https://github.com/geoarrow/geoarrow-c, bundled by upstream's own CMake
+bundler. Copyright Dewey Dunnington and the geoarrow-c contributors.
+Licensed under the Apache License, Version 2.0, whose full text is at
+src/vendor/geoarrow/LICENSE:
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may
+  not use these files except in compliance with the License. You may obtain
+  a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+src/vendor/geoarrow/geoarrow_type.h is a one-line header written by
+tools/derive-vendor, not upstream; it is part of the zugeo package.
+
+src/vendor/geoarrow/ryu/
+------------------------
+
+Ryu, as geoarrow-c ships it (taken from GEOS 3.12.0, with geoarrow-c's
+symbol prefix). Copyright 2018 Ulf Adams. Licensed, at the user's choice,
+under the Apache License, Version 2.0 (src/vendor/geoarrow/ryu/LICENSE-Apache2)
+or the Boost Software License, Version 1.0
+(src/vendor/geoarrow/ryu/LICENSE-Boost).
+
+src/vendor/nanoarrow/
+---------------------
+
+The core of the Apache Arrow nanoarrow C library, as geoarrow-c vendors it
+(nanoarrow 0.8.0, commit df487811eac5bf0e6f8ee75ed497bb2a6d04bb0e).
+
+  Apache Arrow nanoarrow
+  Copyright 2023 The Apache Software Foundation
+
+  This product includes software developed at
+  The Apache Software Foundation (http://www.apache.org/).
+
+The lines above are upstream's NOTICE file, preserved unchanged at
+src/vendor/nanoarrow/NOTICE.txt. The code is licensed under the Apache
+License, Version 2.0, whose full text is at src/vendor/nanoarrow/LICENSE.txt.

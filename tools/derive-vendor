@@ -1,0 +1,81 @@
+#!/bin/sh
+# Derive the vendored tree from the pinned geoarrow-c commit: download the
+# commit's archive, check its SHA-256, run upstream's own CMake bundler with
+# the zugeo symbol namespace, and keep the C files. Writes the tree to the
+# directory given as $1. Shared by tools/update-vendor and
+# tools/verify-vendor. Run from the package root.
+#
+#   tools/derive-vendor <out-dir>
+#
+# The tree holds three libraries (design section 7):
+#   geoarrow/   geoarrow-c's C bundle (geoarrow.h, geoarrow.c), no C++
+#   geoarrow/ryu/  the ryu printer geoarrow-c ships, as it ships it
+#   nanoarrow/  the nanoarrow core geoarrow-c vendors, at the version it
+#               pins, with nanoarrow's LICENSE.txt and NOTICE.txt
+set -eu
+
+OUT=$1
+
+# geoarrow-c has no release after v0.1.2; the design pins a commit (§7).
+COMMIT=b3db89fec68043ade505fffb62a668043812884a
+VERSION=0.2.0-SNAPSHOT
+URL="https://github.com/geoarrow/geoarrow-c/archive/$COMMIT.tar.gz"
+SHA256=d755e1ec9aa8828d496fe26e918378e63b566b19f540aea19adee9737bdd3a64
+
+# The nanoarrow commit geoarrow-c's vendor-nanoarrow.sh names. Only the
+# licence files come from it; the sources are geoarrow-c's copy.
+NANOARROW_COMMIT=df487811eac5bf0e6f8ee75ed497bb2a6d04bb0e
+NANOARROW_RAW="https://raw.githubusercontent.com/apache/arrow-nanoarrow/$NANOARROW_COMMIT"
+NANOARROW_LICENSE_SHA256=abdc436530c715318d843424f4f9b7b817f80f592678526942c2070ace3cba71
+NANOARROW_NOTICE_SHA256=09026abb630fd06cb418815d48535cd46cb102fe6fc307debb586fa2ac49482e
+
+WORK=$(mktemp -d)
+trap 'rm -rf "$WORK"' EXIT
+
+fetch() { # fetch <url> <file> <sha256>
+  curl -fsSL --retry 3 --retry-delay 2 --retry-connrefused -o "$2" "$1"
+  actual=$(shasum -a 256 "$2" | cut -d' ' -f1)
+  if [ "$actual" != "$3" ]; then
+    echo "FAIL: $1 sha256 mismatch" >&2
+    echo "  expected $3" >&2
+    echo "  actual   $actual" >&2
+    exit 1
+  fi
+}
+
+fetch "$URL" "$WORK/src.tar.gz" "$SHA256"
+tar xzf "$WORK/src.tar.gz" -C "$WORK"
+SRC="$WORK/geoarrow-c-$COMMIT"
+
+# Upstream's bundler. fast_float is C++, so it stays off and parsing uses
+# strtod(), which R keeps in the C numeric locale. ryu stays on: it is what
+# the WKT writer prints doubles with.
+cmake -S "$SRC" -B "$WORK/build" \
+  -DGEOARROW_BUNDLE=ON -DGEOARROW_NAMESPACE=Zugeo \
+  -DGEOARROW_USE_FAST_FLOAT=OFF -DGEOARROW_USE_RYU=ON > /dev/null
+cmake --install "$WORK/build" --prefix "$WORK/bundle" > /dev/null
+
+TREE="$WORK/tree"
+mkdir -p "$TREE/geoarrow" "$TREE/nanoarrow"
+# C only: geoarrow.hpp stays out of zugeo.so.
+cp "$WORK/bundle/geoarrow.h" "$WORK/bundle/geoarrow.c" "$TREE/geoarrow/"
+cp "$SRC/LICENSE" "$TREE/geoarrow/LICENSE"
+cp -R "$SRC/src/geoarrow/ryu" "$TREE/geoarrow/ryu"
+
+# ryu/common.h includes "geoarrow/geoarrow_type.h" for the symbol
+# namespace, a header the bundle folds into geoarrow.h. This one-line
+# header, written here and by nothing upstream, points it there, so no
+# upstream line changes.
+printf '%s\n' \
+  '/* Written by tools/derive-vendor, not upstream: the bundle folds' \
+  '   geoarrow_type.h into geoarrow.h, which ryu/common.h needs. */' \
+  '#include "geoarrow/geoarrow.h"' > "$TREE/geoarrow/geoarrow_type.h"
+
+cp "$SRC/src/vendor/nanoarrow/nanoarrow.c" "$SRC/src/vendor/nanoarrow/nanoarrow.h" \
+  "$TREE/nanoarrow/"
+fetch "$NANOARROW_RAW/LICENSE.txt" "$TREE/nanoarrow/LICENSE.txt" "$NANOARROW_LICENSE_SHA256"
+fetch "$NANOARROW_RAW/NOTICE.txt" "$TREE/nanoarrow/NOTICE.txt" "$NANOARROW_NOTICE_SHA256"
+
+rm -rf "$OUT"
+mkdir -p "$(dirname "$OUT")"
+cp -R "$TREE" "$OUT"
