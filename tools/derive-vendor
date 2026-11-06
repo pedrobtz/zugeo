@@ -7,9 +7,8 @@
 #
 #   tools/derive-vendor <out-dir>
 #
-# The tree holds three libraries (design section 7):
+# The tree holds two libraries (design section 7):
 #   geoarrow/   geoarrow-c's C bundle (geoarrow.h, geoarrow.c), no C++
-#   geoarrow/ryu/  the ryu printer geoarrow-c ships, as it ships it
 #   nanoarrow/  the nanoarrow core geoarrow-c vendors, at the version it
 #               pins, with nanoarrow's LICENSE.txt and NOTICE.txt
 set -eu
@@ -48,11 +47,13 @@ tar xzf "$WORK/src.tar.gz" -C "$WORK"
 SRC="$WORK/geoarrow-c-$COMMIT"
 
 # Upstream's bundler. fast_float is C++, so it stays off and parsing uses
-# strtod(), which R keeps in the C numeric locale. ryu stays on: it is what
-# the WKT writer prints doubles with.
+# strtod(), which R keeps in the C numeric locale. ryu stays off too: its
+# assert() calls reach the shared object in builds that ignore NDEBUG, and
+# the WKT writer prints with snprintf() until design Q11 decides how
+# numbers are printed exactly.
 cmake -S "$SRC" -B "$WORK/build" \
   -DGEOARROW_BUNDLE=ON -DGEOARROW_NAMESPACE=Zugeo \
-  -DGEOARROW_USE_FAST_FLOAT=OFF -DGEOARROW_USE_RYU=ON > /dev/null
+  -DGEOARROW_USE_FAST_FLOAT=OFF -DGEOARROW_USE_RYU=OFF > /dev/null
 cmake --install "$WORK/build" --prefix "$WORK/bundle" > /dev/null
 
 TREE="$WORK/tree"
@@ -60,16 +61,6 @@ mkdir -p "$TREE/geoarrow" "$TREE/nanoarrow"
 # C only: geoarrow.hpp stays out of zugeo.so.
 cp "$WORK/bundle/geoarrow.h" "$WORK/bundle/geoarrow.c" "$TREE/geoarrow/"
 cp "$SRC/LICENSE" "$TREE/geoarrow/LICENSE"
-cp -R "$SRC/src/geoarrow/ryu" "$TREE/geoarrow/ryu"
-
-# ryu/common.h includes "geoarrow/geoarrow_type.h" for the symbol
-# namespace, a header the bundle folds into geoarrow.h. This one-line
-# header, written here and by nothing upstream, points it there, so no
-# upstream line changes.
-printf '%s\n' \
-  '/* Written by tools/derive-vendor, not upstream: the bundle folds' \
-  '   geoarrow_type.h into geoarrow.h, which ryu/common.h needs. */' \
-  '#include "geoarrow/geoarrow.h"' > "$TREE/geoarrow/geoarrow_type.h"
 
 cp "$SRC/src/vendor/nanoarrow/nanoarrow.c" "$SRC/src/vendor/nanoarrow/nanoarrow.h" \
   "$TREE/nanoarrow/"

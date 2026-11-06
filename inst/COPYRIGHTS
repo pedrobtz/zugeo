@@ -12,8 +12,8 @@ Bundled third-party code
 The checksum of every vendored file, and how the tree is derived from
 upstream, are recorded in src/vendor/PROVENANCE.
 
-src/vendor/geoarrow/ (except ryu/)
-----------------------------------
+src/vendor/geoarrow/
+--------------------
 
 The geoarrow-c library, version 0.2.0-SNAPSHOT, upstream commit
 b3db89fec68043ade505fffb62a668043812884a, from
@@ -27,18 +27,6 @@ src/vendor/geoarrow/LICENSE:
   a copy of the License at
 
     https://www.apache.org/licenses/LICENSE-2.0
-
-src/vendor/geoarrow/geoarrow_type.h is a one-line header written by
-tools/derive-vendor, not upstream; it is part of the zugeo package.
-
-src/vendor/geoarrow/ryu/
-------------------------
-
-Ryu, as geoarrow-c ships it (taken from GEOS 3.12.0, with geoarrow-c's
-symbol prefix). Copyright 2018 Ulf Adams. Licensed, at the user's choice,
-under the Apache License, Version 2.0 (src/vendor/geoarrow/ryu/LICENSE-Apache2)
-or the Boost Software License, Version 1.0
-(src/vendor/geoarrow/ryu/LICENSE-Boost).
 
 src/vendor/nanoarrow/
 ---------------------

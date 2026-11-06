@@ -5,14 +5,11 @@
 # nanoarrow marks its API visibility("default") unless NANOARROW_DLL is
 # already defined, so it is defined empty; hidden visibility then keeps
 # every vendored symbol out of the export table, and R_init_zugeo is the
-# only exported symbol. NDEBUG compiles ryu's assert() calls out, so no
-# build links assert()'s abort path.
-PKG_CPPFLAGS = -Ivendor -Ivendor/geoarrow \
-  -DNANOARROW_NAMESPACE=ZugeoNanoarrow -DNANOARROW_DLL= -DNDEBUG
+# only exported symbol.
+PKG_CPPFLAGS = -Ivendor -DNANOARROW_NAMESPACE=ZugeoNanoarrow -DNANOARROW_DLL=
 PKG_CFLAGS = $(C_VISIBILITY)
 
 VENDOR_OBJECTS = vendor/geoarrow/geoarrow.o \
-  vendor/geoarrow/ryu/d2s.o \
   vendor/nanoarrow/nanoarrow.o
 
 ZGO_OBJECTS = zugeo.o

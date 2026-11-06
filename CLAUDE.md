@@ -84,10 +84,11 @@ listed in `src/Makevars` (and its copy `Makevars.win`).
   output, byte for byte; `vendor.yaml` fails otherwise. A change to
   vendored code is a patch the derivation applies, recorded in
   `src/vendor/PROVENANCE`.
-- **`R_init_zugeo` is the only exported symbol.** Keep
-  `$(C_VISIBILITY)`, `-DNANOARROW_DLL=` and `src/zugeo-win.def`; `NDEBUG`
-  keeps ryu's `assert()` out of the object. `test-abi.R` checks both
-  tables.
+- **`R_init_zugeo` is the only exported symbol, and no `assert`,
+  `abort` or `printf` is imported.** Keep `$(C_VISIBILITY)`,
+  `-DNANOARROW_DLL=` and `src/zugeo-win.def`. Don't rely on `-DNDEBUG`:
+  the gctorture build ignores it, which is why ryu is not vendored.
+  `test-abi.R` checks both tables.
 - **`src/Makevars` and `src/Makevars.win` stay identical.**
 
 ## Testing
@@ -116,10 +117,8 @@ with the closing three.
 ## Vendored native code
 
 `geoarrow-c` at commit `b3db89f` (0.2.0-SNAPSHOT, Apache-2.0), bundled
-by upstream's CMake bundler with `GEOARROW_NAMESPACE=Zugeo`; the ryu
-printer it ships (Apache-2.0 or BSL-1.0); and the nanoarrow 0.8.0 core
-`geoarrow-c` vendors, namespaced as `ZugeoNanoarrow` in `src/Makevars`.
-No local patches. One file in the tree is zugeo's:
-`src/vendor/geoarrow/geoarrow_type.h`, a one-line shim the derivation
-writes. `src/vendor/PROVENANCE` has the pins and checksums;
-`inst/COPYRIGHTS` the notices.
+by upstream's CMake bundler with `GEOARROW_NAMESPACE=Zugeo` and without
+fast_float or ryu, and the nanoarrow 0.8.0 core `geoarrow-c` vendors,
+namespaced as `ZugeoNanoarrow` in `src/Makevars`. No local patches.
+`src/vendor/PROVENANCE` has the pins and checksums; `inst/COPYRIGHTS`
+the notices.

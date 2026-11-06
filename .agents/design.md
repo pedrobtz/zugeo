@@ -497,10 +497,10 @@ exact.
   included.
   `geo_box()` reports Z and M ranges when present.
 - **Text.** WKT to native is a parse; native to WKT prints the shortest
-  representation that reads back to the same double, which
-  `geoarrow-c`'s `ryu`-based printer does. A round trip through WKT is
-  therefore exact, and a test proves it on every coordinate in the
-  `geoarrow-data` files.
+  representation that reads back to the same double. A round trip
+  through WKT is therefore exact, and a test proves it on every
+  coordinate in the `geoarrow-data` files. *2026-11-06:*
+  `geoarrow-c`'s printer does not do this as vendored; Q11.
 - **Empties.** An empty point is `POINT (NaN NaN)` per `format.md`, and
   stays `NaN NaN`, never null.
 - **Bad layouts.** A null inside a ring, an unclosed ring in a polygon
@@ -727,15 +727,17 @@ scan, as `gpq` does.
 | Library | Version | Licence | Used for |
 | --- | --- | --- | --- |
 | `geoarrow-c` | `b3db89f` (0.2.0-SNAPSHOT) | Apache-2.0 | views, I/O, `box` |
-| ryu, in `geoarrow-c` | GEOS 3.12.0's | Apache-2.0, BSL-1.0 | WKT output |
 | nanoarrow core | 0.8.0, `geoarrow-c`'s own copy | Apache-2.0 | Arrow helpers |
 
 *Decided 2026-11-06 (Stage 0):* `src/vendor/` is derived by
 `tools/derive-vendor`: the commit's archive, checked by SHA-256, run
 through upstream's CMake bundler (`GEOARROW_BUNDLE=ON`,
-`GEOARROW_NAMESPACE=Zugeo`), with `fast_float` off because it is C++ and
-ryu on. Parsing then uses `strtod()`, which R keeps in the C numeric
-locale. No local patches. `tools/verify-vendor` re-derives the tree in
+`GEOARROW_NAMESPACE=Zugeo`), with `fast_float` off because it is C++.
+Parsing then uses `strtod()`, which R keeps in the C numeric locale.
+ryu is off too: its `assert()` calls reached the shared object in the
+gctorture build, which ignores `-DNDEBUG`, so WKT numbers print through
+`snprintf()` until Q11 is settled. No local patches.
+`tools/verify-vendor` re-derives the tree in
 CI (`vendor.yaml`) and fails on any difference, as zuarrow's does.
 
 `geoarrow-c`'s sources include `nanoarrow/nanoarrow.h`, so it cannot
@@ -745,9 +747,8 @@ When zuarrow's C table lands (its §14), Q3 asks whether zugeo switches
 to it. `kernel.c` includes `stdio.h`; Stage 0 checks with `nm` that no
 `printf`, `abort` or `exit` symbol reaches the shared object, as the
 zuclip and zucdt RFCs did for theirs. *2026-11-06 (Stage 0):* none
-does; ryu's `assert()` calls are compiled out with `NDEBUG`, and
-`tests/testthat/test-abi.R` checks the export and import tables on
-every leg.
+does once ryu is left out (above), and `tests/testthat/test-abi.R`
+checks the export and import tables on every leg.
 
 The R-tree, k-d tree and Hilbert function are zugeo's own C, written
 from flatbush and kdbush (ISC) with credit in `inst/COPYRIGHTS`, and
@@ -990,14 +991,17 @@ any of them.
   0.3.0 on CRAN; loading both masks one. Rename it, for example to
   `geo_query_nearest()` beside `geo_query_box()` and
   `geo_query_radius()`, or keep it? Found in Stage 0; blocks Stage 6.
-- **Q11.** `geoarrow-c`'s WKT writer prints each coordinate with ryu's
-  fixed notation at a precision clamped to 16 digits after the point,
-  not ryu's shortest round-trip form. A value below about 0.1 in
-  magnitude then keeps fewer than 17 significant digits, and below
-  1e-16 prints as 0, which breaks §6.3's claim that a WKT round trip is
-  exact. Patch the writer to ryu's `d2s` shortest form, print in zugeo's
-  own code, or document the limit? Found in Stage 0 by reading
-  `geoarrow.c`; Stage 3's property test settles it.
+- **Q11.** `geoarrow-c`'s WKT writer prints each coordinate in fixed
+  notation at a precision clamped to 16 digits after the point (with
+  ryu's digits, or `snprintf("%.*f")` without ryu, as vendored now). A
+  value below about 0.1 in magnitude then keeps fewer than 17
+  significant digits, and below 1e-16 prints as 0, which breaks §6.3's
+  claim that a WKT round trip is exact. The candidate fix is a local
+  patch that reimplements `geoarrow-c`'s two number functions,
+  `GeoArrowPrintDouble()` and `GeoArrowFromChars()`, over `zufast`
+  (`LinkingTo`, header-only, on CRAN): shortest round-trip printing and
+  correctly rounded parsing on every platform. Found in Stage 0 by
+  reading `geoarrow.c`; Stage 3's property test settles it.
 
 ## 16. What this RFC does not decide
 

@@ -12,7 +12,7 @@
 
 #define GEOARROW_USE_FAST_FLOAT 0
 
-#define GEOARROW_USE_RYU 1
+#define GEOARROW_USE_RYU 0
 
 #define GEOARROW_NAMESPACE Zugeo
 

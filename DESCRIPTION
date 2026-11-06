@@ -7,9 +7,7 @@ Authors@R: c(
     person("Dewey", "Dunnington", role = "cph",
            comment = "geoarrow-c, bundled in src/vendor/geoarrow"),
     person("The Apache Software Foundation", role = "cph",
-           comment = "nanoarrow, bundled in src/vendor/nanoarrow"),
-    person("Ulf", "Adams", role = "cph",
-           comment = "ryu, bundled in src/vendor/geoarrow/ryu"))
+           comment = "nanoarrow, bundled in src/vendor/nanoarrow"))
 Description: Makes 'GeoArrow' geometry columns first-class R vectors.
     Points, lines and polygons stay in 'Apache Arrow' memory with their
     coordinate reference system and edge type, move between the native,

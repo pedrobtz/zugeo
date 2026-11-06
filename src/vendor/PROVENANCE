@@ -1,5 +1,4 @@
-Vendored dependency: geoarrow-c, with the ryu printer and the nanoarrow
-core it ships
+Vendored dependency: geoarrow-c, with the nanoarrow core it ships
 
   Upstream:      https://github.com/geoarrow/geoarrow-c
   Version:       0.2.0-SNAPSHOT
@@ -9,36 +8,21 @@ core it ships
   nanoarrow:     0.8.0, geoarrow-c's own copy (src/vendor/nanoarrow
                  in the archive); LICENSE.txt and NOTICE.txt from
                  apache/arrow-nanoarrow at df487811eac5bf0e6f8ee75ed497bb2a6d04bb0e
-  License:       Apache-2.0 (geoarrow-c, nanoarrow); ryu Apache-2.0 or
-                 BSL-1.0
+  License:       Apache-2.0 (geoarrow-c, nanoarrow)
   Local patches: none
 
 src/vendor/geoarrow/geoarrow.h and geoarrow.c are the output of
 upstream's CMake bundler (GEOARROW_BUNDLE=ON) with
 GEOARROW_NAMESPACE=Zugeo, GEOARROW_USE_FAST_FLOAT=OFF (fast_float is
-C++) and GEOARROW_USE_RYU=ON; the C++ geoarrow.hpp is left out.
-src/vendor/geoarrow/ryu/ is upstream's src/geoarrow/ryu unchanged.
-src/vendor/geoarrow/geoarrow_type.h is not upstream's: a one-line header
-tools/derive-vendor writes, because ryu/common.h includes that name and
-the bundle folds it into geoarrow.h. tools/derive-vendor is the
-derivation; tools/verify-vendor re-runs it and fails on any difference.
+C++) and GEOARROW_USE_RYU=OFF (ryu's assert() calls; design Q11 decides
+how numbers are printed); the C++ geoarrow.hpp is left out.
+tools/derive-vendor is the derivation; tools/verify-vendor re-runs it
+and fails on any difference.
 
 SHA-256 of every vendored file:
   c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4  geoarrow/LICENSE
   67bc0638207e4b3c02be1fee6d026050c6e4e3b80cc65eb4bd0127b74c958f14  geoarrow/geoarrow.c
-  232c6e5c61882993b8cf77c856ded0c3413008c1f89060d56e72a97a22341c55  geoarrow/geoarrow.h
-  f7d32b5fe1c9d12191ce58ebc3334efe4c5745de9128b3ca70a858c142fc6f69  geoarrow/geoarrow_type.h
-  95c5db466d355c14de8233571920c3f9da41709702224d2c5b19a2126d69de93  geoarrow/ryu/LICENSE
-  c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4  geoarrow/ryu/LICENSE-Apache2
-  c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566  geoarrow/ryu/LICENSE-Boost
-  354c7abf16c5b1c78e4ab3f05185a6b23ddbb6b70b38c01cf8ac87978fa1c177  geoarrow/ryu/README.md
-  2e5d04ce2352a1baca99ec267568e30a8bea7f9262578329c3892686ff08635e  geoarrow/ryu/common.h
-  1a15601d140b143dcc807094f515c0c23f162ca458c2608ce1b3dd1fd5f971b6  geoarrow/ryu/d2fixed_full_table.h
-  a4852635813c2580d513e3764ad1093a47e8c10bf43f870aca6fda36adaa4fd0  geoarrow/ryu/d2s.c
-  3096ede074771550a441e7e5589ea5cbe05612be579c121e6a320b87e441d324  geoarrow/ryu/d2s_full_table.h
-  ce51a471c82e1fede9321d0bb2ac62673ac4eef5394e3c7c3fadf1bd21ec0959  geoarrow/ryu/d2s_intrinsics.h
-  6d16fb85059c3b2419bdf7b9ec2b3a6c4e7259109ab395d2207fa7936de2411a  geoarrow/ryu/digit_table.h
-  539be19daa238949d341698e39ff00f9320d3b7b7762ea26e7d8c04a541455d6  geoarrow/ryu/ryu.h
+  db0cde47d2c73bde8d4e87424daca74a5e9174b1eb80c84632b628ce121d5cac  geoarrow/geoarrow.h
   abdc436530c715318d843424f4f9b7b817f80f592678526942c2070ace3cba71  nanoarrow/LICENSE.txt
   09026abb630fd06cb418815d48535cd46cb102fe6fc307debb586fa2ac49482e  nanoarrow/NOTICE.txt
   647bcf7fe799815acf7263e9969a93c2f3a64bf3f49b8b5bfd3845c2e134fe01  nanoarrow/nanoarrow.c
