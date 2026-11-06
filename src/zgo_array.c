@@ -128,7 +128,7 @@ static const char *zgo_column_init(SEXP scratch, SEXP chunks, SEXP schema,
     struct ArrowError error;
     if (ArrowArrayViewInitFromSchema(view, col->schema, &error) != NANOARROW_OK ||
         ArrowArrayViewSetArray(view, array, &error) != NANOARROW_OK) {
-      snprintf(message, n, "Chunk %d does not match its schema: %s", k + 1,
+      snprintf(message, n, "Chunk %d does not match its schema: %.400s", k + 1,
                error.message);
       return message;
     }
@@ -419,7 +419,7 @@ SEXP zgo_c_format(SEXP chunks, SEXP schema, SEXP chunk, SEXP row, SEXP max_bytes
       (struct ArrowArray *)zgo_scratch_alloc(scratch, sizeof(struct ArrowArray), zgo_free_array);
   if (status == GEOARROW_OK) status = GeoArrowWKTWriterFinish(writer, text, &error);
   if (status != GEOARROW_OK) {
-    snprintf(message, sizeof(message), "Could not write WKT: %s", error.message);
+    snprintf(message, sizeof(message), "Could not write WKT: %.400s", error.message);
     zgo_scratch_run(scratch);
     Rf_error("%s", message);
   }
@@ -596,7 +596,7 @@ SEXP zgo_c_take(SEXP chunks, SEXP schema, SEXP chunk, SEXP row) {
   }
   if (ArrowArrayInitFromSchema(dst, build, &error) != NANOARROW_OK ||
       ArrowArrayStartAppending(dst) != NANOARROW_OK) {
-    snprintf(message, sizeof(message), "Could not start building the array: %s",
+    snprintf(message, sizeof(message), "Could not start building the array: %.400s",
              error.message);
     failure = message;
   }
@@ -612,7 +612,7 @@ SEXP zgo_c_take(SEXP chunks, SEXP schema, SEXP chunk, SEXP row) {
     }
   }
   if (failure == NULL && ArrowArrayFinishBuildingDefault(dst, &error) != NANOARROW_OK) {
-    snprintf(message, sizeof(message), "Could not finish the array: %s", error.message);
+    snprintf(message, sizeof(message), "Could not finish the array: %.400s", error.message);
     failure = message;
   }
   if (failure != NULL) {
