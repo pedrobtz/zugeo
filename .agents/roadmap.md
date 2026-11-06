@@ -14,7 +14,7 @@ with one sub-issue per stage;
 | Stage | Title | CI | Issue | Pull request | Done |
 | --- | --- | --- | --- | --- | --- |
 | 0 | [Package identity and vendored C](#stage-0--package-identity-and-vendored-c) | quick | [#2](https://github.com/pedrobtz/zugeo/issues/2) | [#16](https://github.com/pedrobtz/zugeo/pull/16) | 2026-11-06 |
-| 1 | [Schemas, metadata and CRS](#stage-1--schemas-metadata-and-crs) | quick | [#3](https://github.com/pedrobtz/zugeo/issues/3) | | |
+| 1 | [Schemas, metadata and CRS](#stage-1--schemas-metadata-and-crs) | quick | [#3](https://github.com/pedrobtz/zugeo/issues/3) | [#17](https://github.com/pedrobtz/zugeo/pull/17) | 2026-11-06 |
 | 2 | [geo_vctr and the zuarrow registry](#stage-2--geo_vctr-and-the-zuarrow-registry) | full | [#4](https://github.com/pedrobtz/zugeo/issues/4) | | |
 | 3 | [Encodings and interchange](#stage-3--encodings-and-interchange) | full | [#5](https://github.com/pedrobtz/zugeo/issues/5) | | |
 | 4 | [Exactness errors](#stage-4--exactness-errors) | quick | [#6](https://github.com/pedrobtz/zugeo/issues/6) | | |
@@ -91,6 +91,12 @@ coexistence criterion needs it; Stage 3 adds the other oracles.
 - `crs` and `edges` metadata parsed and written through `zujson`;
   `zugeo_crs`; `geo_crs_equal()` at its three levels.
 - `zugeo_metadata_error`; the `geoarrow-data` corpus pinned by hash.
+
+*Deviation, 2026-11-06:* `zuarrow` joins `Imports` here, with
+`Remotes: pedrobtz/zuarrow`, not in Stage 2: `geo_type_of()` takes array
+and stream handles through `zuarrow::arrow_schema()`. The schema view is
+zugeo's own C (design D20), and the corpus is fetched in CI rather than
+pinned in the package (design §9).
 
 **Exit criteria.**
 
@@ -385,10 +391,8 @@ blocking finding fixed.
 
 ## Blocking open questions
 
-- [§15](design.md#15-open-questions) Q1 blocks Stage 2: whether
-  zuarrow hands a dense union to a registered handler. Asked in
-  [pedrobtz/zuarrow#171](https://github.com/pedrobtz/zuarrow/issues/171)
-  on 2026-11-06, with zugeo's preference that zuarrow does it.
+- [§15](design.md#15-open-questions) Q1 was answered on 2026-11-06
+  by zuarrow#172; nothing blocks Stage 2.
 - Stage 3 verifies the assumptions behind Q2 and Q5 and implements
   the answers to Q8 and Q11.
 - Stage 5 records Q9's answer.

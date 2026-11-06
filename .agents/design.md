@@ -307,6 +307,8 @@ over `geoarrow`, `nanoarrow` and `arrow`, as zuarrow did for `zar_`.
   precedence over the storage type, which is what lets a dense union
   reach zugeo's handler for `geoarrow.geometry`; zuarrow §6.2 lists
   unions as "always an error" today, so Q1 asks for that exception.
+  *2026-11-06:* granted by
+  [pedrobtz/zuarrow#172](https://github.com/pedrobtz/zuarrow/pull/172).
   Handles are zuarrow's, which are nanoarrow's layout (zuarrow D6), so
   `geoarrow-c` reads them directly.
 - **`zufast`**: `LinkingTo`, header-only, on CRAN. `geoarrow-c`'s two
@@ -382,7 +384,8 @@ duckdb result (ArrowArrayStream)
 geo_vctr(x, crs = NULL, edges = NULL)  # from WKB, WKT or Arrow
 is_geo_vctr(x)
 geo_as_wkb(x); geo_as_wkt(x); geo_as_native(x, layout = "separated")
-geo_type_of(x)                         # the Arrow-level description
+geo_type_of(x)                         # the Arrow-level description;
+                                       # a named list of them for a struct
 
 # coordinates as columns
 geo_coords(x)                          # x, y[, z, m], feature, part, ring
@@ -390,7 +393,8 @@ geo_from_coords(coords, type)          # the reverse
 geo_points(x, y, z = NULL, m = NULL)
 
 # metadata
-geo_crs(x); geo_set_crs(x, crs, crs_type = NULL)
+geo_crs(x, crs_type = NULL)            # also makes one from a string
+geo_set_crs(x, crs, crs_type = NULL)
 geo_crs_text(x)                        # one string for other packages
 geo_crs_equal(x, y, level = "identical")  # or "structural", "authority"
 geo_edges(x); geo_set_edges(x, edges)
@@ -782,7 +786,15 @@ unwrapped.
 - **Corpus.** The `geoarrow-data` `v0.2.0` example files, every type and layout,
   in IPC and GeoParquet, pinned by hash in `tests/testthat/fixtures`.
   Files too large for the package go to a CI-only download, as zuarrow
-  does.
+  does. *Decided 2026-11-06 (Stage 1):* none is shipped, because
+  `geoarrow-data` has no licence file or statement. The tests fetch the
+  122 IPC files from the commit tagged `v0.2.0` (`e8eaa04`; the tag
+  object itself is `1e90fc2`) when `ZUGEO_FETCH_FIXTURES=true`, as every
+  CI workflow sets, or read them from `ZUGEO_CORPUS_DIR`, and check each
+  against the md5 in `tests/testthat/corpus.txt`; otherwise they skip.
+  Tests that run on CRAN build their schemas from specs instead. None of
+  the example files carries a CRS (their metadata is `{}`), so CRS
+  coverage is synthetic.
 - **Oracles, CI only.** None is in `DESCRIPTION`. Their tests live in
   `tests/testthat/test-ci-*.R`, left out of the tarball by
   `.Rbuildignore`, and the `oracles` workflow runs them with
@@ -921,6 +933,19 @@ any of them.
   `geo_query_nearest()`, because `geoops` 0.3.0 exports `geo_nearest()`
   and the new name matches `geo_query_box()` and `geo_query_radius()`.
   Closes Q10.
+- **D20 (C, 2026-11-06, Stage 1).** zugeo reads GeoArrow schemas with
+  its own C (`src/zgo_schema.c`), not `geoarrow-c`'s
+  `GeoArrowSchemaViewInit()`. At `b3db89f` that function rejects
+  `geoarrow.geometry` and `geoarrow.geometrycollection` as unrecognised
+  names, accepts only `list` offsets, and matches `geoarrow.wkb` by
+  prefix, so it cannot cover §2. The same gaps are expected in
+  `geoarrow-c`'s array views, so Stages 2, 3 and 5 walk unions and
+  `large_list` buffers in zugeo's own code (D15's visitor) and use
+  `geoarrow-c` for what it supports. Two leniencies, both from
+  `format.md` ("implementations must be able to ingest arrays with other
+  names when the interpretation is unambiguous"): an explicit `"edges":
+  "planar"` is read as planar, and a width-three interleaved child named
+  `xym` is XYM.
 - **D17 (maintainer, 2026-11-05).** `geo_parquet_info()` joins the
   GeoParquet functions and shares their gate (D12).
 
@@ -986,11 +1011,12 @@ records the answer, or where it is decided; the stage that verifies an
 assumption is named.
 
 - **Q1.** Will zuarrow let a registered extension handler receive a
-  dense-union storage type? *Asked in
-  [pedrobtz/zuarrow#171](https://github.com/pedrobtz/zuarrow/issues/171)
-  on 2026-11-06, with zugeo's preference that it does: the change is
-  zuarrow's own precedence rule applied to unions, read only.* Blocks
-  Stage 2 until zuarrow decides.
+  dense-union storage type? *Answered 2026-11-06: yes, by
+  [pedrobtz/zuarrow#172](https://github.com/pedrobtz/zuarrow/pull/172)
+  (closing #171), for `dense_union` and `sparse_union`, at any depth,
+  sliced or not; an unregistered union still errors. Its
+  `tools/make-union-fixture.py` makes the union test file Stage 2
+  needs.*
 - **Q2.** Should `geo_as_wkb()` mark its result with a class? *Decided
   2026-11-06: no, a plain list of raw vectors with the `crs`
   attribute; a borrowed class would couple zugeo to `wk`. Stage 3
