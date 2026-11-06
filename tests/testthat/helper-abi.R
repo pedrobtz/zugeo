@@ -38,7 +38,9 @@ abi_run <- function(tool, args) {
   if (!is.null(attr(out, "status"))) {
     abi_unavailable(paste(basename(tool), "failed"))
   }
-  out
+  # objdump on Windows ends its lines with \r, which the patterns below
+  # would otherwise read as part of a symbol name.
+  sub("\r$", "", out)
 }
 
 abi_clean <- function(x) {
@@ -82,8 +84,15 @@ abi_exports_of <- function(path) {
 abi_imports <- function() {
   if (.Platform$OS.type == "windows") {
     out <- abi_objdump()
-    rows <- out[grepl("^\\s+[0-9a-f]+\\s+[0-9]+\\s+\\S+$", out)]
-    return(sub("^.*\\s", "", trimws(rows)))
+    rows <- out[grepl("^\\s*[0-9a-fA-F]+\\s+[0-9]+\\s+\\S+\\s*$", out)]
+    imports <- sub("^.*\\s", "", trimws(rows))
+    if (length(imports) == 0L) {
+      testthat::fail(paste(
+        c("objdump -p printed no import rows; its output began:", head(out, 60)),
+        collapse = "\n"
+      ))
+    }
+    return(imports)
   }
   out <- abi_run(abi_tool("nm"), c("-u", shQuote(abi_dll_path())))
   abi_clean(sub("^.*\\s", "", trimws(out[nzchar(out)])))
