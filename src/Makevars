@@ -12,6 +12,6 @@ PKG_CFLAGS = $(C_VISIBILITY)
 VENDOR_OBJECTS = vendor/geoarrow/geoarrow.o \
   vendor/nanoarrow/nanoarrow.o
 
-ZGO_OBJECTS = zugeo.o
+ZGO_OBJECTS = zugeo.o zgo_schema.o zgo_build.o
 
 OBJECTS = $(ZGO_OBJECTS) $(VENDOR_OBJECTS)

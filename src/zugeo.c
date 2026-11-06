@@ -25,6 +25,9 @@ SEXP zgo_c_info(void) {
 
 static const R_CallMethodDef zgo_call_methods[] = {
     ZGO_CALL(zgo_c_info, 0),
+    ZGO_CALL(zgo_c_type_of, 1),
+    ZGO_CALL(zgo_c_type_of_children, 1),
+    ZGO_CALL(zgo_c_schema_from_spec, 1),
     {NULL, NULL, 0}};
 
 void attribute_visible R_init_zugeo(DllInfo *dll) {

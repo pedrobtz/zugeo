@@ -13,5 +13,8 @@
 #define ZGO_GEOARROW_SPEC "0.2"
 
 SEXP zgo_c_info(void);
+SEXP zgo_c_type_of(SEXP schema);
+SEXP zgo_c_type_of_children(SEXP schema);
+SEXP zgo_c_schema_from_spec(SEXP spec);
 
 #endif

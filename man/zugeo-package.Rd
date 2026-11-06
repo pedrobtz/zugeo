@@ -29,7 +29,6 @@ Other contributors:
 \itemize{
   \item Dewey Dunnington (geoarrow-c, bundled in src/vendor/geoarrow) [copyright holder]
   \item The Apache Software Foundation (nanoarrow, bundled in src/vendor/nanoarrow) [copyright holder]
-  \item Ulf Adams (ryu, bundled in src/vendor/geoarrow/ryu) [copyright holder]
 }
 
 }
