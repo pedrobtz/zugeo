@@ -726,8 +726,17 @@ scan, as `gpq` does.
 
 | Library | Version | Licence | Used for |
 | --- | --- | --- | --- |
-| `geoarrow-c` | `b3db89f`, pinned in Stage 0 | Apache-2.0 | views, I/O, `box` |
-| nanoarrow core | as `geoarrow-c` pins | Apache-2.0 | Arrow helpers |
+| `geoarrow-c` | `b3db89f` (0.2.0-SNAPSHOT) | Apache-2.0 | views, I/O, `box` |
+| ryu, in `geoarrow-c` | GEOS 3.12.0's | Apache-2.0, BSL-1.0 | WKT output |
+| nanoarrow core | 0.8.0, `geoarrow-c`'s own copy | Apache-2.0 | Arrow helpers |
+
+*Decided 2026-11-06 (Stage 0):* `src/vendor/` is derived by
+`tools/derive-vendor`: the commit's archive, checked by SHA-256, run
+through upstream's CMake bundler (`GEOARROW_BUNDLE=ON`,
+`GEOARROW_NAMESPACE=Zugeo`), with `fast_float` off because it is C++ and
+ryu on. Parsing then uses `strtod()`, which R keeps in the C numeric
+locale. No local patches. `tools/verify-vendor` re-derives the tree in
+CI (`vendor.yaml`) and fails on any difference, as zuarrow's does.
 
 `geoarrow-c`'s sources include `nanoarrow/nanoarrow.h`, so it cannot
 link against zuarrow's hidden copy (zuarrow has no C table in 0.1.0).
@@ -735,7 +744,10 @@ zugeo compiles its own under a namespace (D2) and hides every symbol.
 When zuarrow's C table lands (its §14), Q3 asks whether zugeo switches
 to it. `kernel.c` includes `stdio.h`; Stage 0 checks with `nm` that no
 `printf`, `abort` or `exit` symbol reaches the shared object, as the
-zuclip and zucdt RFCs did for theirs.
+zuclip and zucdt RFCs did for theirs. *2026-11-06 (Stage 0):* none
+does; ryu's `assert()` calls are compiled out with `NDEBUG`, and
+`tests/testthat/test-abi.R` checks the export and import tables on
+every leg.
 
 The R-tree, k-d tree and Hilbert function are zugeo's own C, written
 from flatbush and kdbush (ISC) with credit in `inst/COPYRIGHTS`, and
@@ -837,6 +849,9 @@ any of them.
   core rather than reimplement GeoArrow. It is the reference
   implementation, Apache-2.0, maintained by the specification's
   authors. The duplicate copy's size is measured in Stage 0.
+  *Measured 2026-11-06 (Stage 0, macOS arm64):* the nanoarrow core
+  compiles to a 174 KB object and the whole shared object is 232 KB
+  after linking, against 714 KB for the nanoarrow package's.
 - **D3.** No package outside the family in `Imports`, `LinkingTo` or
   `Suggests`, the family's rule (maintainer, 2026-11-05). Interchange
   is WKB and WKT (§6.6), and outside packages are CI-only oracles. The
@@ -850,6 +865,12 @@ any of them.
 - **D7 (C).** The `geo_` prefix. No CRAN package exports a `geo_`
   family that a family user would load beside zugeo, checked in
   Stage 0; `geos` uses `geos_` and `geoarrow` uses `geoarrow_`.
+  *Checked 2026-11-06 (Stage 0):* nine CRAN packages export `geo_`
+  names (`fuzzyjoin`, `stplanr`, `geojson`, `geoops`, `tigris`,
+  `tidygeocoder`, `nominatimlite`, `CVXR`, `deeptime`), so the prefix is
+  not free, but only one name in §5 is taken: `geo_nearest()`, by
+  `geoops` 0.3.0. The rest of the prefix stands; Q10 asks about that
+  one.
 - **D8 (C).** Read `geoarrow.geometry` unions, never write them, until
   zuarrow writes unions. Mixed columns go out as WKB.
 - **D9 (C).** No `mask_sf()`. Masking `sf` generics changes the meaning
@@ -965,6 +986,19 @@ any of them.
   and flatbush use the same grid and curve orientation? If not, zugeo
   follows flatbush, because its index format depends on it (§6.7).
 
+- **Q10.** `geo_nearest()` (§5, §6.8) is also exported by `geoops`
+  0.3.0 on CRAN; loading both masks one. Rename it, for example to
+  `geo_query_nearest()` beside `geo_query_box()` and
+  `geo_query_radius()`, or keep it? Found in Stage 0; blocks Stage 6.
+- **Q11.** `geoarrow-c`'s WKT writer prints each coordinate with ryu's
+  fixed notation at a precision clamped to 16 digits after the point,
+  not ryu's shortest round-trip form. A value below about 0.1 in
+  magnitude then keeps fewer than 17 significant digits, and below
+  1e-16 prints as 0, which breaks §6.3's claim that a WKT round trip is
+  exact. Patch the writer to ryu's `d2s` shortest form, print in zugeo's
+  own code, or document the limit? Found in Stage 0 by reading
+  `geoarrow.c`; Stage 3's property test settles it.
+
 ## 16. What this RFC does not decide
 
 The print and `format()` widths, the `geo_box()` column names beyond
@@ -1028,4 +1062,5 @@ From memory rather than fetched: `pyogrio`'s `read_info()` fields,
 Not verified: that `sf::st_crs()` reads PROJJSON text (Q5); that
 `sf`, `geos` and `s2` take a plain list of raw WKB (Q2); DuckDB's and Spark's
 GeoArrow export options (§3), which Stage 2's oracle tests settle; the
-size of `geoarrow-c`'s compiled object and its symbol imports (Stage 0).
+size of `geoarrow-c`'s compiled object and its symbol imports (Stage 0;
+measured 2026-11-06, see D2 and §7).

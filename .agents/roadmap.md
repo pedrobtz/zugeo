@@ -13,7 +13,7 @@ with one sub-issue per stage;
 <!-- markdownlint-disable MD013 -->
 | Stage | Title | CI | Issue | Pull request | Done |
 | --- | --- | --- | --- | --- | --- |
-| 0 | [Package identity and vendored C](#stage-0--package-identity-and-vendored-c) | quick | [#2](https://github.com/pedrobtz/zugeo/issues/2) | | |
+| 0 | [Package identity and vendored C](#stage-0--package-identity-and-vendored-c) | quick | [#2](https://github.com/pedrobtz/zugeo/issues/2) | | 2026-11-06 |
 | 1 | [Schemas, metadata and CRS](#stage-1--schemas-metadata-and-crs) | quick | [#3](https://github.com/pedrobtz/zugeo/issues/3) | | |
 | 2 | [geo_vctr and the zuarrow registry](#stage-2--geo_vctr-and-the-zuarrow-registry) | full | [#4](https://github.com/pedrobtz/zugeo/issues/4) | | |
 | 3 | [Encodings and interchange](#stage-3--encodings-and-interchange) | full | [#5](https://github.com/pedrobtz/zugeo/issues/5) | | |
@@ -56,6 +56,13 @@ beside the family's and outside packages' copies.
   `abort` or `exit` in the shared object. The `geo_` prefix checked
   against CRAN (D7).
 - `zugeo_info()`; `zugeo_error` root condition.
+
+*Deviation, 2026-11-06:* `Imports` are added by the stage that first
+calls each package, because an unused import is an `R CMD check` NOTE:
+`zujson` in Stage 1, `zuarrow` with `Remotes: pedrobtz/zuarrow` in
+Stage 2. The `oracles` workflow arrives here rather than in Stage 3,
+with only `zuarrow`, `geoarrow` and `nanoarrow`, because this stage's
+coexistence criterion needs it; Stage 3 adds the other oracles.
 
 **Exit criteria.**
 
@@ -370,8 +377,12 @@ blocking finding fixed.
 ## Blocking open questions
 
 - [§15](design.md#15-open-questions) Q1 blocks Stage 2: whether
-  zuarrow hands a dense union to a registered handler. Needs a zuarrow
-  issue first.
-- Q2, Q5 and Q8 are answered in Stage 3.
+  zuarrow hands a dense union to a registered handler. Asked in
+  [pedrobtz/zuarrow#171](https://github.com/pedrobtz/zuarrow/issues/171)
+  on 2026-11-06, with zugeo's preference that zuarrow does it.
+- Q2, Q5, Q8 and Q11 (WKT printing precision, found in Stage 0) are
+  answered in Stage 3.
 - Q9 is answered in Stage 5.
+- Q10 blocks Stage 6: whether `geo_nearest()`, which `geoops` also
+  exports, is renamed.
 - Q4 blocks Stage 7: whether `qio` or zugeo owns the `geo` key.
