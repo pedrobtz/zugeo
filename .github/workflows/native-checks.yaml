@@ -26,6 +26,8 @@ jobs:
     uses: pedrobtz/r-actions/.github/workflows/sanitizers.yml@v1
     with:
       asan: true
+      env: |
+        ZUGEO_FETCH_FIXTURES=true
       profile: auto
 
   valgrind:
@@ -38,6 +40,12 @@ jobs:
 
   rchk:
     uses: pedrobtz/r-actions/.github/workflows/rchk.yml@v1
+    with:
+      # zuarrow, and the zukomp version it needs, are not on CRAN yet; drop
+      # these once they are.
+      github-packages: |
+        pedrobtz/zukomp
+        pedrobtz/zuarrow
 
   analyzers:
     uses: pedrobtz/r-actions/.github/workflows/analyzers.yml@v1
