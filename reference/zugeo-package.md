@@ -34,6 +34,3 @@ Other contributors:
 
 - The Apache Software Foundation (nanoarrow, bundled in
   src/vendor/nanoarrow) \[copyright holder\]
-
-- Ulf Adams (ryu, bundled in src/vendor/geoarrow/ryu) \[copyright
-  holder\]

@@ -33,11 +33,14 @@ adopted from RFC 0071. It outranks this file.
 
 ## Current state
 
-Stage 0 (2026-11-06): package identity, CI, and `geoarrow-c` with its
-nanoarrow core vendored, namespaced and hidden;
-[`zugeo_info()`](https://pedrobtz.github.io/zugeo/reference/zugeo_info.md)
-is the only function. No geometry functionality yet. The roadmap in
-`.agents/roadmap.md` takes it to v0.1.0.
+Stage 1 (2026-11-06):
+[`geo_type_of()`](https://pedrobtz.github.io/zugeo/reference/geo_type_of.md)
+reads every GeoArrow 0.2 schema,
+[`geo_crs()`](https://pedrobtz.github.io/zugeo/reference/geo_crs.md) and
+[`geo_crs_equal()`](https://pedrobtz.github.io/zugeo/reference/geo_crs_equal.md)
+carry and compare CRSs. Stage 0 set up the package, CI and the vendored
+`geoarrow-c`. No geometry values yet: `geo_vctr` is Stage 2. The roadmap
+in `.agents/roadmap.md` takes it to v0.1.0.
 
 ## Versions and dependents
 
@@ -66,6 +69,16 @@ calls them by symbol object, `.Call(zgo_c_info)`); `src/zgo.h` is the
 internal header; `src/vendor/` is the vendored C, built by the objects
 listed in `src/Makevars` (and its copy `Makevars.win`).
 
+- `src/zgo_schema.c`: the schema view, zugeo’s own (design D20), behind
+  [`geo_type_of()`](https://pedrobtz.github.io/zugeo/reference/geo_type_of.md).
+  It reads the `ArrowSchema` behind any nanoarrow-layout handle
+  (zuarrow’s or nanoarrow’s).
+- `src/zgo_build.c`: builds schemas from an R spec (`zgo_schema()`,
+  `zgo_spec()` in `R/build.R`), for tests now and export in Stage 2.
+- `R/type.R` turns the C description into a `zugeo_type` and parses the
+  extension metadata with zujson; `R/crs.R` is `zugeo_crs`,
+  classification and the three equality levels.
+
 ## Invariants that are easy to break
 
 - **Nothing outside the family in `DESCRIPTION`**, not even `Suggests`
@@ -90,6 +103,11 @@ listed in `src/Makevars` (and its copy `Makevars.win`).
   ignores it, which is why ryu is not vendored. `test-abi.R` checks both
   tables.
 - **`src/Makevars` and `src/Makevars.win` stay identical.**
+- **C never raises a zugeo condition.** It returns a `zgo_failure` list
+  (`kind`, `message`) and R’s `zgo_check()` raises it, as
+  `zugeo_<kind>_error`. Plain `Rf_error()` is only for misuse of an
+  internal routine. C that holds heap memory must not call R in between
+  (`zgo_build.c` lets the external pointer own the schema first).
 
 ## Testing
 
@@ -100,7 +118,13 @@ union-encoded `geoarrow.geometry` file; Stage 2 makes one. Helpers:
 `helper-abi.R` reads the shared object’s export and import tables (`nm`,
 or `objdump` on Windows; a failure on CI, a skip elsewhere);
 `helper-ci-oracles.R` has `skip_without_oracle()`, which fails under
-`ZUGEO_ORACLES=true`.
+`ZUGEO_ORACLES=true`; `helper-schema.R` builds GeoArrow schemas from
+specs (`ga_schema()`, `ga_union()`, `ga_field()`); `helper-corpus.R`
+fetches the corpus. The corpus is never in the package (no licence): it
+is fetched from `geoarrow-data` at commit `e8eaa04` when
+`ZUGEO_FETCH_FIXTURES=true` (set in every CI workflow), or read from
+`ZUGEO_CORPUS_DIR`, and checked against `tests/testthat/corpus.txt`;
+otherwise the corpus tests skip.
 
 ## Continuous integration
 

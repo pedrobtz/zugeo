@@ -48,7 +48,7 @@
 </div>
 <div class="section level2">
 <h2 id="current-state">Current state<a class="anchor" aria-label="anchor" href="#current-state"></a></h2>
-<p>Stage 0 (2026-11-06): package identity, CI, and <code>geoarrow-c</code> with its nanoarrow core vendored, namespaced and hidden; <code><a href="reference/zugeo_info.html">zugeo_info()</a></code> is the only function. No geometry functionality yet. The roadmap in <code>.agents/roadmap.md</code> takes it to v0.1.0.</p>
+<p>Stage 1 (2026-11-06): <code><a href="reference/geo_type_of.html">geo_type_of()</a></code> reads every GeoArrow 0.2 schema, <code><a href="reference/geo_crs.html">geo_crs()</a></code> and <code><a href="reference/geo_crs_equal.html">geo_crs_equal()</a></code> carry and compare CRSs. Stage 0 set up the package, CI and the vendored <code>geoarrow-c</code>. No geometry values yet: <code>geo_vctr</code> is Stage 2. The roadmap in <code>.agents/roadmap.md</code> takes it to v0.1.0.</p>
 </div>
 <div class="section level2">
 <h2 id="versions-and-dependents">Versions and dependents<a class="anchor" aria-label="anchor" href="#versions-and-dependents"></a></h2>
@@ -66,7 +66,13 @@
 <div class="section level2">
 <h2 id="architecture">Architecture<a class="anchor" aria-label="anchor" href="#architecture"></a></h2>
 <p>To be written as stages land; see <code>.agents/design.md</code> §4. So far: <code>src/zugeo.c</code> registers the <code>.Call</code> routines (<code>R_forceSymbols</code>, so R calls them by symbol object, <code>.Call(zgo_c_info)</code>); <code>src/zgo.h</code> is the internal header; <code>src/vendor/</code> is the vendored C, built by the objects listed in <code>src/Makevars</code> (and its copy <code>Makevars.win</code>).</p>
-</div>
+<ul><li>
+<code>src/zgo_schema.c</code>: the schema view, zugeo’s own (design D20), behind <code><a href="reference/geo_type_of.html">geo_type_of()</a></code>. It reads the <code>ArrowSchema</code> behind any nanoarrow-layout handle (zuarrow’s or nanoarrow’s).</li>
+<li>
+<code>src/zgo_build.c</code>: builds schemas from an R spec (<code>zgo_schema()</code>, <code>zgo_spec()</code> in <code>R/build.R</code>), for tests now and export in Stage 2.</li>
+<li>
+<code>R/type.R</code> turns the C description into a <code>zugeo_type</code> and parses the extension metadata with zujson; <code>R/crs.R</code> is <code>zugeo_crs</code>, classification and the three equality levels.</li>
+</ul></div>
 <div class="section level2">
 <h2 id="invariants-that-are-easy-to-break">Invariants that are easy to break<a class="anchor" aria-label="anchor" href="#invariants-that-are-easy-to-break"></a></h2>
 <ul><li>
@@ -86,10 +92,12 @@
 <li>
 <strong><code>R_init_zugeo</code> is the only exported symbol, and no <code>assert</code>, <code>abort</code> or <code>printf</code> is imported.</strong> Keep <code>$(C_VISIBILITY)</code>, <code>-DNANOARROW_DLL=</code> and <code>src/zugeo-win.def</code>. Don’t rely on <code>-DNDEBUG</code>: the gctorture build ignores it, which is why ryu is not vendored. <code>test-abi.R</code> checks both tables.</li>
 <li><strong><code>src/Makevars</code> and <code>src/Makevars.win</code> stay identical.</strong></li>
+<li>
+<strong>C never raises a zugeo condition.</strong> It returns a <code>zgo_failure</code> list (<code>kind</code>, <code>message</code>) and R’s <code>zgo_check()</code> raises it, as <code>zugeo_&lt;kind&gt;_error</code>. Plain <code>Rf_error()</code> is only for misuse of an internal routine. C that holds heap memory must not call R in between (<code>zgo_build.c</code> lets the external pointer own the schema first).</li>
 </ul></div>
 <div class="section level2">
 <h2 id="testing">Testing<a class="anchor" aria-label="anchor" href="#testing"></a></h2>
-<p>The conformance corpus is <code>geoarrow-data</code> <code>v0.2.0</code> (design §9), with <code>geoarrow</code>, <code>arrow</code>/pyarrow, DuckDB spatial, <code>sf</code>, <code>geos</code>, <code>s2</code>, <code>wk</code>, <code>gpq</code>, and flatbush/kdbush under <code>node</code> as oracles. The corpus has no union-encoded <code>geoarrow.geometry</code> file; Stage 2 makes one. Helpers: <code>helper-abi.R</code> reads the shared object’s export and import tables (<code>nm</code>, or <code>objdump</code> on Windows; a failure on CI, a skip elsewhere); <code>helper-ci-oracles.R</code> has <code>skip_without_oracle()</code>, which fails under <code>ZUGEO_ORACLES=true</code>.</p>
+<p>The conformance corpus is <code>geoarrow-data</code> <code>v0.2.0</code> (design §9), with <code>geoarrow</code>, <code>arrow</code>/pyarrow, DuckDB spatial, <code>sf</code>, <code>geos</code>, <code>s2</code>, <code>wk</code>, <code>gpq</code>, and flatbush/kdbush under <code>node</code> as oracles. The corpus has no union-encoded <code>geoarrow.geometry</code> file; Stage 2 makes one. Helpers: <code>helper-abi.R</code> reads the shared object’s export and import tables (<code>nm</code>, or <code>objdump</code> on Windows; a failure on CI, a skip elsewhere); <code>helper-ci-oracles.R</code> has <code>skip_without_oracle()</code>, which fails under <code>ZUGEO_ORACLES=true</code>; <code>helper-schema.R</code> builds GeoArrow schemas from specs (<code>ga_schema()</code>, <code>ga_union()</code>, <code>ga_field()</code>); <code>helper-corpus.R</code> fetches the corpus. The corpus is never in the package (no licence): it is fetched from <code>geoarrow-data</code> at commit <code>e8eaa04</code> when <code>ZUGEO_FETCH_FIXTURES=true</code> (set in every CI workflow), or read from <code>ZUGEO_CORPUS_DIR</code>, and checked against <code>tests/testthat/corpus.txt</code>; otherwise the corpus tests skip.</p>
 </div>
 <div class="section level2">
 <h2 id="continuous-integration">Continuous integration<a class="anchor" aria-label="anchor" href="#continuous-integration"></a></h2>
