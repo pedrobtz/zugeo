@@ -15,7 +15,7 @@ covered): §1.6, D14 to D17.
 - **Date:** 2026-11-04.
 - **Packages:** `zugeo` (not yet created; crandb returns `not_found` and
   there is no `pedrobtz/zugeo` repository, both checked on 2026-11-04).
-  `Imports: zuarrow, zujson`; no `LinkingTo`. `Suggests: testthat
+  `Imports: zuarrow, zujson`; `LinkingTo: zufast` (D18). `Suggests: testthat
   (>= 3.0.0), withr, qio`. No package outside the family appears in
   `DESCRIPTION` (D3): `sf`, `wk`, `geos`, `s2`, `geoarrow`, `nanoarrow`,
   `arrow` and `duckdb` are CI-only oracles, as in zuarrow §9. Vendors
@@ -309,6 +309,10 @@ over `geoarrow`, `nanoarrow` and `arrow`, as zuarrow did for `zar_`.
   unions as "always an error" today, so Q1 asks for that exception.
   Handles are zuarrow's, which are nanoarrow's layout (zuarrow D6), so
   `geoarrow-c` reads them directly.
+- **`zufast`**: `LinkingTo`, header-only, on CRAN. `geoarrow-c`'s two
+  number functions are reimplemented over it by a local patch (D18), so
+  WKT prints the shortest round-trip digits and parses correctly
+  rounded on every platform.
 - **`zujson`**: `Imports`, for parsing and writing extension metadata,
   the GeoParquet `geo` key and PROJJSON. Every metadata string goes
   through `json_parse()` and `json_write()`; zugeo has no JSON code.
@@ -409,7 +413,7 @@ geo_rtree(x, node_size = 16L)
 geo_kdtree(x, node_size = 64L)         # points only
 geo_query_box(index, extent)           # a geo_extent
 geo_query_radius(index, x, y, r)       # k-d tree
-geo_nearest(index, x, y, k = 1L, max_distance = Inf)
+geo_query_nearest(index, x, y, k = 1L, max_distance = Inf)
 geo_join_box(index, y)                 # y a geo_vctr, geo_extent or index;
                                        # data frame of candidate pairs
 geo_index_raw(index); geo_index_from_raw(raw)
@@ -497,10 +501,10 @@ exact.
   included.
   `geo_box()` reports Z and M ranges when present.
 - **Text.** WKT to native is a parse; native to WKT prints the shortest
-  representation that reads back to the same double, which
-  `geoarrow-c`'s `ryu`-based printer does. A round trip through WKT is
-  therefore exact, and a test proves it on every coordinate in the
-  `geoarrow-data` files.
+  representation that reads back to the same double. A round trip
+  through WKT is therefore exact, and a test proves it on every
+  coordinate in the `geoarrow-data` files. *2026-11-06:*
+  `geoarrow-c`'s printer does not do this as vendored; Q11.
 - **Empties.** An empty point is `POINT (NaN NaN)` per `format.md`, and
   stays `NaN NaN`, never null.
 - **Bad layouts.** A null inside a ring, an unclosed ring in a polygon
@@ -590,9 +594,12 @@ and writes it and none of them has to be a dependency to do so.
   has `ST_AsHEXWKB`; `orb` and `go-geom` read both for that reason.
   `geo_vctr()` accepts EWKB and hex WKB as well. An EWKB SRID becomes a
   CRS of `crs_type = "srid"` unless `crs =` is given, and differing
-  SRIDs in one column are a `zugeo_crs_error`. Whether `geoarrow-c`
-  reads EWKB already is Q8; if not, zugeo strips the SRID flag before
-  handing it the bytes.
+  SRIDs in one column are a `zugeo_crs_error`. *Decided 2026-11-06
+  (Q8):* `geoarrow-c` reads EWKB but discards the SRID without a trace
+  (`wkb_reader.c`: "We ignore this"), so zugeo reads each feature's
+  header itself first, in C: the SRID of the outer geometry and of any
+  nested one, which must agree. Then it hands the unchanged bytes to
+  `geoarrow-c`.
 - **Cost.** WKB is one copy each way, where `wk`'s handler protocol
   would stream without one. §14 records how that protocol can be
   reached later without adding `wk` to `DESCRIPTION`.
@@ -662,7 +669,7 @@ Both indexes are immutable and bulk-loaded, and each is one raw vector.
   candidates with an exact predicate is GEOS's job.
 - **Queries** are box intersection, radius (k-d tree), and k nearest
   by box distance. Exact nearest by geometry distance needs a distance
-  function, so `geo_nearest()` returns box-distance candidates and says
+  function, so `geo_query_nearest()` returns box-distance candidates and says
   so in its documentation; refining them is GEOS's or S2's job.
 
 ### 6.9 GeoParquet
@@ -726,8 +733,19 @@ scan, as `gpq` does.
 
 | Library | Version | Licence | Used for |
 | --- | --- | --- | --- |
-| `geoarrow-c` | `b3db89f`, pinned in Stage 0 | Apache-2.0 | views, I/O, `box` |
-| nanoarrow core | as `geoarrow-c` pins | Apache-2.0 | Arrow helpers |
+| `geoarrow-c` | `b3db89f` (0.2.0-SNAPSHOT) | Apache-2.0 | views, I/O, `box` |
+| nanoarrow core | 0.8.0, `geoarrow-c`'s own copy | Apache-2.0 | Arrow helpers |
+
+*Decided 2026-11-06 (Stage 0):* `src/vendor/` is derived by
+`tools/derive-vendor`: the commit's archive, checked by SHA-256, run
+through upstream's CMake bundler (`GEOARROW_BUNDLE=ON`,
+`GEOARROW_NAMESPACE=Zugeo`), with `fast_float` off because it is C++.
+Parsing then uses `strtod()`, which R keeps in the C numeric locale.
+ryu is off too: its `assert()` calls reached the shared object in the
+gctorture build, which ignores `-DNDEBUG`, so WKT numbers print through
+`snprintf()` until Q11 is settled. No local patches.
+`tools/verify-vendor` re-derives the tree in
+CI (`vendor.yaml`) and fails on any difference, as zuarrow's does.
 
 `geoarrow-c`'s sources include `nanoarrow/nanoarrow.h`, so it cannot
 link against zuarrow's hidden copy (zuarrow has no C table in 0.1.0).
@@ -735,7 +753,9 @@ zugeo compiles its own under a namespace (D2) and hides every symbol.
 When zuarrow's C table lands (its §14), Q3 asks whether zugeo switches
 to it. `kernel.c` includes `stdio.h`; Stage 0 checks with `nm` that no
 `printf`, `abort` or `exit` symbol reaches the shared object, as the
-zuclip and zucdt RFCs did for theirs.
+zuclip and zucdt RFCs did for theirs. *2026-11-06 (Stage 0):* none
+does once ryu is left out (above), and `tests/testthat/test-abi.R`
+checks the export and import tables on every leg.
 
 The R-tree, k-d tree and Hilbert function are zugeo's own C, written
 from flatbush and kdbush (ISC) with credit in `inst/COPYRIGHTS`, and
@@ -837,6 +857,9 @@ any of them.
   core rather than reimplement GeoArrow. It is the reference
   implementation, Apache-2.0, maintained by the specification's
   authors. The duplicate copy's size is measured in Stage 0.
+  *Measured 2026-11-06 (Stage 0, macOS arm64):* the nanoarrow core
+  compiles to a 174 KB object and the whole shared object is 232 KB
+  after linking, against 714 KB for the nanoarrow package's.
 - **D3.** No package outside the family in `Imports`, `LinkingTo` or
   `Suggests`, the family's rule (maintainer, 2026-11-05). Interchange
   is WKB and WKT (§6.6), and outside packages are CI-only oracles. The
@@ -850,6 +873,12 @@ any of them.
 - **D7 (C).** The `geo_` prefix. No CRAN package exports a `geo_`
   family that a family user would load beside zugeo, checked in
   Stage 0; `geos` uses `geos_` and `geoarrow` uses `geoarrow_`.
+  *Checked 2026-11-06 (Stage 0):* nine CRAN packages export `geo_`
+  names (`fuzzyjoin`, `stplanr`, `geojson`, `geoops`, `tigris`,
+  `tidygeocoder`, `nominatimlite`, `CVXR`, `deeptime`), so the prefix is
+  not free, but only one name in §5 is taken: `geo_nearest()`, by
+  `geoops` 0.3.0. The rest of the prefix stands; D19 renames that
+  one.
 - **D8 (C).** Read `geoarrow.geometry` unions, never write them, until
   zuarrow writes unions. Mixed columns go out as WKB.
 - **D9 (C).** No `mask_sf()`. Masking `sf` generics changes the meaning
@@ -876,6 +905,22 @@ any of them.
 - **D16 (maintainer, 2026-11-05).** `geo_extent` is the one box type:
   returned by `geo_box()`, taken by queries, reported by
   `geo_parquet_info()`.
+- **D18 (maintainer, 2026-11-06).** WKT numbers go through `zufast`:
+  a local patch to the vendored `geoarrow-c` replaces
+  `GeoArrowPrintDouble()` with `zuf_format_f64()` (shortest round trip,
+  positional or scientific, at most 25 characters) and
+  `GeoArrowFromChars()` with `zuf_parse_f64()` (correctly rounded on
+  every platform and rounding mode). A writer `precision` below the
+  default stays a lossy opt-in. Libraries that print WKT exactly by
+  default (DuckDB, the georust `wkt` crate, `orb`, `go-geom`,
+  WellKnownGeometry.jl) all print shortest round-trip digits with no
+  decimal cap; the ones that use a fixed digit budget (GEOS, JTS,
+  PostGIS, GDAL, `wk`, `sf`) lose digits by default. Survey of
+  2026-11-06, from their sources. Closes Q11.
+- **D19 (maintainer, 2026-11-06).** `geo_nearest()` is
+  `geo_query_nearest()`, because `geoops` 0.3.0 exports `geo_nearest()`
+  and the new name matches `geo_query_box()` and `geo_query_radius()`.
+  Closes Q10.
 - **D17 (maintainer, 2026-11-05).** `geo_parquet_info()` joins the
   GeoParquet functions and shares their gate (D12).
 
@@ -936,34 +981,65 @@ any of them.
 
 ## 15. Open questions
 
+All eleven had an answer on 2026-11-06. Each line keeps the question and
+records the answer, or where it is decided; the stage that verifies an
+assumption is named.
+
 - **Q1.** Will zuarrow let a registered extension handler receive a
-  dense-union storage type, instead of erroring before the registry is
-  consulted? Its precedence rule ("the extension name wins") suggests
-  yes; its type table says unions are "always an error". This needs a
-  zuarrow issue before Stage 2.
-- **Q2.** Should `geo_as_wkb()` mark its result with a class that
-  `sf`, `wk` or `geos` dispatch on, or stay a plain list? A borrowed
-  class name is a soft coupling to an outside package; this RFC says
-  plain, and Stage 3 checks that all three accept the plain list.
-- **Q3.** When zuarrow publishes its C table, does zugeo drop its own
-  nanoarrow copy and link through zuarrow? It removes the duplicate but
-  ties zugeo's release to zuarrow's ABI.
-- **Q4.** Does `qio` expose GeoParquet natively in 0.2.0, with zugeo
-  only interpreting, or does `qio` stay geometry-agnostic and zugeo own
-  the `geo` key? This RFC assumes the second; the decision is in qio's
-  repository.
+  dense-union storage type? *Asked in
+  [pedrobtz/zuarrow#171](https://github.com/pedrobtz/zuarrow/issues/171)
+  on 2026-11-06, with zugeo's preference that it does: the change is
+  zuarrow's own precedence rule applied to unions, read only.* Blocks
+  Stage 2 until zuarrow decides.
+- **Q2.** Should `geo_as_wkb()` mark its result with a class? *Decided
+  2026-11-06: no, a plain list of raw vectors with the `crs`
+  attribute; a borrowed class would couple zugeo to `wk`. Stage 3
+  checks that `sf`, `geos` and `s2` accept it.*
+- **Q3.** Does zugeo drop its own nanoarrow copy when zuarrow publishes
+  a C table? *Decided 2026-11-06: not in 0.x. The copy costs 174 KB
+  (D2); linking through zuarrow would tie zugeo's releases to its ABI.
+  Revisit when zuarrow's C table is stable and `geoarrow-c` can build
+  against it.*
+- **Q4.** Does `qio` interpret GeoParquet, or stay geometry-agnostic
+  with zugeo owning the `geo` key? *Proposed 2026-11-06 in
+  [pedrobtz/qio#21](https://github.com/pedrobtz/qio/issues/21): qio
+  exposes the raw facts (native types with `crs` and algorithm, row-group
+  bounds, footer pairs, row-group selection, and writing them), zugeo
+  owns the `geo` key and CRS meaning. The decision is qio's.* Blocks
+  Stage 7.
 - **Q5.** Does `sf::st_crs()` accept every string `geo_crs_text()`
-  returns, PROJJSON included? §6.4 assumes PROJ reads all three forms;
-  the Stage 3 oracle verifies it.
-- **Q6.** Is v0.1.0 a CRAN submission? `CRAN intent` records it; this
-  RFC assumes `Planned`.
-- **Q7.** Should zugeo approach `geoarrowrs` and `geoarrow` about a
-  shared conformance suite, given that all three read the same files?
-- **Q8.** Does `geoarrow-c`'s WKB reader accept EWKB's SRID flag, or
-  does zugeo strip it first (§6.6)?
+  returns, PROJJSON included? *Assumed yes on 2026-11-06: GDAL's
+  `SetFromUserInput()` and PROJ's `proj_create()` read PROJJSON. The
+  Stage 3 oracle verifies it; if not, the documentation says to pass
+  the authority code or WKT2 instead.*
+- **Q6.** Is v0.1.0 a CRAN submission? *Decided 2026-11-06: yes, after
+  zuarrow is on CRAN, because `Remotes:` is refused there. #14 carries
+  that as its first item.*
+- **Q7.** A shared conformance suite with `geoarrowrs` and `geoarrow`?
+  *Decided 2026-11-06: no new suite. `geoarrow-data` is the shared
+  corpus; zugeo offers it the fixtures it makes (a union-encoded
+  geometry file in Stage 2, the CRS and edges matrix in Stage 4, the
+  WKT number edge cases in Stage 3) as pull requests.*
+- **Q8.** Does `geoarrow-c`'s WKB reader keep EWKB's SRID? *Answered
+  2026-11-06: it reads EWKB and discards the SRID; zugeo reads it
+  first (§6.6). Reported upstream with the metadata parser bug below.*
 - **Q9.** Do DuckDB's `ST_Hilbert`, `geopandas`' `hilbert_distance()`
-  and flatbush use the same grid and curve orientation? If not, zugeo
-  follows flatbush, because its index format depends on it (§6.7).
+  and flatbush use the same grid and curve orientation? *Decided
+  2026-11-06: zugeo follows flatbush, because its index format depends
+  on it (§6.7); Stage 5 records whether the others agree, as a test
+  result, not a requirement.*
+- **Q10.** `geo_nearest()` was also exported by `geoops`. *Decided
+  2026-11-06: renamed `geo_query_nearest()` (D19).*
+- **Q11.** `geoarrow-c`'s WKT writer prints at most 16 digits after the
+  point, so small values lose digits and values below 1e-16 print as 0.
+  *Decided 2026-11-06: print and parse through `zufast` (D18). Stage 3's
+  property test proves the round trip.*
+
+Found while answering Q8, not yet reported upstream: `geoarrow-c`'s
+metadata parser (`metadata.c`, `crs_type`) compares the key rather than
+the value and omits `== 0`, so only the value's length picks the CRS
+type: `"crs_type": "epsg"` reads as `srid`. zugeo is unaffected, because
+it parses metadata with `zujson` (D4).
 
 ## 16. What this RFC does not decide
 
@@ -1028,4 +1104,5 @@ From memory rather than fetched: `pyogrio`'s `read_info()` fields,
 Not verified: that `sf::st_crs()` reads PROJJSON text (Q5); that
 `sf`, `geos` and `s2` take a plain list of raw WKB (Q2); DuckDB's and Spark's
 GeoArrow export options (§3), which Stage 2's oracle tests settle; the
-size of `geoarrow-c`'s compiled object and its symbol imports (Stage 0).
+size of `geoarrow-c`'s compiled object and its symbol imports (Stage 0;
+measured 2026-11-06, see D2 and §7).

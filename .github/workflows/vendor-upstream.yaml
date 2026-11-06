@@ -1,0 +1,23 @@
+on:
+  schedule:
+    # Weekly. A new upstream release is not urgent.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+name: vendor-upstream
+
+jobs:
+  upstream:
+    # Pinned to a commit because this call holds a write token; bump it
+    # deliberately, reading the diff.
+    uses: pedrobtz/r-actions/.github/workflows/vendor-upstream.yml@8caf5119301bb2a3bd433b92045b8c75b3097096 # v1 (v1.24.0)
+    permissions:
+      contents: read
+      issues: write
+    with:
+      upstream-repo: geoarrow/geoarrow-c
+      # The pin is a commit past v0.1.2 (design section 7), reported as
+      # 0.2.0-SNAPSHOT, so every release differs from it: the issue this
+      # opens is the prompt to move to a release once 0.2.0 exists.
+      current-version: sed -n 's/^VERSION=//p' tools/derive-vendor
+      tag-pattern: '^v[0-9]+\.[0-9]+\.[0-9]+$'

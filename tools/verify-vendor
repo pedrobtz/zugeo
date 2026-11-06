@@ -1,0 +1,55 @@
+#!/bin/sh
+# Verify that src/vendor/ is exactly what tools/derive-vendor produces from
+# the pinned geoarrow-c commit, byte for byte, that src/vendor/PROVENANCE
+# records the tree's checksums, and that src/zgo.h names the same commit.
+# Exits non-zero on any difference. Run from the package root.
+#
+#   tools/verify-vendor
+set -eu
+
+PROV=src/vendor/PROVENANCE
+[ -f "$PROV" ] || { echo "missing $PROV" >&2; exit 1; }
+
+WORK=$(mktemp -d)
+trap 'rm -rf "$WORK"' EXIT
+FAILURES="$WORK/failures"
+: > "$FAILURES"
+
+tools/derive-vendor "$WORK/tree"
+
+# Every file must match, and nothing may be present that the derivation did
+# not produce. Object files are ignored: R builds in place.
+(cd "$WORK/tree" && find . -type f | LC_ALL=C sort) > "$WORK/derived"
+(cd src/vendor && find . -type f ! -name '*.o' ! -name PROVENANCE |
+  LC_ALL=C sort) > "$WORK/local"
+if ! cmp -s "$WORK/derived" "$WORK/local"; then
+  echo "FAIL: the file list differs from the derivation:" >> "$FAILURES"
+  diff "$WORK/derived" "$WORK/local" >> "$FAILURES" || true
+fi
+while read -r f; do
+  [ -f "src/vendor/$f" ] || continue
+  cmp -s "$WORK/tree/$f" "src/vendor/$f" ||
+    echo "FAIL: src/vendor/${f#./} differs from the derivation" >> "$FAILURES"
+done < "$WORK/derived"
+
+# The recorded checksums must be the tree's.
+sed -n 's/^  \([0-9a-f]\{64\}\)  \(.*\)$/\1  \2/p' "$PROV" > "$WORK/recorded"
+(cd src/vendor && find . -type f ! -name '*.o' ! -name PROVENANCE |
+  LC_ALL=C sort | while read -r f; do
+    printf '%s  %s\n' "$(shasum -a 256 "$f" | cut -d' ' -f1)" "${f#./}"
+  done) > "$WORK/actual"
+cmp -s "$WORK/recorded" "$WORK/actual" ||
+  echo "FAIL: the SHA-256 list in $PROV is not the tree's" >> "$FAILURES"
+
+# The commit zugeo_info() reports must be the one vendored.
+COMMIT=$(sed -n 's/^COMMIT=//p' tools/derive-vendor)
+grep -q "^  Commit:        $COMMIT\$" "$PROV" ||
+  echo "FAIL: $PROV does not name commit $COMMIT" >> "$FAILURES"
+grep -q "#define ZGO_GEOARROW_C_COMMIT \"$COMMIT\"" src/zgo.h ||
+  echo "FAIL: src/zgo.h does not name commit $COMMIT" >> "$FAILURES"
+
+if [ -s "$FAILURES" ]; then
+  cat "$FAILURES" >&2
+  exit 1
+fi
+echo "==> src/vendor/ is geoarrow-c $COMMIT as tools/derive-vendor derives it"

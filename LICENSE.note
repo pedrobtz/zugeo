@@ -1,0 +1,6 @@
+The zugeo package bundles the geoarrow-c library and the Apache Arrow
+nanoarrow core it ships with. zugeo is distributed under the MIT license.
+geoarrow-c and nanoarrow are distributed under the Apache License,
+Version 2.0. The licences apply to their respective
+files; the package as a whole is not MIT-licensed. inst/COPYRIGHTS lists
+each directory and its notice.

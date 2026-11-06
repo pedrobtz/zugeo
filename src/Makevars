@@ -1,0 +1,17 @@
+# geoarrow-c and the nanoarrow core it builds on are vendored under vendor/
+# (see vendor/PROVENANCE, design section 7). The bundled geoarrow.h sets
+# GEOARROW_NAMESPACE to Zugeo; nanoarrow's namespace is set here, so this
+# copy never shares a name with zuarrow's or a loaded nanoarrow's (D2).
+# nanoarrow marks its API visibility("default") unless NANOARROW_DLL is
+# already defined, so it is defined empty; hidden visibility then keeps
+# every vendored symbol out of the export table, and R_init_zugeo is the
+# only exported symbol.
+PKG_CPPFLAGS = -Ivendor -DNANOARROW_NAMESPACE=ZugeoNanoarrow -DNANOARROW_DLL=
+PKG_CFLAGS = $(C_VISIBILITY)
+
+VENDOR_OBJECTS = vendor/geoarrow/geoarrow.o \
+  vendor/nanoarrow/nanoarrow.o
+
+ZGO_OBJECTS = zugeo.o
+
+OBJECTS = $(ZGO_OBJECTS) $(VENDOR_OBJECTS)

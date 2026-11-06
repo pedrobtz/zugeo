@@ -1,0 +1,48 @@
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  # The full set runs weekly and on demand:
+  # `gh workflow run native-checks.yaml --ref main`.
+  schedule:
+    - cron: "47 4 * * 1"
+  workflow_dispatch:
+
+name: native-checks
+
+permissions: read-all
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+# `profile` goes to the three workflows it changes: quick skips the asan
+# containers, valgrind and cran-special. lto, rchk and analyzers take minutes
+# either way and run on every push. gctorture has its own caller,
+# gctorture.yaml, with step 20 on a schedule.
+jobs:
+  sanitizers:
+    uses: pedrobtz/r-actions/.github/workflows/sanitizers.yml@v1
+    with:
+      asan: true
+      profile: auto
+
+  valgrind:
+    uses: pedrobtz/r-actions/.github/workflows/valgrind.yml@v1
+    with:
+      profile: auto
+
+  lto:
+    uses: pedrobtz/r-actions/.github/workflows/lto.yml@v1
+
+  rchk:
+    uses: pedrobtz/r-actions/.github/workflows/rchk.yml@v1
+
+  analyzers:
+    uses: pedrobtz/r-actions/.github/workflows/analyzers.yml@v1
+
+  cran-special:
+    uses: pedrobtz/r-actions/.github/workflows/cran-special.yml@v1
+    with:
+      profile: auto

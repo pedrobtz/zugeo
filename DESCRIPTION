@@ -1,14 +1,32 @@
 Package: zugeo
-Title: What the Package Does (One Line, Title Case)
+Title: 'GeoArrow' Geometry Columns, Exact or an Error
 Version: 0.0.0.9000
-Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Authors@R: c(
+    person("Pedro", "Baltazar", , "pedrobtz@gmail.com",
+           role = c("aut", "cre", "cph")),
+    person("Dewey", "Dunnington", role = "cph",
+           comment = "geoarrow-c, bundled in src/vendor/geoarrow"),
+    person("The Apache Software Foundation", role = "cph",
+           comment = "nanoarrow, bundled in src/vendor/nanoarrow"))
+Description: Makes 'GeoArrow' geometry columns first-class R vectors.
+    Points, lines and polygons stay in 'Apache Arrow' memory with their
+    coordinate reference system and edge type, move between the native,
+    well-known binary and well-known text encodings exactly or raise an
+    error, and get bounding boxes, spatial sorting and packed spatial
+    indexes computed over the coordinate buffers. The bundled 'geoarrow-c'
+    library (<https://github.com/geoarrow/geoarrow-c>) needs no system
+    library. The format is specified at <https://geoarrow.org/>.
 License: MIT + file LICENSE
-Encoding: UTF-8
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 8.1.1
+Copyright: file inst/COPYRIGHTS
+URL: https://github.com/pedrobtz/zugeo, https://pedrobtz.github.io/zugeo/
+BugReports: https://github.com/pedrobtz/zugeo/issues
+Depends: 
+    R (>= 4.1)
 Suggests: 
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    withr
 Config/testthat/edition: 3
-URL: https://pedrobtz.github.io/zugeo/
+Encoding: UTF-8
+Language: en-GB
+Roxygen: list(markdown = TRUE)
+Config/roxygen2/version: 8.1.1
