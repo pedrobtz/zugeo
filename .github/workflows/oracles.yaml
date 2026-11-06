@@ -1,0 +1,51 @@
+# The oracle tests (design section 9). None of the oracle packages is a
+# dependency of zugeo, so the tests that use them live in
+# tests/testthat/*-ci-*.R, which .Rbuildignore leaves out of the package
+# tarball: R CMD check and CRAN never run them. This workflow runs them from
+# the source tree, with every oracle installed and ZUGEO_ORACLES=true, so a
+# missing oracle fails rather than skips.
+#
+# Stage 0 needs only zuarrow, geoarrow and nanoarrow, for the coexistence
+# test; Stage 3 adds sf, geos, s2, wk, arrow and duckdb.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+name: oracles
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oracles-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  oracles:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      ZUGEO_ORACLES: true
+      NOT_CRAN: true
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::devtools
+            any::geoarrow
+            any::nanoarrow
+            github::pedrobtz/zuarrow
+
+      - name: Run the oracle tests
+        run: |
+          devtools::test(filter = "^ci-", stop_on_failure = TRUE)
+        shell: Rscript {0}
