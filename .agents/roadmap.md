@@ -132,6 +132,10 @@ and leave unchanged.
   lacks, made with pyarrow by a script in `tools/`; offered to
   `geoarrow-data` (design Q7).
 
+*Deviation, 2026-11-06:* the vendored nanoarrow core moves from 0.8.0 to
+the 0.9.0 release (design section 7), because the full profile's GCC 16
+leg reported a warning in 0.8.0.
+
 *Deviation, 2026-11-06:* the coordinate walk of design D21, which the
 roadmap placed in Stage 5 as half of D15, is built here, because
 `format()` needs WKT for unions and `large_list` columns, which

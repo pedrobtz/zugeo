@@ -31,8 +31,9 @@ src/vendor/geoarrow/LICENSE:
 src/vendor/nanoarrow/
 ---------------------
 
-The core of the Apache Arrow nanoarrow C library, as geoarrow-c vendors it
-(nanoarrow 0.8.0, commit df487811eac5bf0e6f8ee75ed497bb2a6d04bb0e).
+The core of the Apache Arrow nanoarrow C library, release
+apache-arrow-nanoarrow-0.9.0, from https://github.com/apache/arrow-nanoarrow,
+bundled by upstream's ci/scripts/bundle.py.
 
   Apache Arrow nanoarrow
   Copyright 2023 The Apache Software Foundation

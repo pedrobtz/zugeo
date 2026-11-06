@@ -9,8 +9,8 @@
 #
 # The tree holds two libraries (design section 7):
 #   geoarrow/   geoarrow-c's C bundle (geoarrow.h, geoarrow.c), no C++
-#   nanoarrow/  the nanoarrow core geoarrow-c vendors, at the version it
-#               pins, with nanoarrow's LICENSE.txt and NOTICE.txt
+#   nanoarrow/  the nanoarrow core, release 0.9.0, through upstream's own
+#               bundler, with nanoarrow's LICENSE.txt and NOTICE.txt
 set -eu
 
 OUT=$1
@@ -21,21 +21,22 @@ VERSION=0.2.0-SNAPSHOT
 URL="https://github.com/geoarrow/geoarrow-c/archive/$COMMIT.tar.gz"
 SHA256=d755e1ec9aa8828d496fe26e918378e63b566b19f540aea19adee9737bdd3a64
 
-# The nanoarrow commit geoarrow-c's vendor-nanoarrow.sh names. Only the
-# licence files come from it; the sources are geoarrow-c's copy.
-NANOARROW_COMMIT=df487811eac5bf0e6f8ee75ed497bb2a6d04bb0e
-NANOARROW_RAW="https://raw.githubusercontent.com/apache/arrow-nanoarrow/$NANOARROW_COMMIT"
-NANOARROW_LICENSE_SHA256=abdc436530c715318d843424f4f9b7b817f80f592678526942c2070ace3cba71
-NANOARROW_NOTICE_SHA256=09026abb630fd06cb418815d48535cd46cb102fe6fc307debb586fa2ac49482e
+# nanoarrow 0.9.0, the release zuarrow vendors, rather than the 0.8.0
+# geoarrow-c pins: GCC 16 reports a null destination for snprintf() in
+# 0.8.0's ArrowSchemaToString(), which 0.9.0 rewrote (design section 7).
+# The SHA-512 is the digest Apache publishes beside the release.
+NANOARROW_TAG=apache-arrow-nanoarrow-0.9.0
+NANOARROW_URL="https://github.com/apache/arrow-nanoarrow/releases/download/$NANOARROW_TAG/$NANOARROW_TAG.tar.gz"
+NANOARROW_SHA512=2fbdfe3274da9dcba5e3215ba0a7ff66da9f65395d1800841f0dc9a6bbc00b8cc224f900bcb946c91969b3c6e79d132ad5077c9a537f861502c4763dbffb33b8
 
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 
-fetch() { # fetch <url> <file> <sha256>
+fetch() { # fetch <url> <file> <sha> [<algorithm>]
   curl -fsSL --retry 3 --retry-delay 2 --retry-connrefused -o "$2" "$1"
-  actual=$(shasum -a 256 "$2" | cut -d' ' -f1)
+  actual=$(shasum -a "${4:-256}" "$2" | cut -d' ' -f1)
   if [ "$actual" != "$3" ]; then
-    echo "FAIL: $1 sha256 mismatch" >&2
+    echo "FAIL: $1 sha${4:-256} mismatch" >&2
     echo "  expected $3" >&2
     echo "  actual   $actual" >&2
     exit 1
@@ -62,10 +63,16 @@ mkdir -p "$TREE/geoarrow" "$TREE/nanoarrow"
 cp "$WORK/bundle/geoarrow.h" "$WORK/bundle/geoarrow.c" "$TREE/geoarrow/"
 cp "$SRC/LICENSE" "$TREE/geoarrow/LICENSE"
 
-cp "$SRC/src/vendor/nanoarrow/nanoarrow.c" "$SRC/src/vendor/nanoarrow/nanoarrow.h" \
-  "$TREE/nanoarrow/"
-fetch "$NANOARROW_RAW/LICENSE.txt" "$TREE/nanoarrow/LICENSE.txt" "$NANOARROW_LICENSE_SHA256"
-fetch "$NANOARROW_RAW/NOTICE.txt" "$TREE/nanoarrow/NOTICE.txt" "$NANOARROW_NOTICE_SHA256"
+fetch "$NANOARROW_URL" "$WORK/nanoarrow.tar.gz" "$NANOARROW_SHA512" 512
+tar xzf "$WORK/nanoarrow.tar.gz" -C "$WORK"
+NSRC="$WORK/$NANOARROW_TAG"
+# Upstream's bundler, as zuarrow and nanoarrow's own R package use it. -I
+# keeps Python from importing anything from the extracted tree.
+(cd "$NSRC" && python3 -I ci/scripts/bundle.py \
+  --symbol-namespace=ZugeoNanoarrow --header-namespace= \
+  --include-output-dir="$WORK/nbundle" --source-output-dir="$WORK/nbundle" > /dev/null)
+cp "$WORK/nbundle/nanoarrow.c" "$WORK/nbundle/nanoarrow.h" "$TREE/nanoarrow/"
+cp "$NSRC/LICENSE.txt" "$NSRC/NOTICE.txt" "$TREE/nanoarrow/"
 
 rm -rf "$OUT"
 mkdir -p "$(dirname "$OUT")"

@@ -22,8 +22,13 @@ test_that("no symbol CRAN's compiled-code check reports is referenced", {
   abi_skip_instrumented()
   imports <- sub("^_+", "", abi_imports())
   # The object calls R's API, so an empty or unparsed listing is a broken
-  # tool or pattern, not a clean object. (Not strtod: under LTO the
-  # vendored parser is dropped until something calls it.)
-  expect_true("Rf_mkString" %in% imports)
+  # tool or pattern, not a clean object. Rf_allocVector, as zuarrow's test
+  # checks on every platform; Rf_mkString was absent from the Windows
+  # listing. (Not strtod: under LTO the vendored parser is dropped until
+  # something calls it.)
+  expect_true(
+    "Rf_allocVector" %in% imports,
+    label = paste("imports include Rf_allocVector:", paste(head(imports, 20), collapse = " "))
+  )
   expect_identical(intersect(imports, abi_forbidden), character())
 })

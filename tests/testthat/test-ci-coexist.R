@@ -13,7 +13,7 @@ test_that("zugeo, zuarrow, geoarrow and nanoarrow load and work together", {
   }
 
   # Each package calls into its own copy of the C libraries.
-  expect_identical(zugeo_info()$nanoarrow, "0.8.0")
+  expect_identical(zugeo_info()$nanoarrow, "0.9.0")
   array <- nanoarrow::as_nanoarrow_array(1:3)
   expect_identical(zuarrow::arrow_to_r(array), 1:3)
   vctr <- geoarrow::as_geoarrow_vctr("POINT (0 1)")

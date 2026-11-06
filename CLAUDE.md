@@ -53,7 +53,7 @@ consumers (design §3).
 
 - `tools/verify-vendor`: re-derives `src/vendor/` from the pinned
   commit and fails on any difference. CI runs it (`vendor.yaml`).
-  Needs `cmake`, `curl` and `shasum`.
+  Needs `cmake`, `curl`, `shasum` and `python3`.
 - `tools/update-vendor`: after changing a pin in `tools/derive-vendor`,
   re-derives the tree and rewrites `src/vendor/PROVENANCE`; then update
   the commit in `src/zgo.h` and the versions in `test-info.R`,
@@ -159,7 +159,8 @@ with the closing three.
 
 `geoarrow-c` at commit `b3db89f` (0.2.0-SNAPSHOT, Apache-2.0), bundled
 by upstream's CMake bundler with `GEOARROW_NAMESPACE=Zugeo` and without
-fast_float or ryu, and the nanoarrow 0.8.0 core `geoarrow-c` vendors,
-namespaced as `ZugeoNanoarrow` in `src/Makevars`. No local patches.
+fast_float or ryu, and the nanoarrow 0.9.0 release core (not the 0.8.0
+`geoarrow-c` pins, which GCC 16 warns on), bundled by nanoarrow's own
+`bundle.py` and namespaced as `ZugeoNanoarrow`. No local patches.
 `src/vendor/PROVENANCE` has the pins and checksums; `inst/COPYRIGHTS`
 the notices.

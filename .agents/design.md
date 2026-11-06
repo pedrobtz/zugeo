@@ -762,7 +762,7 @@ scan, as `gpq` does.
 | Library | Version | Licence | Used for |
 | --- | --- | --- | --- |
 | `geoarrow-c` | `b3db89f` (0.2.0-SNAPSHOT) | Apache-2.0 | views, I/O, `box` |
-| nanoarrow core | 0.8.0, `geoarrow-c`'s own copy | Apache-2.0 | Arrow helpers |
+| nanoarrow core | 0.9.0 release, as zuarrow | Apache-2.0 | Arrow helpers |
 
 *Decided 2026-11-06 (Stage 0):* `src/vendor/` is derived by
 `tools/derive-vendor`: the commit's archive, checked by SHA-256, run
@@ -771,7 +771,12 @@ through upstream's CMake bundler (`GEOARROW_BUNDLE=ON`,
 Parsing then uses `strtod()`, which R keeps in the C numeric locale.
 ryu is off too: its `assert()` calls reached the shared object in the
 gctorture build, which ignores `-DNDEBUG`, so WKT numbers print through
-`snprintf()` until Q11 is settled. No local patches.
+`snprintf()` until Q11 is settled. No local patches. *2026-11-06
+(Stage 2):* the nanoarrow core is the 0.9.0 release through upstream's
+bundler, the version zuarrow vendors, not the 0.8.0 `geoarrow-c` pins:
+GCC 16 reports a null `snprintf()` destination in 0.8.0's
+`ArrowSchemaToString()`, an `R CMD check` WARNING, which 0.9.0 rewrote.
+`geoarrow-c` builds against it unchanged.
 `tools/verify-vendor` re-derives the tree in
 CI (`vendor.yaml`) and fails on any difference, as zuarrow's does.
 
