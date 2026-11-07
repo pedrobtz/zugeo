@@ -540,6 +540,27 @@ exact.
   `zugeo_layout_error` at read, because the specification forbids it.
   Unclosed rings are reported, not repaired.
 
+*Decided 2026-11-07 (Stage 4):*
+
+- **Where the policy applies.** `geo_as_wkb()` and `geo_as_wkt()` take
+  `lossy` (`"error"`, `"warn"`, `"allow"`), the one place a conversion
+  can lose something today. A column has edges when any line or ring, at
+  any depth, has two vertices or more; points, multipoints, empties,
+  nulls and collections of points convert freely. Under `"warn"` the
+  warning is a `zugeo_edges_warning`; the condition carries `edges`.
+  Reading through zuarrow loses nothing, so its `lossy` reaches the
+  handler with nothing to apply; `geo_box()` on non-planar edges joins
+  in Stage 5.
+- **Nulls inside geometries** are a `zugeo_layout_error` when a column
+  becomes a `geo_vctr`, from any level below the outer one; a union's
+  outer nulls are its children's, so its check starts a level down.
+  "An unclosed ring in a polygon claimed valid" has no claim to check
+  in GeoArrow metadata, so unclosed rings are reported by
+  `geo_validate()` (§6.11, Stage 5), never refused at read.
+- **Coordinates keep the CRS and edges** as the attributes `crs` and
+  `edges` of `geo_coords()`'s data frame, which `geo_from_coords()`
+  takes back by default, so that route drops neither.
+
 ### 6.4 CRS
 
 The specification allows a CRS as a PROJJSON object, a WKT2:2019 string,
