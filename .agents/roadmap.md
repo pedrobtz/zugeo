@@ -381,7 +381,9 @@ the last scheduled one, before Stage 7, took 2h49m, and the 124-file
 GeoParquet corpus tests pushed it past four hours. Under gctorture
 (`R_ACTIONS_WORKFLOW=gctorture`) those tests now loop over a fixed
 11-file sample (`parquet_corpus_files()` in `helper-corpus.R`), and the
-job timeout is 330 minutes. Fixed in a second pull request,
+job timeout is 330 minutes. `nosuggests` and `nold`, which the work list
+names, had never run: r-actions leaves them off unless the caller asks, and
+`R-CMD-check.yaml` now does. Fixed in a second pull request,
 [#27](https://github.com/pedrobtz/zugeo/pull/27).
 
 ## Stage 10 — v0.1.0 readiness

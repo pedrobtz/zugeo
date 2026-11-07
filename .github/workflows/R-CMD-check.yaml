@@ -34,6 +34,11 @@ jobs:
       # shipped in the package.
       env: |
         ZUGEO_FETCH_FIXTURES=true
+      # CRAN's NOSUGGESTS and NOLD flavors, in the full profile: zugeo
+      # suggests qio, testthat and withr, and parses and prints numbers
+      # (WKT through zufast). Off by default in r-actions.
+      nosuggests: true
+      nold: true
       # The default four legs plus Windows on R-devel, the combination CRAN's
       # own Windows R-devel check runs and nothing else here reaches. The
       # extra row runs in the full profile only.
