@@ -20,7 +20,7 @@ A named list of character strings: `zugeo`, `geoarrow_c`,
 ``` r
 zugeo_info()
 #> $zugeo
-#> [1] "0.0.0.9000"
+#> [1] "0.1.0"
 #> 
 #> $geoarrow_c
 #> [1] "0.2.0-SNAPSHOT"

@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">zugeo</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -118,8 +118,8 @@ column is a <code>geo_vctr</code>, its CRS taken from the file.</p>
 </h2>
 <p>The column stays in Arrow memory. Its boxes, Hilbert keys and index
 are computed over the coordinates. Sorting by Hilbert key puts nearby
-points next to each other, which is what makes a file’s row groups
-prunable.</p>
+points next to each other, which is what lets a reader skip a file’s row
+groups.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="va">df</span><span class="op">[</span><span class="fu"><a href="../reference/geo_hilbert.html">geo_sort</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">geometry</span><span class="op">)</span>, <span class="op">]</span></span>
 <span><span class="fu"><a href="../reference/geo_box.html">geo_box_all</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">geometry</span><span class="op">)</span></span>

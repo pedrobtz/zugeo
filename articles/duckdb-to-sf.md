@@ -68,7 +68,8 @@ geo_crs(df$geometry)
 
 The column stays in Arrow memory. Its boxes, Hilbert keys and index are
 computed over the coordinates. Sorting by Hilbert key puts nearby points
-next to each other, which is what makes a file’s row groups prunable.
+next to each other, which is what lets a reader skip a file’s row
+groups.
 
 ``` r
 

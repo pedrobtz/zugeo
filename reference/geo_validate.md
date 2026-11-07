@@ -6,7 +6,7 @@ ring of fewer than four positions (`short_ring`), a linestring of one
 position (`short_linestring`), a coordinate that is not finite in a
 geometry other than an empty point (`non_finite`), parts of different
 dimensions in one geometry (`mixed_dimensions`), and rings against the
-RFC 7946 winding convention, exteriors counterclockwise
+RFC 7946 winding convention, exteriors anticlockwise
 (`exterior_clockwise`, `interior_counterclockwise`), which Simple
 Features does not require and are reported for information.
 
