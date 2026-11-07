@@ -12,7 +12,7 @@ bare_wkt <- function(x) {
 }
 
 parquet_wkb_files <- function() {
-  files <- names(parquet_manifest())
+  files <- parquet_corpus_files()
   files[!grepl("_native\\.parquet$", files)]
 }
 
@@ -68,7 +68,7 @@ test_that("GeoArrow-encoded corpus files are a zugeo_parquet_error", {
   skip_without_qio()
   for (file in grep(
     "_native\\.parquet$",
-    names(parquet_manifest()),
+    parquet_corpus_files(),
     value = TRUE
   )) {
     expect_error(
@@ -107,7 +107,7 @@ test_that("every WKB corpus file round-trips through geo_write_parquet()", {
 
 test_that("geo_validate_parquet() finds no errors in the corpus beyond missing geo keys", {
   skip_without_qio()
-  for (file in names(parquet_manifest())) {
+  for (file in parquet_corpus_files()) {
     v <- geo_validate_parquet(parquet_corpus_path(file))
     errors <- v$issue[v$severity == "error"]
     want <- if (grepl("_(geo|native)\\.parquet$", file)) {
