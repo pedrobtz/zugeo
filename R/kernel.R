@@ -123,9 +123,10 @@ geo_n_coords <- function(x) {
 geo_hilbert <- function(x, extent = NULL, lossy = c("error", "warn", "allow")) {
   call <- sys.call()
   lossy <- match.arg(lossy)
-  box <- zgo_extent_parts(geo_box(x, lossy = lossy))
+  boxes <- geo_box(x, lossy = lossy)
+  box <- zgo_extent_parts(boxes)
   if (is.null(extent)) {
-    extent <- geo_extent_union(geo_box(x, lossy = lossy))
+    extent <- geo_extent_union(boxes)
   } else if (!inherits(extent, "geo_extent") || length(extent) != 1L) {
     zgo_abort(NULL, "`extent` must be a geo_extent of length one.", call = call)
   }
