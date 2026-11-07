@@ -123,20 +123,22 @@ test_that("a covering column's statistics prune row groups", {
   expect_false("bbox" %in% names(df))
 })
 
+# gpq's report, or, when gpq cannot validate the file at all (it prints an
+# error and no report), a failure carrying its message.
 gpq_report <- function(path) {
   gpq <- Sys.getenv("ZUGEO_GPQ")
-  out <- suppressWarnings(system2(
-    gpq,
-    c("validate", "--format", "json", shQuote(path)),
-    stdout = TRUE,
-    stderr = TRUE
+  err <- tempfile()
+  on.exit(unlink(err))
+  out <- suppressWarnings(system2(gpq, c("validate", "--format", "json", shQuote(path)),
+    stdout = TRUE, stderr = err
   ))
-  report <- zujson::json_parse(paste(out, collapse = "\n"), simplify = FALSE)
+  text <- paste(out, collapse = "\n")
+  report <- tryCatch(zujson::json_parse(text, simplify = FALSE), zujson_error = function(e) NULL)
+  if (is.null(report)) {
+    return(list(passed = FALSE, failed = paste("no report:", paste(readLines(err), collapse = " "))))
+  }
   passed <- vapply(report$checks, function(c) isTRUE(c$passed), logical(1))
-  list(
-    passed = all(passed),
-    failed = vapply(report$checks[!passed], `[[`, "", "title")
-  )
+  list(passed = all(passed), failed = vapply(report$checks[!passed], `[[`, "", "title"))
 }
 
 skip_without_gpq <- function() {
