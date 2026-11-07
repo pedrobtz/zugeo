@@ -151,33 +151,69 @@ skip_without_gpq <- function() {
   skip_if_not(file.exists(Sys.getenv("ZUGEO_GPQ")), "gpq is not installed")
 }
 
-# Where gpq v0.24.0 and the specification part: gpq predates GeoParquet
-# 1.1's native encodings, which it reports as unsupported.
-gpq_disagrees <- function(file) grepl("_native\\.parquet$", file)
+# gpq v0.24.0 is older than parts of the specification, in four ways that
+# each comparison below asserts rather than skips:
+# - it predates GeoParquet 1.1's native encodings ("unsupported encoding");
+# - its Arrow Go v16 panics on Parquet's GEOMETRY and GEOGRAPHY logical
+#   types ("invalid logical type"), so it reads no GeoParquet 2.0 file;
+# - its WKB decoder (orb) is two-dimensional, and it does not know the
+#   " M" and " ZM" type names, so files with Z or M fail several checks;
+# - it bounds an empty non-point geometry as (0, 0), so a file with one and a
+#   bbox away from the origin fails its bbox check alone.
+gpq_bbox_title <- 'all geometries must fall within the "bbox" metadata (if present)'
+
+gpq_expected_failure <- function(path, theirs) {
+  file <- basename(path)
+  if (grepl("_native\\.parquet$", file)) {
+    return("native encoding")
+  }
+  if (any(grepl("invalid logical type", theirs$failed, fixed = TRUE))) {
+    return("native type")
+  }
+  info <- tryCatch(geo_parquet_info(path), error = function(e) NULL)
+  df <- tryCatch(geo_read_parquet(path), error = function(e) NULL)
+  if (is.null(df)) {
+    return(NULL)
+  }
+  g <- df[[info$primary_column]]
+  dims <- geo_dims(g)
+  if (any(!is.na(dims) & dims != "xy")) {
+    return("Z or M")
+  }
+  b <- info$columns[[info$primary_column]]$bbox
+  empty <- !is.na(g) & geo_n_coords(g) == 0L & geo_types(g) != "point"
+  origin_out <- !is.na(b$xmin) && !(b$xmin <= 0 && b$xmax >= 0 && b$ymin <= 0 && b$ymax >= 0)
+  if (any(empty) && origin_out && identical(unname(theirs$failed), gpq_bbox_title)) {
+    return("empty at origin")
+  }
+  NULL
+}
+
+gpq_compare <- function(path, label) {
+  theirs <- gpq_report(path)
+  v <- geo_validate_parquet(path)
+  ours <- !any(v$severity == "error")
+  why <- if (!theirs$passed && ours) gpq_expected_failure(path, theirs)
+  if (!is.null(why)) {
+    return(why)
+  }
+  expect_identical(ours, theirs$passed, label = paste(
+    label, "- gpq failed:", paste(theirs$failed, collapse = "; "),
+    "- zugeo found:", paste(v$issue[v$severity == "error"], collapse = ", ")
+  ))
+  "agree"
+}
 
 test_that("gpq validate agrees with geo_validate_parquet() on the corpus", {
   skip_without_gpq()
   skip_without_qio()
-  for (file in names(parquet_manifest())) {
-    if (gpq_disagrees(file)) {
-      next
-    }
-    path <- parquet_corpus_path(file)
-    theirs <- gpq_report(path)
-    v <- geo_validate_parquet(path)
-    ours <- !any(v$severity == "error")
-    expect_identical(
-      ours,
-      theirs$passed,
-      label = paste(
-        file,
-        "- gpq failed:",
-        paste(theirs$failed, collapse = "; "),
-        "- zugeo found:",
-        paste(v$issue[v$severity == "error"], collapse = ", ")
-      )
-    )
-  }
+  outcome <- vapply(names(parquet_manifest()), function(file) {
+    gpq_compare(parquet_corpus_path(file), file)
+  }, character(1))
+  # Each known limit is met where expected, and most files agree outright.
+  expect_true(all(grepl("_native\\.parquet$", names(outcome)[outcome == "native encoding"])))
+  expect_gt(sum(outcome == "agree"), 40L)
+  expect_true(all(c("Z or M", "empty at origin") %in% outcome))
 })
 
 test_that("gpq validate agrees on the files zugeo writes", {
@@ -185,18 +221,17 @@ test_that("gpq validate agrees on the files zugeo writes", {
   skip_without_qio()
   dir <- withr::local_tempdir()
   paths <- write_parquet_cases(dir)
+  cases <- parquet_cases()
   for (name in names(paths)) {
-    theirs <- gpq_report(paths[[name]])
-    v <- geo_validate_parquet(paths[[name]])
-    expect_identical(
-      !any(v$severity == "error"),
-      theirs$passed,
-      label = paste(
-        name,
-        "- gpq failed:",
-        paste(theirs$failed, collapse = "; ")
-      )
-    )
+    outcome <- gpq_compare(paths[[name]], name)
+    version <- cases[[name]]$args$version
+    if (identical(version, "1.1") || name == "code_crs") {
+      # code_crs has no geo key, which gpq reports before reading the schema.
+      expect_identical(outcome, "agree", label = name)
+    } else {
+      # 2.0 files carry the native types gpq cannot read.
+      expect_identical(outcome, "native type", label = name)
+    }
   }
 })
 

@@ -866,8 +866,16 @@ covering their data); `"warning"` is a geometry finding of
 `geo_validate()` (winding only when `orientation` is declared) or the
 guide's advice (zstd, row groups over 200,000 rows, row-group boxes that
 overlap as unordered data does). PROJJSON is checked to be an object,
-not against its JSON schema. gpq v0.24.0 predates 1.1's native
-encodings, so the agreement test leaves those files out.
+not against its JSON schema. *Measured 2026-11-07 (Stage 7):* gpq
+v0.24.0 (2024-11) is older than parts of the specification, and the
+agreement test asserts each gap where it occurs rather than skip the
+file. It predates 1.1's native encodings; its Arrow Go v16 panics on the
+`GEOMETRY` and `GEOGRAPHY` logical types, so it reads no 2.0 file; its
+WKB decoder is 2D and it rejects the " M" and " ZM" type names, so files
+with Z or M fail; and it bounds an empty non-point geometry as (0, 0),
+failing the bbox check of every corpus file that has one. Everywhere
+else, the 2D `_geo` files, the plain native files and zugeo's 1.1 output,
+the two agree.
 
 ## 7. Vendored code
 
