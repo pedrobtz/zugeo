@@ -6,24 +6,34 @@
 
 corpus_commit <- "e8eaa04487d982398f07713cde527c5c5edeee1e"
 
-corpus_manifest <- function() {
-  lines <- readLines(test_path("corpus.txt"))
+corpus_read_manifest <- function(file) {
+  lines <- readLines(test_path(file))
   lines <- lines[!startsWith(lines, "#")]
   stats::setNames(sub(" .*$", "", lines), sub("^[^ ]+ ", "", lines))
 }
 
+# The IPC files, relative to example/files.
+corpus_manifest <- function() corpus_read_manifest("corpus.txt")
+
+# The Parquet files, relative to the repository root.
+parquet_manifest <- function() corpus_read_manifest("corpus-parquet.txt")
+
 corpus_env <- new.env(parent = emptyenv())
 
-corpus_dir <- function() {
+# The geoarrow-data checkout: the parent of ZUGEO_CORPUS_DIR's example/files,
+# or the pinned commit fetched once per session, with every manifest file.
+corpus_root <- function() {
   dir <- Sys.getenv("ZUGEO_CORPUS_DIR")
   if (nzchar(dir)) {
-    return(corpus_verified(dir))
+    return(normalizePath(file.path(dir, "..", "..")))
   }
-  if (!is.null(corpus_env$dir)) {
-    return(corpus_env$dir)
+  if (!is.null(corpus_env$root)) {
+    return(corpus_env$root)
   }
   if (!identical(Sys.getenv("ZUGEO_FETCH_FIXTURES"), "true")) {
-    skip("The geoarrow-data corpus is fetched only with ZUGEO_FETCH_FIXTURES=true.")
+    skip(
+      "The geoarrow-data corpus is fetched only with ZUGEO_FETCH_FIXTURES=true."
+    )
   }
   dest <- file.path(tempdir(), "zugeo-corpus")
   dir.create(dest, showWarnings = FALSE)
@@ -39,20 +49,42 @@ corpus_dir <- function() {
       error = function(e) FALSE,
       warning = function(w) FALSE
     )
-    if (ok) break
+    if (ok) {
+      break
+    }
     Sys.sleep(2^attempt)
   }
   if (!ok) {
     stop("Could not download the geoarrow-data corpus from ", url)
   }
-  prefix <- sprintf("geoarrow-data-%s/example/files/", corpus_commit)
-  utils::untar(archive, files = paste0(prefix, names(corpus_manifest())), exdir = dest)
-  corpus_env$dir <- corpus_verified(file.path(dest, prefix))
+  prefix <- sprintf("geoarrow-data-%s/", corpus_commit)
+  files <- c(
+    paste0(prefix, "example/files/", names(corpus_manifest())),
+    paste0(prefix, names(parquet_manifest()))
+  )
+  utils::untar(archive, files = files, exdir = dest)
+  corpus_env$root <- file.path(dest, prefix)
+  corpus_env$root
+}
+
+corpus_dir <- function() {
+  if (is.null(corpus_env$dir)) {
+    corpus_env$dir <- corpus_verified(
+      file.path(corpus_root(), "example", "files"),
+      corpus_manifest()
+    )
+  }
   corpus_env$dir
 }
 
-corpus_verified <- function(dir) {
-  manifest <- corpus_manifest()
+parquet_corpus_dir <- function() {
+  if (is.null(corpus_env$parquet)) {
+    corpus_env$parquet <- corpus_verified(corpus_root(), parquet_manifest())
+  }
+  corpus_env$parquet
+}
+
+corpus_verified <- function(dir, manifest) {
   actual <- tools::md5sum(file.path(dir, names(manifest)))
   bad <- names(manifest)[is.na(actual) | unname(actual) != manifest]
   if (length(bad) > 0L) {
@@ -60,6 +92,8 @@ corpus_verified <- function(dir) {
   }
   dir
 }
+
+parquet_corpus_path <- function(file) file.path(parquet_corpus_dir(), file)
 
 corpus_path <- function(file) file.path(corpus_dir(), file)
 
