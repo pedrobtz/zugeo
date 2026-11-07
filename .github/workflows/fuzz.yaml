@@ -23,10 +23,11 @@ jobs:
     uses: pedrobtz/r-actions/.github/workflows/fuzz.yml@v1
     with:
       harness: tools/fuzz/harness.c
-      # zugeo's own C talks to R; the target is the vendored C alone.
-      exclude-sources: |
-        src/zugeo.c
-        src/zgo_*.c
+      # The vendored C alone: zugeo's own C talks to R. Listed, because the
+      # default src/*.c does not reach src/vendor/.
+      sources: |
+        src/vendor/geoarrow/geoarrow.c
+        src/vendor/nanoarrow/nanoarrow.c
       seed-corpus: tools/fuzz/corpus
       # geoarrow.c includes zufast/number.h (tools/patches/0001).
       github-packages: pedrobtz/zufast
