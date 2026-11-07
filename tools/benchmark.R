@@ -19,15 +19,16 @@ suppressPackageStartupMessages(library(zugeo))
 have <- function(pkg) requireNamespace(pkg, quietly = TRUE)
 
 # Median wall time in milliseconds of `reps` runs of `expr`, after one warm-up.
-time_ms <- function(expr, reps_ = reps) {
+# `inner` repeats it within each run, for operations near the clock's 1 ms.
+time_ms <- function(expr, reps_ = reps, inner = 1L) {
   e <- substitute(expr)
   env <- parent.frame()
   eval(e, env)
   t <- vapply(seq_len(reps_), function(i) {
     gc(FALSE)
     s <- proc.time()[["elapsed"]]
-    eval(e, env)
-    (proc.time()[["elapsed"]] - s) * 1000
+    for (j in seq_len(inner)) eval(e, env)
+    (proc.time()[["elapsed"]] - s) * 1000 / inner
   }, numeric(1))
   stats::median(t)
 }
@@ -51,12 +52,13 @@ array <- getFromNamespace("zgo_to_array", "zugeo")(x)
 results <- list()
 add <- function(op, ms, target, comparison = NA_character_) {
   results[[length(results) + 1L]] <<- list(
-    operation = op, ms = round(ms, 2), target = target, comparison = comparison
+    operation = op, ms = round(ms, if (ms < 10) 2L else 0L), target = target,
+    comparison = comparison
   )
 }
 
 add("arrow_to_r() of a native column to geo_vctr",
-  time_ms(zuarrow::arrow_to_r(array)), "under 1 ms; no copy")
+  time_ms(zuarrow::arrow_to_r(array), inner = 100L), "under 1 ms; no copy")
 
 box_ms <- time_ms(geo_box(x))
 cmp <- NA_character_
@@ -96,7 +98,8 @@ cat(sprintf("zugeo %s, R %s, %s; n = %s polygons of %d vertices, median of %d\n\
   format(n, big.mark = ","), k, reps))
 cat("| Operation | Target | Measured | Comparison |\n| --- | --- | --- | --- |\n")
 for (r_ in results) {
-  cat(sprintf("| %s | %s | %.1f ms | %s |\n", r_$operation, r_$target, r_$ms,
+  cat(sprintf("| %s | %s | %s ms | %s |\n", r_$operation, r_$target,
+    format(r_$ms, nsmall = if (r_$ms < 10) 2L else 0L),
     if (is.na(r_$comparison)) "" else r_$comparison))
 }
 if (!is.na(out)) {
