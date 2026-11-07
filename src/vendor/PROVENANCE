@@ -5,9 +5,10 @@ Vendored dependency: geoarrow-c, with the nanoarrow core it ships
   Commit:        b3db89fec68043ade505fffb62a668043812884a
   Archive:       https://github.com/geoarrow/geoarrow-c/archive/b3db89fec68043ade505fffb62a668043812884a.tar.gz
   SHA-256:       d755e1ec9aa8828d496fe26e918378e63b566b19f540aea19adee9737bdd3a64
-  nanoarrow:     0.8.0, geoarrow-c's own copy (src/vendor/nanoarrow
-                 in the archive); LICENSE.txt and NOTICE.txt from
-                 apache/arrow-nanoarrow at df487811eac5bf0e6f8ee75ed497bb2a6d04bb0e
+  nanoarrow:     0.9.0 (apache-arrow-nanoarrow-0.9.0), its core bundled by
+                 upstream's ci/scripts/bundle.py with
+                 --symbol-namespace=ZugeoNanoarrow; the release archive is
+                 checked by Apache's published SHA-512
   License:       Apache-2.0 (geoarrow-c, nanoarrow)
   Local patches: none
 
@@ -25,5 +26,5 @@ SHA-256 of every vendored file:
   db0cde47d2c73bde8d4e87424daca74a5e9174b1eb80c84632b628ce121d5cac  geoarrow/geoarrow.h
   abdc436530c715318d843424f4f9b7b817f80f592678526942c2070ace3cba71  nanoarrow/LICENSE.txt
   09026abb630fd06cb418815d48535cd46cb102fe6fc307debb586fa2ac49482e  nanoarrow/NOTICE.txt
-  647bcf7fe799815acf7263e9969a93c2f3a64bf3f49b8b5bfd3845c2e134fe01  nanoarrow/nanoarrow.c
-  cf88d7ded87ac5274d9d131bcd02f9ec5e1ea8a5936fe21aea0776b1f0e9c6ed  nanoarrow/nanoarrow.h
+  ef3c5001fc2c22b28cf018e79ffc9fbcfd4cc810b667664adce9d430ee066c06  nanoarrow/nanoarrow.c
+  7e5ab5a6e917d31985c4c188cb295a39b1a6f69e413a092b5caa51743ad13cbf  nanoarrow/nanoarrow.h

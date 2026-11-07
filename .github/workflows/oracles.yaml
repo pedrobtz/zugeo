@@ -25,7 +25,12 @@ concurrency:
 jobs:
   oracles:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # R comes with the image, so the job does not wait on setup-r, which took
+    # 21 to 29 minutes on GitHub's runners on 2026-11-06. The image installs
+    # packages as binaries from Posit's repository.
+    container: rocker/r-ver:4.5.2
+    # 45, not 30, while installing the oracle packages stays slow.
+    timeout-minutes: 45
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       ZUGEO_ORACLES: true
@@ -34,9 +39,12 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: r-lib/actions/setup-r@v2
-        with:
-          use-public-rspm: true
+      # The image's repository is a snapshot from its R release (March 2026),
+      # which predates zujson and the decimal version zuarrow needs.
+      - name: Use the latest binary repository
+        run: |
+          echo 'options(repos = c(CRAN = "https://p3m.dev/cran/__linux__/noble/latest"))' \
+            >> "$(Rscript -e 'cat(R.home("etc"))')/Rprofile.site"
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:

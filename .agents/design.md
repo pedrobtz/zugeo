@@ -465,6 +465,30 @@ Interface in a CI test.
 - `NA` positions are null geometries. Arrow allows nulls only at the
   outer level, so this is the only kind there is.
 
+*Decided 2026-11-06 (Stage 2):*
+
+- **Representation.** Positions are 1-based integers into the
+  concatenated chunks; the attribute `starts` holds each chunk's first
+  row, so a position maps to a chunk and row without scanning. A vector
+  is limited to 2^31 - 1 rows for now, and `c()` beyond that is an
+  error.
+- **Union nulls.** A union has no validity bitmap, so an element is null
+  when the child element it points to is. Gathering writes a null as a
+  null element of that child, or of the first child for an `NA`
+  position.
+- **`c()` of other layouts.** Equal schemas (zuarrow's `arrow_equal()`,
+  metadata included) append chunks; a different CRS or edge type is a
+  `zugeo_crs_error`; any other difference, such as separated against
+  interleaved, is a `zugeo_layout_error` until Stage 3's conversions.
+- **No assignment.** `[<-` and `[[<-` are errors; `length<-` pads with
+  `NA`.
+- **`format()`** writes WKT through `geoarrow-c`'s WKT writer, with
+  `max_bytes` (1000 by default) truncating each element, and prints
+  numbers as that writer does until D18 lands in Stage 3. Nulls format
+  as `<null>`; `as.character()` gives `NA`.
+- **`geo_vctr()`** takes an array handle in this stage; WKB, WKT and
+  coordinate inputs are Stage 3's.
+
 ### 6.2 Types and layouts
 
 GeoArrow allows several layouts for one extension name. zugeo reads all
@@ -738,7 +762,7 @@ scan, as `gpq` does.
 | Library | Version | Licence | Used for |
 | --- | --- | --- | --- |
 | `geoarrow-c` | `b3db89f` (0.2.0-SNAPSHOT) | Apache-2.0 | views, I/O, `box` |
-| nanoarrow core | 0.8.0, `geoarrow-c`'s own copy | Apache-2.0 | Arrow helpers |
+| nanoarrow core | 0.9.0 release, as zuarrow | Apache-2.0 | Arrow helpers |
 
 *Decided 2026-11-06 (Stage 0):* `src/vendor/` is derived by
 `tools/derive-vendor`: the commit's archive, checked by SHA-256, run
@@ -747,7 +771,12 @@ through upstream's CMake bundler (`GEOARROW_BUNDLE=ON`,
 Parsing then uses `strtod()`, which R keeps in the C numeric locale.
 ryu is off too: its `assert()` calls reached the shared object in the
 gctorture build, which ignores `-DNDEBUG`, so WKT numbers print through
-`snprintf()` until Q11 is settled. No local patches.
+`snprintf()` until Q11 is settled. No local patches. *2026-11-06
+(Stage 2):* the nanoarrow core is the 0.9.0 release through upstream's
+bundler, the version zuarrow vendors, not the 0.8.0 `geoarrow-c` pins:
+GCC 16 reports a null `snprintf()` destination in 0.8.0's
+`ArrowSchemaToString()`, an `R CMD check` WARNING, which 0.9.0 rewrote.
+`geoarrow-c` builds against it unchanged.
 `tools/verify-vendor` re-derives the tree in
 CI (`vendor.yaml`) and fails on any difference, as zuarrow's does.
 
@@ -946,6 +975,16 @@ any of them.
   names when the interpretation is unambiguous"): an explicit `"edges":
   "planar"` is read as planar, and a width-three interleaved child named
   `xym` is XYM.
+- **D21 (C, 2026-11-06, Stage 2).** Native arrays are walked by zugeo's
+  own C (`src/zgo_array.c`) over nanoarrow array views, which read every
+  list width and unions, and the walk drives `geoarrow-c`'s
+  `GeoArrowVisitor`, so its WKT and WKB writers consume it unchanged.
+  This is the traversal half of D15, built in Stage 2 because `format()`
+  needs it; Stage 5's kernels are reductions over the same walk.
+  Gathering rows for export builds with nanoarrow, which builds a union
+  only when its type ids are its child indices; zugeo builds against a
+  copy of the schema whose unions are numbered `0..n-1` and rewrites the
+  type id buffer to GeoArrow's ids after, which changes no value.
 - **D17 (maintainer, 2026-11-05).** `geo_parquet_info()` joins the
   GeoParquet functions and shares their gate (D12).
 

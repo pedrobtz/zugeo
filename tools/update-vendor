@@ -12,7 +12,7 @@ tools/derive-vendor src/vendor
 COMMIT=$(sed -n 's/^COMMIT=//p' tools/derive-vendor)
 VERSION=$(sed -n 's/^VERSION=//p' tools/derive-vendor)
 SHA256=$(sed -n 's/^SHA256=//p' tools/derive-vendor)
-NANOARROW_COMMIT=$(sed -n 's/^NANOARROW_COMMIT=//p' tools/derive-vendor)
+NANOARROW_TAG=$(sed -n 's/^NANOARROW_TAG=//p' tools/derive-vendor)
 NANOARROW_VERSION=$(sed -n 's/^#define NANOARROW_VERSION "\(.*\)"$/\1/p' \
   src/vendor/nanoarrow/nanoarrow.h)
 
@@ -25,9 +25,10 @@ Vendored dependency: geoarrow-c, with the nanoarrow core it ships
   Commit:        $COMMIT
   Archive:       https://github.com/geoarrow/geoarrow-c/archive/$COMMIT.tar.gz
   SHA-256:       $SHA256
-  nanoarrow:     $NANOARROW_VERSION, geoarrow-c's own copy (src/vendor/nanoarrow
-                 in the archive); LICENSE.txt and NOTICE.txt from
-                 apache/arrow-nanoarrow at $NANOARROW_COMMIT
+  nanoarrow:     $NANOARROW_VERSION ($NANOARROW_TAG), its core bundled by
+                 upstream's ci/scripts/bundle.py with
+                 --symbol-namespace=ZugeoNanoarrow; the release archive is
+                 checked by Apache's published SHA-512
   License:       Apache-2.0 (geoarrow-c, nanoarrow)
   Local patches: none
 

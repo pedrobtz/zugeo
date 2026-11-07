@@ -22,8 +22,22 @@ test_that("no symbol CRAN's compiled-code check reports is referenced", {
   abi_skip_instrumented()
   imports <- sub("^_+", "", abi_imports())
   # The object calls R's API, so an empty or unparsed listing is a broken
-  # tool or pattern, not a clean object. (Not strtod: under LTO the
-  # vendored parser is dropped until something calls it.)
-  expect_true("Rf_mkString" %in% imports)
-  expect_identical(intersect(imports, abi_forbidden), character())
+  # tool or pattern, not a clean object. Rf_allocVector, as zuarrow's test
+  # checks on every platform; Rf_mkString was absent from the Windows
+  # listing. (Not strtod: under LTO the vendored parser is dropped until
+  # something calls it.)
+  expect_true(
+    "Rf_allocVector" %in% imports,
+    label = paste("imports include Rf_allocVector:", paste(head(imports, 20), collapse = " "))
+  )
+  found <- intersect(imports, abi_forbidden)
+  if (.Platform$OS.type == "windows") {
+    # As R CMD check does: only what zugeo's own objects reference counts.
+    objects <- abi_object_symbols()
+    if (is.null(objects)) {
+      skip("On Windows the runtime imports exit and abort; checked within R CMD check.")
+    }
+    found <- intersect(found, objects)
+  }
+  expect_identical(found, character())
 })

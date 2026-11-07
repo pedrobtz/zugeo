@@ -38,7 +38,9 @@ abi_run <- function(tool, args) {
   if (!is.null(attr(out, "status"))) {
     abi_unavailable(paste(basename(tool), "failed"))
   }
-  out
+  # objdump on Windows ends its lines with \r, which the patterns below
+  # would otherwise read as part of a symbol name.
+  sub("\r$", "", out)
 }
 
 abi_clean <- function(x) {
@@ -81,9 +83,7 @@ abi_exports_of <- function(path) {
 
 abi_imports <- function() {
   if (.Platform$OS.type == "windows") {
-    out <- abi_objdump()
-    rows <- out[grepl("^\\s+[0-9a-f]+\\s+[0-9]+\\s+\\S+$", out)]
-    return(sub("^.*\\s", "", trimws(rows)))
+    return(abi_windows_imports(abi_objdump()))
   }
   out <- abi_run(abi_tool("nm"), c("-u", shQuote(abi_dll_path())))
   abi_clean(sub("^.*\\s", "", trimws(out[nzchar(out)])))
@@ -120,3 +120,46 @@ abi_forbidden <- c(
   "assert_fail",
   "assert_rtn"
 )
+
+# The imported names in `objdump -p` output: after each "DLL Name:" line, a
+# header row and then one row per symbol, whose last token is the name,
+# until a blank line. Parsed by that structure rather than by columns,
+# which differ across binutils versions.
+abi_windows_imports <- function(out) {
+  imports <- character()
+  starts <- grep("^\\s*DLL Name:", out)
+  for (start in starts) {
+    i <- start + 1L
+    while (i <= length(out) && nzchar(trimws(out[[i]]))) {
+      row <- trimws(out[[i]])
+      if (!grepl("Member-Name|^vma:", row)) {
+        imports <- c(imports, sub("^.*\\s", "", row))
+      }
+      i <- i + 1L
+    }
+  }
+  if (length(imports) == 0L) {
+    section <- grep("Import Tables", out)
+    from <- if (length(section)) section[[1L]] else 1L
+    testthat::fail(paste(
+      c("objdump -p printed no import rows; its import section:",
+        out[seq(from, min(length(out), from + 40L))]),
+      collapse = "\n"
+    ))
+  }
+  imports
+}
+
+# The names in the package's own object files, from the symbols.rds that R
+# CMD check writes beside the shared object, or NULL outside a check. R's
+# compiled-code check reports a symbol only when an object file references
+# it, which leaves out the C runtime the toolchain links in: MinGW's
+# startup code imports exit, abort and __acrt_iob_func on Windows.
+abi_object_symbols <- function() {
+  path <- file.path(dirname(abi_dll_path()), "symbols.rds")
+  if (!file.exists(path)) {
+    return(NULL)
+  }
+  tables <- readRDS(path)
+  sub("^_+", "", unique(unlist(lapply(tables, function(t) t[, "name"]))))
+}

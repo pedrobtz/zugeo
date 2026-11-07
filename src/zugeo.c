@@ -28,6 +28,10 @@ static const R_CallMethodDef zgo_call_methods[] = {
     ZGO_CALL(zgo_c_type_of, 1),
     ZGO_CALL(zgo_c_type_of_children, 1),
     ZGO_CALL(zgo_c_schema_from_spec, 1),
+    ZGO_CALL(zgo_c_is_na, 4),
+    ZGO_CALL(zgo_c_format, 5),
+    ZGO_CALL(zgo_c_take, 4),
+    ZGO_CALL(zgo_c_array_length, 1),
     {NULL, NULL, 0}};
 
 void attribute_visible R_init_zugeo(DllInfo *dll) {
