@@ -30,11 +30,16 @@
 - [`geo_hilbert()`](https://pedrobtz.github.io/zugeo/reference/geo_hilbert.md)
   [`geo_sort()`](https://pedrobtz.github.io/zugeo/reference/geo_hilbert.md)
   : Hilbert keys and spatial sorting
+- [`geo_parquet_info()`](https://pedrobtz.github.io/zugeo/reference/geo_parquet_info.md)
+  : GeoParquet metadata without reading rows
 - [`geo_query_box()`](https://pedrobtz.github.io/zugeo/reference/geo_query_box.md)
   [`geo_query_radius()`](https://pedrobtz.github.io/zugeo/reference/geo_query_box.md)
   [`geo_query_nearest()`](https://pedrobtz.github.io/zugeo/reference/geo_query_box.md)
   [`geo_join_box()`](https://pedrobtz.github.io/zugeo/reference/geo_query_box.md)
   : Query packed indexes
+- [`geo_read_parquet()`](https://pedrobtz.github.io/zugeo/reference/geo_read_parquet.md)
+  [`geo_write_parquet()`](https://pedrobtz.github.io/zugeo/reference/geo_read_parquet.md)
+  : Read and write GeoParquet
 - [`geo_rtree()`](https://pedrobtz.github.io/zugeo/reference/geo_rtree.md)
   [`geo_kdtree()`](https://pedrobtz.github.io/zugeo/reference/geo_rtree.md)
   [`geo_index_raw()`](https://pedrobtz.github.io/zugeo/reference/geo_rtree.md)
@@ -44,6 +49,8 @@
   : Describe a GeoArrow field
 - [`geo_validate()`](https://pedrobtz.github.io/zugeo/reference/geo_validate.md)
   : Report what is wrong with geometries, without repairing it
+- [`geo_validate_parquet()`](https://pedrobtz.github.io/zugeo/reference/geo_validate_parquet.md)
+  : Report what is wrong with a GeoParquet file
 - [`geo_vctr()`](https://pedrobtz.github.io/zugeo/reference/geo_vctr.md)
   [`is_geo_vctr()`](https://pedrobtz.github.io/zugeo/reference/geo_vctr.md)
   : Make geometry vectors from WKB, WKT or Arrow

@@ -5,7 +5,8 @@ and polygons stay in 'Apache Arrow' memory with their coordinate
 reference system and edge type, move between the native, well-known
 binary and well-known text encodings exactly or raise an error, and get
 bounding boxes, spatial sorting and packed spatial indexes computed over
-the coordinate buffers. The bundled 'geoarrow-c' library
+the coordinate buffers. With the 'qio' package it reads, writes and
+validates 'GeoParquet'. The bundled 'geoarrow-c' library
 (<https://github.com/geoarrow/geoarrow-c>) needs no system library. The
 format is specified at <https://geoarrow.org/>.
 

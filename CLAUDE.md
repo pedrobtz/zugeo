@@ -18,14 +18,15 @@ zugeo makes GeoArrow a first-class column type in R. It registers every
 `geoarrow.*` extension name with `zuarrow`, keeps geometries in Arrow
 memory as a `geo_vctr`, computes bounds, Hilbert keys and spatial sorts
 over the coordinate buffers, builds flatbush- and kdbush-format packed
-indexes, and, with `qio` 0.2.0, reads and writes GeoParquet. Every
-conversion is exact or an error; a CRS is carried, never resolved or
-invented. `Imports` are `zuarrow` and `zujson` only, and `LinkingTo` is
-`zufast` (from Stage 3, design D18). No package outside the family
-appears in `DESCRIPTION`: `sf`, `wk`, `geos`, `s2`, `geoarrow`,
-`nanoarrow`, `arrow` and `duckdb` are CI-only oracles. No system
-library. It is not a geometry engine, not a projection library and not
-an `sf` replacement; WKB and a CRS string are the bridge to those.
+indexes, and, with `qio` 0.1.2 in `Suggests`, reads and writes
+GeoParquet. Every conversion is exact or an error; a CRS is carried,
+never resolved or invented. `Imports` are `zuarrow` and `zujson` only,
+and `LinkingTo` is `zufast` (from Stage 3, design D18). No package
+outside the family appears in `DESCRIPTION`: `sf`, `wk`, `geos`, `s2`,
+`geoarrow`, `nanoarrow`, `arrow` and `duckdb` are CI-only oracles. No
+system library. It is not a geometry engine, not a projection library
+and not an `sf` replacement; WKB and a CRS string are the bridge to
+those.
 
 The specification is
 [`.agents/design.md`](https://pedrobtz.github.io/zugeo/.agents/design.md),
@@ -39,9 +40,10 @@ interchange with sf, geos, s2 and wk by WKB. Stage 2 gave `geo_vctr`
 over Arrow memory, registered with zuarrow; Stage 1
 [`geo_type_of()`](https://pedrobtz.github.io/zugeo/reference/geo_type_of.md)
 and the CRS functions; Stage 0 the package, CI and vendored
-`geoarrow-c`. No GeoParquet yet (Stage 7). Stage 6 (2026-11-07) added
-the packed indexes. Stage 4 (2026-11-07) added the `lossy` policy for
-edges and the inner-null layout check; Stage 5 (2026-11-07) the kernels,
+`geoarrow-c`. Stage 7 (2026-11-07) added GeoParquet over `qio` 0.1.2
+(`R/parquet.R`, `R/parquet-validate.R`). Stage 6 (2026-11-07) added the
+packed indexes. Stage 4 (2026-11-07) added the `lossy` policy for edges
+and the inner-null layout check; Stage 5 (2026-11-07) the kernels,
 `geo_extent`, Hilbert keys and
 [`geo_validate()`](https://pedrobtz.github.io/zugeo/reference/geo_validate.md).
 The roadmap in `.agents/roadmap.md` takes it to v0.1.0.
@@ -100,6 +102,11 @@ listed in `src/Makevars` (and its copy `Makevars.win`).
 - `src/zgo_kernel.c`, `R/kernel.R` and `R/extent.R`: the per-row kernels
   as one visitor pass, flatbush’s Hilbert function, validation, and the
   `geo_extent` record vector.
+- `R/parquet.R` and `R/parquet-validate.R`: GeoParquet over `qio`
+  (`Suggests`, called as `qio::` behind `zgo_need_qio()`).
+  `zgo_pq_describe()` reconciles the `geo` key with the native
+  `GEOMETRY`/`GEOGRAPHY` columns; it is shared by reading, info and
+  validation. No Parquet code in `src/`.
 
 ## Invariants that are easy to break
 
@@ -197,11 +204,13 @@ on a daily schedule), `vendor.yml`, and `vendor-upstream.yml` weekly.
 Its own workflows: `pkgdown.yaml`, and `oracles.yaml`, which runs the
 `test-ci-*.R` files with `ZUGEO_ORACLES=true` because r-actions has no
 workflow for tests outside the tarball, in `rocker/r-ver` with Posit’s
-current binaries; `fuzz.yaml` fuzzes the vendored WKB and WKT readers
-(`tools/fuzz/harness.c`, seeds from `tools/fuzz/make-corpus.R`), short
-on pull requests and an hour weekly; `arch.yaml` runs the 32-bit and
-musl builds weekly. Stages 2, 3 and 6 are `full`, with the closing
-three.
+current binaries, with gpq v0.24.0 (`ZUGEO_GPQ`), then a `gdal` job in
+`ghcr.io/osgeo/gdal` that reads the GeoParquet files the tests leave in
+`ZUGEO_PARQUET_OUT` (`tools/gdal-oracle.py`); `fuzz.yaml` fuzzes the
+vendored WKB and WKT readers (`tools/fuzz/harness.c`, seeds from
+`tools/fuzz/make-corpus.R`), short on pull requests and an hour weekly;
+`arch.yaml` runs the 32-bit and musl builds weekly. Stages 2, 3 and 6
+are `full`, with the closing three.
 
 ## Vendored native code
 
