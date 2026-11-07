@@ -18,7 +18,7 @@ with one sub-issue per stage;
 | 2 | [geo_vctr and the zuarrow registry](#stage-2--geo_vctr-and-the-zuarrow-registry) | full | [#4](https://github.com/pedrobtz/zugeo/issues/4) | [#18](https://github.com/pedrobtz/zugeo/pull/18) | 2026-11-06 |
 | 3 | [Encodings and interchange](#stage-3--encodings-and-interchange) | full | [#5](https://github.com/pedrobtz/zugeo/issues/5) | [#19](https://github.com/pedrobtz/zugeo/pull/19) | 2026-11-07 |
 | 4 | [Exactness errors](#stage-4--exactness-errors) | quick | [#6](https://github.com/pedrobtz/zugeo/issues/6) | [#20](https://github.com/pedrobtz/zugeo/pull/20) | 2026-11-07 |
-| 5 | [Visitor, extents and kernels](#stage-5--visitor-extents-and-kernels) | quick | [#7](https://github.com/pedrobtz/zugeo/issues/7) | | |
+| 5 | [Visitor, extents and kernels](#stage-5--visitor-extents-and-kernels) | quick | [#7](https://github.com/pedrobtz/zugeo/issues/7) | | 2026-11-07 |
 | 6 | [Packed indexes](#stage-6--packed-indexes) | full | [#8](https://github.com/pedrobtz/zugeo/issues/8) | | |
 | 7 | [GeoParquet](#stage-7--geoparquet) | quick | [#9](https://github.com/pedrobtz/zugeo/issues/9) | | |
 | 8 | [Documentation and benchmarks](#stage-8--documentation-and-benchmarks) | quick | [#10](https://github.com/pedrobtz/zugeo/issues/10) | | |
@@ -242,6 +242,10 @@ over the buffers, all through one visitor.
 - `geo_box()`, `geo_box_all()`, `geo_types()`, `geo_dims()`,
   `geo_n_coords()`, `geo_hilbert()`, `geo_sort()`, `geo_validate()`.
 
+*Note, 2026-11-07:* the coordinate walk itself arrived in Stage 2
+(design D21); this stage's kernels are visitors over it. The oracles
+workflow gains `duckdb`, whose spatial extension downloads in CI.
+
 **Exit criteria.**
 
 - Results equal the `sf` and flatbush oracles and `geoarrow-c`'s `box`
@@ -414,6 +418,6 @@ blocking finding fixed.
   by zuarrow#172; nothing blocks Stage 2.
 - Stage 3 verifies the assumptions behind Q2 and Q5 and implements
   the answers to Q8 and Q11.
-- Stage 5 records Q9's answer.
+- Q9 was answered in Stage 5: flatbush and DuckDB agree.
 - Q4 blocks Stage 7: what qio 0.2.0 exposes, proposed in
   [pedrobtz/qio#21](https://github.com/pedrobtz/qio/issues/21).

@@ -697,6 +697,33 @@ sorted by DuckDB are known to agree or known not to.
 `geo_sort()` returns the permutation; `x[geo_sort(x)]` is the sorted
 vector.
 
+*Decided 2026-11-07 (Stage 5):*
+
+- **flatbush's arithmetic, not an equivalent.** The grid position is
+  `trunc((65535 / size) * (centre - min))`, the size being the range or
+  1 when the range is 0, which is `finish()`'s `(sx * (c - min)) | 0`;
+  a formula that is equal on paper rounds differently in doubles. The
+  key is flatbush's unsigned (it subtracts 2^31 to keep JavaScript
+  integers small; the order is the same). Centres outside a given extent
+  are clamped onto its edge.
+- **One walk for the per-row kernels.** Box, top-level type, dimensions
+  and coordinate count come from one visitor pass
+  (`src/zgo_kernel.c`). An empty point (`NaN NaN`) has no coordinates;
+  a collection's dimensions are its own header's, so `GEOMETRYCOLLECTION
+  (POINT M (1 2 3))` is XY with an XYM part, which `geo_validate()`
+  reports as `mixed_dimensions`.
+- **`geo_box()` takes `lossy`** for non-planar edges on geometries with
+  edges, as `geo_as_wkb()` does.
+- **`geo_extent`** is a record of numeric bounds with `crs` and `edges`
+  attributes; Z and M bounds come in pairs and only when present. Set
+  operations compare dimensions both sides have; a box touching
+  another intersects it; a disjoint intersection is `NaN`, one with a
+  null is `NA`. Combining or comparing extents of different CRS or
+  edges is a `zugeo_crs_error`.
+- **`geoarrow-c`'s box kernel** is the oracle where it can read the
+  layout (`zgo_c_geoarrow_box()`, tests only). It reports XY only, and
+  `Inf`/`-Inf` where zugeo has `NA` for nulls and `NaN` for empties.
+
 ### 6.8 Packed indexes
 
 Both indexes are immutable and bulk-loaded, and each is one raw vector.
@@ -774,8 +801,13 @@ for points.
 ### 6.11 Validation
 
 `geo_validate()` reports, one row per finding, what `gpq validate`
-checks: rings closed, ring orientation, a declared geometry type
-matching the values, coordinates finite except for empty points, and
+checks (*decided 2026-11-07, Stage 5:* the issues are `unclosed_ring`,
+`short_ring`, `short_linestring`, `non_finite`, `mixed_dimensions`, and
+`exterior_clockwise` and `interior_counterclockwise` against RFC 7946's
+winding, for information; a declared type is checked against the
+values with GeoParquet's `geometry_types`, in Stage 7): rings closed,
+ring orientation, a declared geometry type matching the values,
+coordinates finite except for empty points, and
 dimensions consistent within a feature. It reports and never repairs.
 
 `geo_validate_parquet()`, with `qio` 0.2.0, also checks the `geo` key
@@ -1131,10 +1163,14 @@ assumption is named.
   past by `geoarrow-c` and dropped, which no producer zugeo knows of
   writes.*
 - **Q9.** Do DuckDB's `ST_Hilbert`, `geopandas`' `hilbert_distance()`
-  and flatbush use the same grid and curve orientation? *Decided
-  2026-11-06: zugeo follows flatbush, because its index format depends
-  on it (§6.7); Stage 5 records whether the others agree, as a test
-  result, not a requirement.*
+  and flatbush use the same grid and curve orientation? *Answered
+  2026-11-07 (Stage 5): flatbush and DuckDB agree exactly. On 401 boxes,
+  `geo_hilbert()`, flatbush v4.7.0's own `hilbert()` with its `finish()`
+  mapping (`tests/testthat/data/hilbert-flatbush.csv`, from
+  `tools/make-hilbert-fixture.js`) and DuckDB spatial's `ST_Hilbert`
+  over the same extent give identical keys; `test-kernel.R` and
+  `test-ci-kernels.R` keep checking both. `geopandas` was not checked
+  (no Python in CI).*
 - **Q10.** `geo_nearest()` was also exported by `geoops`. *Decided
   2026-11-06: renamed `geo_query_nearest()` (D19).*
 - **Q11.** `geoarrow-c`'s WKT writer prints at most 16 digits after the
