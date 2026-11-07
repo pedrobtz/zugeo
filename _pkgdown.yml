@@ -2,3 +2,47 @@ url: https://pedrobtz.github.io/zugeo/
 template:
   bootstrap: 5
 
+reference:
+  - title: Geometry vectors
+    desc: >
+      GeoArrow columns as R vectors, read from WKB, WKT or any Arrow
+      producer, and converted between encodings exactly or with an error.
+    contents:
+      - geo_vctr
+      - geo_as_wkb
+      - geo_coords
+      - geo_type_of
+  - title: Coordinate reference systems
+    desc: Carried exactly as given, and compared without PROJ.
+    contents:
+      - geo_crs
+      - geo_crs_equal
+      - geo_crs_text
+  - title: Kernels
+    desc: Boxes, types, Hilbert keys, sorting and validation over the buffers.
+    contents:
+      - geo_box
+      - geo_extent
+      - geo_hilbert
+      - geo_validate
+  - title: Spatial indexes
+    desc: Packed R-trees and k-d trees in flatbush's and kdbush's formats.
+    contents:
+      - geo_rtree
+      - geo_query_box
+  - title: GeoParquet
+    desc: Reading, writing, inspecting and validating, with the qio package.
+    contents:
+      - geo_read_parquet
+      - geo_parquet_info
+      - geo_validate_parquet
+  - title: About the package
+    contents:
+      - zugeo_info
+      - zugeo-package
+
+articles:
+  - title: Articles
+    navbar: ~
+    contents:
+      - articles/duckdb-to-sf

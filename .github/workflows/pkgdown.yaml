@@ -31,7 +31,8 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::pkgdown, local::.
+          # The article's packages; none is a zugeo dependency (design D3).
+          extra-packages: any::pkgdown, any::duckdb, any::DBI, any::sf, local::.
           needs: website
 
       - name: Build site

@@ -1,0 +1,54 @@
+# The performance targets of design section 10, on the Ubuntu release leg:
+# tools/benchmark.R over 10^6 polygons, with sf and wk beside zugeo. CI-only,
+# like the oracles. The table lands in the job summary and as an artifact;
+# its numbers are copied into design.md section 10 by hand.
+on:
+  pull_request:
+    paths:
+      - tools/benchmark.R
+      - .github/workflows/benchmark.yaml
+  workflow_dispatch:
+
+name: benchmark
+
+permissions:
+  contents: read
+
+concurrency:
+  group: benchmark-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    container: rocker/r-ver:4.5.2
+    timeout-minutes: 45
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Use the latest binary repository
+        run: |
+          echo 'options(repos = c(CRAN = "https://p3m.dev/cran/__linux__/noble/latest"))' \
+            >> "$(Rscript -e 'cat(R.home("etc"))')/Rprofile.site"
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::sf
+            any::wk
+            any::geoarrow
+            local::.
+
+      - name: Run the benchmark
+        run: |
+          Rscript tools/benchmark.R --n 1000000 --reps 5 --out benchmark.json | tee benchmark.md
+          cat benchmark.md >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: benchmark
+          path: |
+            benchmark.md
+            benchmark.json
