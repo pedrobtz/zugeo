@@ -51,3 +51,25 @@
   [`geo_coords()`](https://pedrobtz.github.io/zugeo/reference/geo_coords.md)
   carries the CRS and edges to
   [`geo_from_coords()`](https://pedrobtz.github.io/zugeo/reference/geo_coords.md).
+
+- [`geo_box()`](https://pedrobtz.github.io/zugeo/reference/geo_box.md),
+  [`geo_box_all()`](https://pedrobtz.github.io/zugeo/reference/geo_box.md),
+  [`geo_types()`](https://pedrobtz.github.io/zugeo/reference/geo_box.md),
+  [`geo_dims()`](https://pedrobtz.github.io/zugeo/reference/geo_box.md)
+  and
+  [`geo_n_coords()`](https://pedrobtz.github.io/zugeo/reference/geo_box.md)
+  compute over the coordinate buffers; boxes are `geo_extent` vectors
+  with
+  [`geo_extent_union()`](https://pedrobtz.github.io/zugeo/reference/geo_extent.md),
+  [`geo_extent_intersection()`](https://pedrobtz.github.io/zugeo/reference/geo_extent.md)
+  and
+  [`geo_extent_intersects()`](https://pedrobtz.github.io/zugeo/reference/geo_extent.md).
+
+- [`geo_hilbert()`](https://pedrobtz.github.io/zugeo/reference/geo_hilbert.md)
+  and
+  [`geo_sort()`](https://pedrobtz.github.io/zugeo/reference/geo_hilbert.md)
+  give flatbush’s Hilbert keys exactly, the same as DuckDB’s
+  `ST_Hilbert`.
+  [`geo_validate()`](https://pedrobtz.github.io/zugeo/reference/geo_validate.md)
+  reports unclosed or short rings, non-finite coordinates, mixed
+  dimensions and winding.
