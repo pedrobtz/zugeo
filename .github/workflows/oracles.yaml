@@ -25,7 +25,11 @@ concurrency:
 jobs:
   oracles:
     runs-on: ubuntu-latest
-    # 45, not 30: setup-r alone has taken 21 minutes on a slow runner.
+    # R comes with the image, so the job does not wait on setup-r, which took
+    # 21 to 29 minutes on GitHub's runners on 2026-11-06. The image installs
+    # packages as binaries from Posit's repository.
+    container: rocker/r-ver:4.5.2
+    # 45, not 30, while installing the oracle packages stays slow.
     timeout-minutes: 45
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -34,10 +38,6 @@ jobs:
       NOT_CRAN: true
     steps:
       - uses: actions/checkout@v6
-
-      - uses: r-lib/actions/setup-r@v2
-        with:
-          use-public-rspm: true
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
