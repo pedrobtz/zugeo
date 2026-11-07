@@ -66,6 +66,14 @@ consumers (design §3).
   `inst/COPYRIGHTS` and `DESCRIPTION`.
 - `ZUGEO_ORACLES=true Rscript -e 'devtools::test(filter = "^ci-")'`: the
   CI-only oracle tests, with a missing oracle as a failure.
+- `Rscript tools/benchmark.R [--n 1000000] [--reps 5]`: design §10’s
+  measurements against the installed zugeo, with sf and wk beside it.
+  `benchmark.yaml` runs it on Ubuntu (the platform §10 names) when the
+  script or workflow changes, or by hand; copy its table into §10.
+- `README.Rmd` renders with
+  [`devtools::build_readme()`](https://devtools.r-lib.org/reference/build_readme.html);
+  the article is `vignettes/articles/duckdb-to-sf.Rmd` (needs duckdb,
+  DBI, sf and qio, which `pkgdown.yaml` installs).
 
 ## Architecture
 
@@ -190,9 +198,12 @@ from `geoarrow-data` at commit `e8eaa04` when
 otherwise the corpus tests skip. `helper-convert.R` has EWKB builders,
 bit-for-bit double comparison and the hard doubles of the exactness
 property test (`test-exact.R`). The oracle tests compare with sf, geos,
-s2 and wk by WKB or coordinates, never by WKT text: `sf::st_as_text()`
-prints 7 digits, `sf::st_as_binary()` of a mixed-dimension `sfc` drops
-Z, and wk prints the largest double as `inf`.
+s2 and wk by WKB or coordinates, never by WKT text:
+[`sf::st_as_text()`](https://r-spatial.github.io/sf/reference/st_as_text.html)
+prints 7 digits,
+[`sf::st_as_binary()`](https://r-spatial.github.io/sf/reference/st_as_binary.html)
+of a mixed-dimension `sfc` drops Z, and wk prints the largest double as
+`inf`.
 
 ## Continuous integration
 
@@ -201,16 +212,17 @@ R-devel added to `runners`), `coverage.yml`, the native checks in
 `native-checks.yaml` (sanitizers with ASan, valgrind, LTO, rchk,
 analyzers, cran-special), `gctorture.yml` (quick step on pushes, step 20
 on a daily schedule), `vendor.yml`, and `vendor-upstream.yml` weekly.
-Its own workflows: `pkgdown.yaml`, and `oracles.yaml`, which runs the
-`test-ci-*.R` files with `ZUGEO_ORACLES=true` because r-actions has no
-workflow for tests outside the tarball, in `rocker/r-ver` with Posit’s
-current binaries, with gpq v0.24.0 (`ZUGEO_GPQ`), then a `gdal` job in
-`ghcr.io/osgeo/gdal` that reads the GeoParquet files the tests leave in
-`ZUGEO_PARQUET_OUT` (`tools/gdal-oracle.py`); `fuzz.yaml` fuzzes the
-vendored WKB and WKT readers (`tools/fuzz/harness.c`, seeds from
-`tools/fuzz/make-corpus.R`), short on pull requests and an hour weekly;
-`arch.yaml` runs the 32-bit and musl builds weekly. Stages 2, 3 and 6
-are `full`, with the closing three.
+Its own workflows: `pkgdown.yaml`, `benchmark.yaml`, and `oracles.yaml`,
+which runs the `test-ci-*.R` files with `ZUGEO_ORACLES=true` because
+r-actions has no workflow for tests outside the tarball, in
+`rocker/r-ver` with Posit’s current binaries, with gpq v0.24.0
+(`ZUGEO_GPQ`), then a `gdal` job in `ghcr.io/osgeo/gdal` that reads the
+GeoParquet files the tests leave in `ZUGEO_PARQUET_OUT`
+(`tools/gdal-oracle.py`); `fuzz.yaml` fuzzes the vendored WKB and WKT
+readers (`tools/fuzz/harness.c`, seeds from `tools/fuzz/make-corpus.R`),
+short on pull requests and an hour weekly; `arch.yaml` runs the 32-bit
+and musl builds weekly. Stages 2, 3 and 6 are `full`, with the closing
+three.
 
 ## Vendored native code
 

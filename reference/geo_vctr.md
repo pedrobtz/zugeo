@@ -1,7 +1,7 @@
 # Make geometry vectors from WKB, WKT or Arrow
 
 `geo_vctr()` reads well-known binary (a list of raw vectors, such as
-`sf::st_as_binary()`,
+[`sf::st_as_binary()`](https://r-spatial.github.io/sf/reference/st_as_binary.html),
 [`wk::as_wkb()`](https://paleolimbot.github.io/wk/reference/wkb.html) or
 `geos::geos_write_wkb()` return), EWKB with an SRID, hex WKB as
 databases return it, or well-known text. Every element is checked by

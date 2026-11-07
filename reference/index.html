@@ -16,6 +16,10 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/duckdb-to-sf.html">Geometry columns from DuckDB to sf</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -32,9 +36,9 @@
     </div>
 
     <div class="section level2">
-      <h2 id="all-functions">All functions<a class="anchor" aria-label="anchor" href="#all-functions"></a></h2>
+      <h2 id="geometry-vectors">Geometry vectors<a class="anchor" aria-label="anchor" href="#geometry-vectors"></a></h2>
 
-
+      <div class="section-desc"><p>GeoArrow columns as R vectors, read from WKB, WKT or any Arrow producer, and converted between encodings exactly or with an error.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -43,17 +47,17 @@
 
       <dl><dt>
 
+          <code><a href="geo_vctr.html">geo_vctr()</a></code> <code><a href="geo_vctr.html">is_geo_vctr()</a></code>
+
+        </dt>
+        <dd>Make geometry vectors from WKB, WKT or Arrow</dd>
+
+        <dt>
+
           <code><a href="geo_as_wkb.html">geo_as_wkb()</a></code> <code><a href="geo_as_wkb.html">geo_as_wkt()</a></code> <code><a href="geo_as_wkb.html">geo_as_native()</a></code>
 
         </dt>
         <dd>Convert geometries between encodings</dd>
-
-        <dt>
-
-          <code><a href="geo_box.html">geo_box()</a></code> <code><a href="geo_box.html">geo_box_all()</a></code> <code><a href="geo_box.html">geo_types()</a></code> <code><a href="geo_box.html">geo_dims()</a></code> <code><a href="geo_box.html">geo_n_coords()</a></code>
-
-        </dt>
-        <dd>Bounds, types and counts over the buffers</dd>
 
         <dt>
 
@@ -63,6 +67,22 @@
         <dd>Coordinates as columns</dd>
 
         <dt>
+
+          <code><a href="geo_type_of.html">geo_type_of()</a></code>
+
+        </dt>
+        <dd>Describe a GeoArrow field</dd>
+      </dl></div><div class="section level2">
+      <h2 id="coordinate-reference-systems">Coordinate reference systems<a class="anchor" aria-label="anchor" href="#coordinate-reference-systems"></a></h2>
+
+      <div class="section-desc"><p>Carried exactly as given, and compared without PROJ.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
 
           <code><a href="geo_crs.html">geo_crs()</a></code>
 
@@ -82,6 +102,22 @@
 
         </dt>
         <dd>The CRS as one string for other packages</dd>
+      </dl></div><div class="section level2">
+      <h2 id="kernels">Kernels<a class="anchor" aria-label="anchor" href="#kernels"></a></h2>
+
+      <div class="section-desc"><p>Boxes, types, Hilbert keys, sorting and validation over the buffers.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="geo_box.html">geo_box()</a></code> <code><a href="geo_box.html">geo_box_all()</a></code> <code><a href="geo_box.html">geo_types()</a></code> <code><a href="geo_box.html">geo_dims()</a></code> <code><a href="geo_box.html">geo_n_coords()</a></code>
+
+        </dt>
+        <dd>Bounds, types and counts over the buffers</dd>
 
         <dt>
 
@@ -99,26 +135,21 @@
 
         <dt>
 
-          <code><a href="geo_parquet_info.html">geo_parquet_info()</a></code>
+          <code><a href="geo_validate.html">geo_validate()</a></code>
 
         </dt>
-        <dd>GeoParquet metadata without reading rows</dd>
+        <dd>Report what is wrong with geometries, without repairing it</dd>
+      </dl></div><div class="section level2">
+      <h2 id="spatial-indexes">Spatial indexes<a class="anchor" aria-label="anchor" href="#spatial-indexes"></a></h2>
 
-        <dt>
+      <div class="section-desc"><p>Packed R-trees and k-d trees in flatbush’s and kdbush’s formats.</p></div>
 
-          <code><a href="geo_query_box.html">geo_query_box()</a></code> <code><a href="geo_query_box.html">geo_query_radius()</a></code> <code><a href="geo_query_box.html">geo_query_nearest()</a></code> <code><a href="geo_query_box.html">geo_join_box()</a></code>
+      <dl></dl></div><div class="section level2">
 
-        </dt>
-        <dd>Query packed indexes</dd>
 
-        <dt>
 
-          <code><a href="geo_read_parquet.html">geo_read_parquet()</a></code> <code><a href="geo_read_parquet.html">geo_write_parquet()</a></code>
 
-        </dt>
-        <dd>Read and write GeoParquet</dd>
-
-        <dt>
+      <dl><dt>
 
           <code><a href="geo_rtree.html">geo_rtree()</a></code> <code><a href="geo_rtree.html">geo_kdtree()</a></code> <code><a href="geo_rtree.html">geo_index_raw()</a></code> <code><a href="geo_rtree.html">geo_index_from_raw()</a></code>
 
@@ -127,17 +158,33 @@
 
         <dt>
 
-          <code><a href="geo_type_of.html">geo_type_of()</a></code>
+          <code><a href="geo_query_box.html">geo_query_box()</a></code> <code><a href="geo_query_box.html">geo_query_radius()</a></code> <code><a href="geo_query_box.html">geo_query_nearest()</a></code> <code><a href="geo_query_box.html">geo_join_box()</a></code>
 
         </dt>
-        <dd>Describe a GeoArrow field</dd>
+        <dd>Query packed indexes</dd>
+      </dl></div><div class="section level2">
+      <h2 id="geoparquet">GeoParquet<a class="anchor" aria-label="anchor" href="#geoparquet"></a></h2>
+
+      <div class="section-desc"><p>Reading, writing, inspecting and validating, with the qio package.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="geo_read_parquet.html">geo_read_parquet()</a></code> <code><a href="geo_read_parquet.html">geo_write_parquet()</a></code>
+
+        </dt>
+        <dd>Read and write GeoParquet</dd>
 
         <dt>
 
-          <code><a href="geo_validate.html">geo_validate()</a></code>
+          <code><a href="geo_parquet_info.html">geo_parquet_info()</a></code>
 
         </dt>
-        <dd>Report what is wrong with geometries, without repairing it</dd>
+        <dd>GeoParquet metadata without reading rows</dd>
 
         <dt>
 
@@ -145,22 +192,32 @@
 
         </dt>
         <dd>Report what is wrong with a GeoParquet file</dd>
+      </dl></div><div class="section level2">
+      <h2 id="about-the-package">About the package<a class="anchor" aria-label="anchor" href="#about-the-package"></a></h2>
 
-        <dt>
 
-          <code><a href="geo_vctr.html">geo_vctr()</a></code> <code><a href="geo_vctr.html">is_geo_vctr()</a></code>
 
-        </dt>
-        <dd>Make geometry vectors from WKB, WKT or Arrow</dd>
+      <dl></dl></div><div class="section level2">
 
-        <dt>
+
+
+
+      <dl><dt>
 
           <code><a href="zugeo_info.html">zugeo_info()</a></code>
 
         </dt>
         <dd>Versions zugeo is built from</dd>
+
+        <dt>
+
+          <code><a href="zugeo-package.html">zugeo</a></code> <code><a href="zugeo-package.html">zugeo-package</a></code>
+
+        </dt>
+        <dd>zugeo: 'GeoArrow' Geometry Columns, Exact or an Error</dd>
       </dl></div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">

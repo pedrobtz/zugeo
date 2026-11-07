@@ -105,3 +105,11 @@
   [`geo_validate_parquet()`](https://pedrobtz.github.io/zugeo/reference/geo_validate_parquet.md)
   reports what `gpq validate` checks, what GeoParquet 2.0 adds and the
   distribution guide’s advice.
+
+- [`geo_sort()`](https://pedrobtz.github.io/zugeo/reference/geo_hilbert.md)
+  and
+  [`geo_hilbert()`](https://pedrobtz.github.io/zugeo/reference/geo_hilbert.md)
+  compute each box once, not twice.
+
+- A README, the article “Geometry columns from DuckDB to sf”, and a
+  reference index by task.

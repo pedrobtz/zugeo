@@ -1,12 +1,15 @@
 # Convert geometries between encodings
 
 `geo_as_wkb()` gives well-known binary as a list of raw vectors, ISO and
-little-endian, `NULL` for a null geometry; `sf::st_as_sfc()`,
-`geos::geos_read_wkb()` and `s2::s2_geog_from_wkb()` each read it
-directly. `geo_as_wkt()` gives well-known text, with every coordinate
-written as the shortest text that reads back to the same double, so the
-round trip is exact. Both carry the CRS as the attribute `crs`, since
-bare WKB and WKT have no place for one (design section 6.3).
+little-endian, `NULL` for a null geometry;
+[`sf::st_as_sfc()`](https://r-spatial.github.io/sf/reference/st_as_sfc.html),
+`geos::geos_read_wkb()` and
+[`s2::s2_geog_from_wkb()`](https://r-spatial.github.io/s2/reference/s2_geog_point.html)
+each read it directly. `geo_as_wkt()` gives well-known text, with every
+coordinate written as the shortest text that reads back to the same
+double, so the round trip is exact. Both carry the CRS as the attribute
+`crs`, since bare WKB and WKT have no place for one (design section
+6.3).
 
 ## Usage
 
