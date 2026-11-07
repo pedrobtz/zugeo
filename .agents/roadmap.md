@@ -16,7 +16,7 @@ with one sub-issue per stage;
 | 0 | [Package identity and vendored C](#stage-0--package-identity-and-vendored-c) | quick | [#2](https://github.com/pedrobtz/zugeo/issues/2) | [#16](https://github.com/pedrobtz/zugeo/pull/16) | 2026-11-06 |
 | 1 | [Schemas, metadata and CRS](#stage-1--schemas-metadata-and-crs) | quick | [#3](https://github.com/pedrobtz/zugeo/issues/3) | [#17](https://github.com/pedrobtz/zugeo/pull/17) | 2026-11-06 |
 | 2 | [geo_vctr and the zuarrow registry](#stage-2--geo_vctr-and-the-zuarrow-registry) | full | [#4](https://github.com/pedrobtz/zugeo/issues/4) | [#18](https://github.com/pedrobtz/zugeo/pull/18) | 2026-11-06 |
-| 3 | [Encodings and interchange](#stage-3--encodings-and-interchange) | full | [#5](https://github.com/pedrobtz/zugeo/issues/5) | | |
+| 3 | [Encodings and interchange](#stage-3--encodings-and-interchange) | full | [#5](https://github.com/pedrobtz/zugeo/issues/5) | | 2026-11-07 |
 | 4 | [Exactness errors](#stage-4--exactness-errors) | quick | [#6](https://github.com/pedrobtz/zugeo/issues/6) | | |
 | 5 | [Visitor, extents and kernels](#stage-5--visitor-extents-and-kernels) | quick | [#7](https://github.com/pedrobtz/zugeo/issues/7) | | |
 | 6 | [Packed indexes](#stage-6--packed-indexes) | full | [#8](https://github.com/pedrobtz/zugeo/issues/8) | | |
@@ -178,6 +178,14 @@ spatial packages by WKB and coordinates, exactly.
 - The EWKB SRID read before `geoarrow-c` sees the bytes (§6.6, Q8).
 - Oracle comparisons with `sf`, `geos` and `s2` by WKB, never by WKT
   text: `sf::st_as_text()` prints 7 significant digits by default.
+
+*Deviations, 2026-11-07:* `geo_vctr()` stores WKB and WKT as given
+rather than parsing them into native buffers (design §6.6), with
+`geo_as_native()` for that. The oracles workflow gains `sf`, `geos`, `s2`
+and `wk`; `arrow` and `duckdb` wait for the stages that compare with them.
+`arch.yaml` runs weekly, not on pull requests, because every dependency
+builds from source in its containers. The truncation test found a WKB
+reader over-read in `geoarrow-c`, fixed by zugeo's second patch (D22).
 
 **Exit criteria.**
 
