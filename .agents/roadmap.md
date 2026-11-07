@@ -20,7 +20,7 @@ with one sub-issue per stage;
 | 4 | [Exactness errors](#stage-4--exactness-errors) | quick | [#6](https://github.com/pedrobtz/zugeo/issues/6) | [#20](https://github.com/pedrobtz/zugeo/pull/20) | 2026-11-07 |
 | 5 | [Visitor, extents and kernels](#stage-5--visitor-extents-and-kernels) | quick | [#7](https://github.com/pedrobtz/zugeo/issues/7) | [#21](https://github.com/pedrobtz/zugeo/pull/21) | 2026-11-07 |
 | 6 | [Packed indexes](#stage-6--packed-indexes) | full | [#8](https://github.com/pedrobtz/zugeo/issues/8) | [#22](https://github.com/pedrobtz/zugeo/pull/22) | 2026-11-07 |
-| 7 | [GeoParquet](#stage-7--geoparquet) | quick | [#9](https://github.com/pedrobtz/zugeo/issues/9) | | |
+| 7 | [GeoParquet](#stage-7--geoparquet) | quick | [#9](https://github.com/pedrobtz/zugeo/issues/9) | [#23](https://github.com/pedrobtz/zugeo/pull/23) | 2026-11-07 |
 | 8 | [Documentation and benchmarks](#stage-8--documentation-and-benchmarks) | quick | [#10](https://github.com/pedrobtz/zugeo/issues/10) | | |
 | 9 | [Full CI](#stage-9--full-ci) | full | [#11](https://github.com/pedrobtz/zugeo/issues/11) | | |
 | 10 | [v0.1.0 readiness](#stage-10--v010-readiness) | full | [#12](https://github.com/pedrobtz/zugeo/issues/12) | | |
@@ -314,6 +314,16 @@ the recorded decision to move this to zugeo 0.2.0 (D12).
 
 **Design.** [§6.9](design.md#69-geoparquet),
 [§6.11](design.md#611-validation), D10, D12, D17.
+
+**Deviations (2026-11-07).** Built over `qio` 0.1.2, not 0.2.0: the
+maintainer took the qio work into 0.1.x ([pedrobtz/qio#22](https://github.com/pedrobtz/qio/pull/22)),
+so D12 is not invoked. `Suggests` names `qio (>= 0.1.1.9000)` with
+`Remotes: pedrobtz/qio` until 0.1.2 is on CRAN; `v0.1.0 readiness` raises
+it to `(>= 0.1.2)` and drops the remote. Two §6.9 items wait for qio's
+nested columns (its 0.2.0): reading GeoParquet 1.1's native GeoArrow
+encodings (a `zugeo_parquet_error` meanwhile) and `covering = TRUE` on
+write; reading a covering column's statistics for `bbox =` works now.
+Recorded in D23 of the design.
 
 ## Stage 8 — Documentation and benchmarks
 

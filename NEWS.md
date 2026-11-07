@@ -44,3 +44,11 @@
   `geo_query_nearest()` and `geo_join_box()` query them; `geo_join_box()`
   descends two indexes together. `geo_index_from_raw()` checks bytes before
   use.
+
+* With qio 0.1.2, `geo_read_parquet()` and `geo_write_parquet()` read and
+  write GeoParquet 2.0 and 1.1: WKB in the native `GEOMETRY` and
+  `GEOGRAPHY` types with the `geo` key beside them, CRS and edges checked
+  to agree, rows in Hilbert order, and `bbox =` skipping row groups by
+  their statistics. `geo_parquet_info()` reads the footer alone, and
+  `geo_validate_parquet()` reports what `gpq validate` checks, what
+  GeoParquet 2.0 adds and the distribution guide's advice.

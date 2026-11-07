@@ -9,8 +9,7 @@ covered): §1.6, D14 to D17.
 - **Status:** Proposed. Merging this file adopts the design as the starting
   point for the package's own `.agents/design.md`. Each decision in section
   13 stays the maintainer's until the package repository records it.
-  GeoParquet (§6.9) is gated on `qio` 0.2.0, which adds Parquet extension
-  types, and on `zuarrow` reading a union storage type under a registered
+  GeoParquet (§6.9) is gated on `qio` 0.1.2 (D23; first planned for 0.2.0), and on `zuarrow` reading a union storage type under a registered
   extension name (§15, Q1).
 - **Date:** 2026-11-04.
 - **Packages:** `zugeo` (not yet created; crandb returns `not_found` and
@@ -801,6 +800,30 @@ With `qio` 0.2.0 installed:
 - **Oracles.** DuckDB's spatial extension and GDAL through `sf` read
   every file zugeo writes, in the CI-only tests (§9).
 
+*Decided 2026-11-07 (Stage 7), D23:* built over `qio` 0.1.2 (its
+`geospatial_statistics()`, the native types on write, footer pairs and
+row-group selection), not 0.2.0, so D12 is not invoked. The signatures
+are `geo_read_parquet(path, bbox = NULL, columns = NULL)` and
+`geo_write_parquet(x, path, sort = "hilbert", version = "2.0",
+row_group_size = 100000L, compression = "zstd")`: the guide's 50,000 to
+200,000 rows and its zstd. `covering` is not an argument yet, and 1.1's
+native encodings are read as a `zugeo_parquet_error`, because both are
+nested columns qio cannot write or read until its 0.2.0. The CRS rules
+keep D6. A `geo` key must hold PROJJSON, so a CRS given as a code or WKT
+is written in the Parquet type alone and the key is left out, as the 2.0
+specification advises writers that cannot produce PROJJSON; version 1.1
+then raises `zugeo_crs_error`. OGC:CRS84 is written by omitting the key's
+`crs`, no CRS as `null` and `srid:0`, and PROJJSON over the Parquet
+type's 127 bytes under the footer key `projjson_crs_<column>`. On read,
+the key's and the type's CRS disagree only when
+`geo_crs_equal(level = "authority")` is `FALSE`: the specification lets
+them differ in form (a code beside PROJJSON), so `"identical"`, D14's
+level for zugeo's own checks, would reject conformant files. This
+comparison of two statements in one file is the one exception to D14;
+the key's PROJJSON is kept unless the two are identical. qio 0.1.2 also
+reads a native CRS of any length: carquet had cut it to 127 bytes,
+which zugeo found on the corpus's inline-PROJJSON files.
+
 ### 6.10 Coordinates as columns
 
 `geo_coords()` returns a data frame with one row per vertex: `x`, `y`,
@@ -828,12 +851,31 @@ ring orientation, a declared geometry type matching the values,
 coordinates finite except for empty points, and
 dimensions consistent within a feature. It reports and never repairs.
 
-`geo_validate_parquet()`, with `qio` 0.2.0, also checks the `geo` key
+`geo_validate_parquet()`, with `qio` 0.1.2, also checks the `geo` key
 against the schema, its `bbox` against the data, the native types'
 statistics against the data, and the best practices of the 2.0
 distribution guide that can be read from the file: spatial ordering,
 row-group sizes, compression. `metadata_only = TRUE` skips the data
 scan, as `gpq` does.
+
+*Decided 2026-11-07 (Stage 7):* one row per finding of `column`,
+`row_group`, `row`, `issue`, `severity` and `message`. Severity `"error"`
+is a break with the specification, mirroring `gpq validate`'s rules and
+adding 2.0's (native type present, CRS and edges agreeing, statistics
+covering their data); `"warning"` is a geometry finding of
+`geo_validate()` (winding only when `orientation` is declared) or the
+guide's advice (zstd, row groups over 200,000 rows, row-group boxes that
+overlap as unordered data does). PROJJSON is checked to be an object,
+not against its JSON schema. *Measured 2026-11-07 (Stage 7):* gpq
+v0.24.0 (2024-11) is older than parts of the specification, and the
+agreement test asserts each gap where it occurs rather than skip the
+file. It predates 1.1's native encodings; its Arrow Go v16 panics on the
+`GEOMETRY` and `GEOGRAPHY` logical types, so it reads no 2.0 file; its
+WKB decoder is 2D and it rejects the " M" and " ZM" type names, so files
+with Z or M fail; and it bounds an empty non-point geometry as (0, 0),
+failing the bbox check of every corpus file that has one. Everywhere
+else, the 2D `_geo` files, the plain native files and zugeo's 1.1 output,
+the two agree.
 
 ## 7. Vendored code
 
@@ -1073,6 +1115,10 @@ any of them.
   reader from now on. To be reported upstream.
 - **D17 (maintainer, 2026-11-05).** `geo_parquet_info()` joins the
   GeoParquet functions and shares their gate (D12).
+- **D23 (C, 2026-11-07, Stage 7).** GeoParquet over `qio` 0.1.2; a CRS
+  zugeo cannot state as PROJJSON leaves the `geo` key out rather than be
+  resolved; the key and the native type disagree only at the
+  `"authority"` level. §6.9 has the details.
 
 ## 14. Later versions, in the order they are expected
 
@@ -1158,8 +1204,10 @@ assumption is named.
   [pedrobtz/qio#21](https://github.com/pedrobtz/qio/issues/21): qio
   exposes the raw facts (native types with `crs` and algorithm, row-group
   bounds, footer pairs, row-group selection, and writing them), zugeo
-  owns the `geo` key and CRS meaning. The decision is qio's.* Blocks
-  Stage 7.
+  owns the `geo` key and CRS meaning. The decision is qio's.* *Answered
+  2026-11-07: as proposed, in qio 0.1.2 ([pedrobtz/qio#22](https://github.com/pedrobtz/qio/pull/22));
+  qio writes and reports the native types and statistics, zugeo the `geo`
+  key (D23).*
 - **Q5.** Does `sf::st_crs()` accept every string `geo_crs_text()`
   returns, PROJJSON included? *Verified 2026-11-07 (Stage 3):
   `sf::st_crs()` reads `OGC:CRS84`, `EPSG:4326`, `EPSG:3857` and a

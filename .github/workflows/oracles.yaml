@@ -8,7 +8,8 @@
 # zuarrow, geoarrow and nanoarrow for the coexistence test (Stage 0); sf,
 # geos, s2 and wk for interchange by WKB (Stage 3); duckdb, with its spatial
 # extension, for Hilbert keys (Stage 5); flatbush, kdbush and geo-index for
-# packed indexes (Stage 6). arrow joins with GeoParquet.
+# packed indexes (Stage 6); qio, DuckDB, gpq and, in its own job, GDAL for
+# GeoParquet (Stage 7).
 on:
   push:
     branches: [main]
@@ -39,6 +40,8 @@ jobs:
       ZUGEO_FETCH_FIXTURES: true
       ZUGEO_NODE_MODULES: /opt/zugeo-node
       ZUGEO_GEOINDEX_PYTHON: /opt/zugeo-py/bin/python
+      ZUGEO_GPQ: /opt/gpq/gpq
+      ZUGEO_PARQUET_OUT: /tmp/zugeo-parquet
       NOT_CRAN: true
     steps:
       - uses: actions/checkout@v6
@@ -63,6 +66,20 @@ jobs:
           python3 -m venv /opt/zugeo-py
           /opt/zugeo-py/bin/pip install geoindex-rs==0.1.0 numpy
 
+      # gpq for GeoParquet validation (test-ci-parquet.R, Stage 7), checked
+      # against the release's checksum.
+      - name: Install gpq
+        run: |
+          apt-get install -y --no-install-recommends curl ca-certificates
+          mkdir -p /opt/gpq
+          cd /opt/gpq
+          base=https://github.com/planetlabs/gpq/releases/download/v0.24.0
+          curl -fsSL -o gpq.tar.gz "$base/gpq-linux-amd64.tar.gz"
+          curl -fsSL -o checksums.txt "$base/checksums.txt"
+          grep ' gpq-linux-amd64.tar.gz$' checksums.txt | sed 's/gpq-linux-amd64.tar.gz/gpq.tar.gz/' | sha256sum -c -
+          tar xzf gpq.tar.gz gpq
+          ./gpq version
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: |
@@ -80,3 +97,25 @@ jobs:
         run: |
           devtools::test(filter = "^ci-", stop_on_failure = TRUE)
         shell: Rscript {0}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zugeo-parquet
+          path: /tmp/zugeo-parquet
+          if-no-files-found: error
+
+  # GDAL reads the files the oracle tests wrote, in GDAL's image: the GDAL
+  # behind sf is built without the Arrow-based Parquet driver.
+  gdal:
+    needs: oracles
+    runs-on: ubuntu-latest
+    container: ghcr.io/osgeo/gdal:ubuntu-full-3.13.2
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v4
+        with:
+          name: zugeo-parquet
+          path: /tmp/zugeo-parquet
+      - name: Read every file with GDAL
+        run: python3 tools/gdal-oracle.py /tmp/zugeo-parquet
