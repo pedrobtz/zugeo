@@ -1,4 +1,4 @@
-# zugeo 0.0.0.9000
+# zugeo 0.1.0
 
 * `zugeo_info()` reports the bundled geoarrow-c and nanoarrow versions and
   the GeoArrow specification version implemented.
