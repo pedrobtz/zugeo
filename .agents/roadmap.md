@@ -22,7 +22,7 @@ with one sub-issue per stage;
 | 6 | [Packed indexes](#stage-6--packed-indexes) | full | [#8](https://github.com/pedrobtz/zugeo/issues/8) | [#22](https://github.com/pedrobtz/zugeo/pull/22) | 2026-11-07 |
 | 7 | [GeoParquet](#stage-7--geoparquet) | quick | [#9](https://github.com/pedrobtz/zugeo/issues/9) | [#23](https://github.com/pedrobtz/zugeo/pull/23) | 2026-11-07 |
 | 8 | [Documentation and benchmarks](#stage-8--documentation-and-benchmarks) | quick | [#10](https://github.com/pedrobtz/zugeo/issues/10) | [#24](https://github.com/pedrobtz/zugeo/pull/24) | 2026-11-07 |
-| 9 | [Full CI](#stage-9--full-ci) | full | [#11](https://github.com/pedrobtz/zugeo/issues/11) | [#25](https://github.com/pedrobtz/zugeo/pull/25) | 2026-11-07 |
+| 9 | [Full CI](#stage-9--full-ci) | full | [#11](https://github.com/pedrobtz/zugeo/issues/11) | [#25](https://github.com/pedrobtz/zugeo/pull/25), [#27](https://github.com/pedrobtz/zugeo/pull/27) | 2026-11-07 |
 | 10 | [v0.1.0 readiness](#stage-10--v010-readiness) | full | [#12](https://github.com/pedrobtz/zugeo/issues/12) | [#26](https://github.com/pedrobtz/zugeo/pull/26) | |
 | 11 | [Review](#stage-11--review) | full | [#13](https://github.com/pedrobtz/zugeo/issues/13) | | |
 <!-- markdownlint-enable MD013 -->
@@ -375,7 +375,18 @@ green except gctorture's push run at `quick-step` 500, which ran past its
 10-minute budget once Stage 7's GeoParquet corpus tests joined the suite:
 no memory error, only time. `quick-step` is now 1000, as r-actions advises
 ("widen the step ... rather than gating tests"); step 20 runs by dispatch
-on this branch and daily on the default branch.
+on this branch and daily on the default branch. That dispatched step-20 run then
+[ran past the 240-minute job timeout](https://github.com/pedrobtz/zugeo/actions/runs/42374526935):
+the last scheduled one, before Stage 7, took 2h49m, and the 124-file
+GeoParquet corpus tests pushed it past four hours. Under gctorture
+(`R_ACTIONS_WORKFLOW=gctorture`) those tests now loop over a fixed
+11-file sample (`parquet_corpus_files()` in `helper-corpus.R`), and the
+job timeout is 330 minutes. `nosuggests` and `nold`, which the work list
+names, had never run: r-actions leaves them off unless the caller asks, and
+`R-CMD-check.yaml` now does. `nosuggests` then failed at once:
+`tests/testthat.R` loaded testthat unguarded, now behind
+`requireNamespace()` as zuarrow's is. Fixed in a second pull request,
+[#27](https://github.com/pedrobtz/zugeo/pull/27).
 
 ## Stage 10 — v0.1.0 readiness
 

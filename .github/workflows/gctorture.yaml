@@ -34,7 +34,8 @@ jobs:
       # Inverted, because `cond && 0 || 10` is always 10: an expression
       # treats 0 as false.
       test-timeout-minutes: ${{ (github.event_name != 'schedule' && github.event_name != 'workflow_dispatch') && 10 || 0 }}
-      timeout-minutes: 240
+      # 330 of GitHub's 360: step 20 took 2h49m before Stage 7 added GeoParquet.
+      timeout-minutes: 330
       env: |
         ZUGEO_FETCH_FIXTURES=true
 
