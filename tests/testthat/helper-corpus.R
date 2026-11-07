@@ -18,6 +18,20 @@ corpus_manifest <- function() corpus_read_manifest("corpus.txt")
 # The Parquet files, relative to the repository root.
 parquet_manifest <- function() corpus_read_manifest("corpus-parquet.txt")
 
+# The Parquet files the corpus tests loop over. Under gctorture (r-actions
+# sets R_ACTIONS_WORKFLOW) a fixed sample of each kind: all 124, each read,
+# written and validated, took step 20 past the job's four hours, and zugeo's
+# own C on this path is the WKB reader and writer, which the sample and the
+# unit tests reach.
+parquet_corpus_files <- function() {
+  files <- names(parquet_manifest())
+  if (identical(Sys.getenv("R_ACTIONS_WORKFLOW"), "gctorture")) {
+    keep <- "example_(point|polygon-z|geometrycollection)(_geo|_native)?\\.parquet$|vermont-(utm|crs84-wkt2)"
+    files <- files[grepl(keep, files)]
+  }
+  files
+}
+
 corpus_env <- new.env(parent = emptyenv())
 
 # The geoarrow-data checkout: the parent of ZUGEO_CORPUS_DIR's example/files,
