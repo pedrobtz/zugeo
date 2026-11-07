@@ -38,6 +38,8 @@ SEXP zgo_c_from_wkb(SEXP x);
 SEXP zgo_c_from_wkt(SEXP x);
 SEXP zgo_c_hex_to_raw(SEXP x);
 SEXP zgo_c_type_schema(SEXP type, SEXP metadata);
+SEXP zgo_c_check_inner_nulls(SEXP array);
+SEXP zgo_c_check_inner_nulls_union(SEXP array);
 SEXP zgo_c_coords(SEXP chunks, SEXP schema, SEXP chunk, SEXP row);
 SEXP zgo_c_from_coords(SEXP x, SEXP y, SEXP z, SEXP m, SEXP feature, SEXP part,
                        SEXP ring, SEXP n_features, SEXP type, SEXP out_type);

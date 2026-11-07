@@ -24,3 +24,8 @@
 * `geo_coords()`, `geo_from_coords()` and `geo_points()` move coordinates
   to and from columns; `geo_crs_text()` gives the CRS as one string for
   sf and PROJ.
+
+* Converting to WKB or WKT is an error when it would drop a non-planar
+  edge type from geometries with edges; `lossy = "warn"` or `"allow"`
+  converts anyway. A null inside a geometry is a layout error when a column
+  is read. `geo_coords()` carries the CRS and edges to `geo_from_coords()`.

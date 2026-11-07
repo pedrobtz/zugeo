@@ -67,12 +67,17 @@ static SEXP zgo_schema_handle_finalized(struct ArrowSchema *schema);
 
 /* ---- Scanning: which geometry types and dimensions a column holds ------ */
 
+#define ZGO_SCAN_DEPTH 32
+
 typedef struct {
   int depth;
   int types; /* bit t for top-level geometry type t (1 to 7) */
   int dims;  /* bit d for dimensions d (1 to 4) */
   int n_null;
-  int n_empty_point;
+  /* Whether any line or ring has two vertices or more: an edge, which a
+     non-planar edge type changes the meaning of (design section 6.3). */
+  int has_edges;
+  int type_at[ZGO_SCAN_DEPTH];
 } zgo_scan_state;
 
 static int zgo_scan_feat_start(struct GeoArrowVisitor *v) {
@@ -90,7 +95,18 @@ static int zgo_scan_geom_start(struct GeoArrowVisitor *v, enum GeoArrowGeometryT
     s->types |= 1 << (int)type;
     s->dims |= 1 << (int)dims;
   }
+  if (s->depth < ZGO_SCAN_DEPTH) s->type_at[s->depth] = (int)type;
   s->depth++;
+  return GEOARROW_OK;
+}
+static int zgo_scan_coords(struct GeoArrowVisitor *v, const struct GeoArrowCoordView *c) {
+  zgo_scan_state *s = (zgo_scan_state *)v->private_data;
+  int d = s->depth - 1;
+  if (d >= 0 && d < ZGO_SCAN_DEPTH && c->n_coords >= 2 &&
+      (s->type_at[d] == GEOARROW_GEOMETRY_TYPE_LINESTRING ||
+       s->type_at[d] == GEOARROW_GEOMETRY_TYPE_POLYGON)) {
+    s->has_edges = 1;
+  }
   return GEOARROW_OK;
 }
 static int zgo_scan_geom_end(struct GeoArrowVisitor *v) {
@@ -122,6 +138,7 @@ SEXP zgo_c_scan(SEXP chunks, SEXP schema, SEXP chunk, SEXP row) {
   vis.null_feat = &zgo_scan_null;
   vis.geom_start = &zgo_scan_geom_start;
   vis.geom_end = &zgo_scan_geom_end;
+  vis.coords = &zgo_scan_coords;
   vis.private_data = &state;
   vis.error = &error;
   for (R_xlen_t p = 0; p < n; p++) {
@@ -135,7 +152,7 @@ SEXP zgo_c_scan(SEXP chunks, SEXP schema, SEXP chunk, SEXP row) {
     }
   }
   zgo_scratch_run(scratch);
-  const char *names[] = {"types", "dims", "n_null", ""};
+  const char *names[] = {"types", "dims", "n_null", "has_edges", ""};
   SEXP out = PROTECT(Rf_mkNamed(VECSXP, names));
   int nt = 0;
   for (int t = 1; t <= 7; t++) nt += (state.types >> t) & 1;
@@ -152,6 +169,7 @@ SEXP zgo_c_scan(SEXP chunks, SEXP schema, SEXP chunk, SEXP row) {
   SET_VECTOR_ELT(out, 0, types);
   SET_VECTOR_ELT(out, 1, dims);
   SET_VECTOR_ELT(out, 2, Rf_ScalarInteger(state.n_null));
+  SET_VECTOR_ELT(out, 3, Rf_ScalarLogical(state.has_edges));
   UNPROTECT(4);
   return out;
 }

@@ -1,7 +1,24 @@
 # One chunk read from Arrow: every row, in order. Validates the layout and
 # metadata first, so a bad column fails as it is read.
 zgo_from_array <- function(array, schema, call) {
-  zgo_single_type(schema, call = call)
+  type <- zgo_single_type(schema, call = call)
+  inner <- if (type$encoding == "native" && type$geometry_type == "geometry") {
+    .Call(zgo_c_check_inner_nulls_union, array)
+  } else if (type$encoding %in% c("native", "box")) {
+    .Call(zgo_c_check_inner_nulls, array)
+  } else {
+    FALSE
+  }
+  if (inner) {
+    zgo_abort(
+      "layout",
+      paste(
+        "The column has a null inside a geometry (a coordinate, vertex,",
+        "ring or part); GeoArrow allows nulls only for whole geometries."
+      ),
+      call = call
+    )
+  }
   n <- .Call(zgo_c_array_length, array)
   if (n > .Machine$integer.max) {
     zgo_abort(NULL, "A GeoArrow array longer than 2^31 - 1 rows is not supported yet.",
