@@ -5120,10 +5120,16 @@ static inline int WKBReaderReadUInt32(struct WKBReaderPrivate* s, uint32_t* out,
   }
 }
 
+/* Modified for the zugeo R package (tools/patches/0002-wkb-reader-bounds.patch):
+   the size is computed in 64 bits, where the uint32_t product could wrap,
+   and the bytes the coordinates take are taken off size_bytes as well as
+   data, so a later read past a truncated buffer is caught instead of
+   reading beyond it. */
 static inline GeoArrowErrorCode WKBReaderReadNodeCoordinates(
     struct WKBReaderPrivate* s, uint32_t n_coords, uint32_t coord_size_elements,
     struct GeoArrowGeometryNode* node, struct GeoArrowError* error) {
-  int64_t bytes_needed = n_coords * coord_size_elements * sizeof(double);
+  int64_t bytes_needed =
+      (int64_t)n_coords * (int64_t)coord_size_elements * (int64_t)sizeof(double);
   if (s->size_bytes < bytes_needed) {
     GeoArrowErrorSet(
         error,
@@ -5142,6 +5148,7 @@ static inline GeoArrowErrorCode WKBReaderReadNodeCoordinates(
   }
 
   s->data += bytes_needed;
+  s->size_bytes -= bytes_needed;
   return GEOARROW_OK;
 }
 
@@ -7338,7 +7345,18 @@ int64_t GeoArrowPrintDouble(double f, uint32_t precision, char* result) {
 
 #else
 
+/* Modified for the zugeo R package (tools/patches/0001-zufast-numbers.patch):
+   at the default precision a number prints as zufast's shortest round-trip
+   text, positional or scientific, at most 25 characters of the 40 the
+   callers reserve, so WKT round-trips exactly (zugeo design D18). A lower
+   precision is the caller's opt-in to rounding and keeps upstream's path. */
+#include "zufast/number.h"
+
 int64_t GeoArrowPrintDouble(double f, uint32_t precision, char* result) {
+  if (precision >= 16) {
+    return (int64_t)zuf_format_f64(result, 40, f);
+  }
+
   // For very large numbers, use scientific notation ignoring user precision
   if (f > 1.0e17 || f < -1.0e17) {
     return snprintf(result, 40, "%0.*e", 16, f);
@@ -7374,32 +7392,19 @@ int64_t GeoArrowPrintDouble(double f, uint32_t precision, char* result) {
 
 #if !defined(GEOARROW_USE_FAST_FLOAT) || !GEOARROW_USE_FAST_FLOAT
 
+/* Modified for the zugeo R package (tools/patches/0001-zufast-numbers.patch):
+   numbers parse through zufast's correctly rounded parser on every platform
+   instead of strtod(), and a value outside the double range is an error
+   rather than an infinity or a zero (zugeo design D18). */
 GeoArrowErrorCode GeoArrowFromChars(const char* first, const char* last, double* out) {
-  if (first == last) {
+  if (first < last && *first == '+') {
+    first++;
+  }
+  zuf_result zugeo_result = zuf_parse_f64(first, last, out);
+  if (zugeo_result.status != ZUF_OK || zugeo_result.ptr != last) {
     return EINVAL;
   }
-
-  int64_t size_bytes = last - first;
-
-  // There is no guarantee that src.data is null-terminated. The maximum size of
-  // a double is 24 characters, but if we can't fit all of src for some reason, error.
-  char src_copy[64];
-  if (size_bytes >= ((int64_t)sizeof(src_copy))) {
-    return EINVAL;
-  }
-
-  memcpy(src_copy, first, size_bytes);
-  char* last_copy = src_copy + size_bytes;
-  *last_copy = '\0';
-
-  char* end_ptr;
-  double result = strtod(src_copy, &end_ptr);
-  if (end_ptr != last_copy) {
-    return EINVAL;
-  } else {
-    *out = result;
-    return GEOARROW_OK;
-  }
+  return GEOARROW_OK;
 }
 
 #endif

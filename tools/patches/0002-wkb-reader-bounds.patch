@@ -1,0 +1,28 @@
+--- a/geoarrow/geoarrow.c
++++ b/geoarrow/geoarrow.c
+@@ -5120,10 +5120,16 @@
+   }
+ }
+ 
++/* Modified for the zugeo R package (tools/patches/0002-wkb-reader-bounds.patch):
++   the size is computed in 64 bits, where the uint32_t product could wrap,
++   and the bytes the coordinates take are taken off size_bytes as well as
++   data, so a later read past a truncated buffer is caught instead of
++   reading beyond it. */
+ static inline GeoArrowErrorCode WKBReaderReadNodeCoordinates(
+     struct WKBReaderPrivate* s, uint32_t n_coords, uint32_t coord_size_elements,
+     struct GeoArrowGeometryNode* node, struct GeoArrowError* error) {
+-  int64_t bytes_needed = n_coords * coord_size_elements * sizeof(double);
++  int64_t bytes_needed =
++      (int64_t)n_coords * (int64_t)coord_size_elements * (int64_t)sizeof(double);
+   if (s->size_bytes < bytes_needed) {
+     GeoArrowErrorSet(
+         error,
+@@ -5142,6 +5148,7 @@
+   }
+ 
+   s->data += bytes_needed;
++  s->size_bytes -= bytes_needed;
+   return GEOARROW_OK;
+ }
+ 

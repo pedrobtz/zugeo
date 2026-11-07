@@ -10,7 +10,9 @@ Vendored dependency: geoarrow-c, with the nanoarrow core it ships
                  --symbol-namespace=ZugeoNanoarrow; the release archive is
                  checked by Apache's published SHA-512
   License:       Apache-2.0 (geoarrow-c, nanoarrow)
-  Local patches: none
+  Local patches: applied in this order, from tools/patches/
+                 0001-zufast-numbers.patch
+                 0002-wkb-reader-bounds.patch
 
 src/vendor/geoarrow/geoarrow.h and geoarrow.c are the output of
 upstream's CMake bundler (GEOARROW_BUNDLE=ON) with
@@ -20,9 +22,22 @@ how numbers are printed); the C++ geoarrow.hpp is left out.
 tools/derive-vendor is the derivation; tools/verify-vendor re-runs it
 and fails on any difference.
 
+Patches:
+  0001-zufast-numbers.patch  prints numbers in geoarrow.c through
+      zufast's shortest round-trip formatter at the default precision and
+      parses them with zufast's correctly rounded parser instead of
+      strtod(), so WKT round-trips exactly on every platform (zugeo design
+      D18, Q11). A value outside the double range becomes a parse error.
+  0002-wkb-reader-bounds.patch  makes the WKB reader take a coordinate
+      sequence's bytes off size_bytes as well as data, and compute their
+      size in 64 bits. Upstream advanced only data, so after one
+      coordinate sequence every bounds check counted bytes already read,
+      and a truncated buffer was read past its end (found by Stage 3's
+      truncation test). To be offered upstream.
+
 SHA-256 of every vendored file:
   c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4  geoarrow/LICENSE
-  67bc0638207e4b3c02be1fee6d026050c6e4e3b80cc65eb4bd0127b74c958f14  geoarrow/geoarrow.c
+  80ed08e08f6fd11cb30bbb6a12b5e853603056c0013535f2feae893c224600b6  geoarrow/geoarrow.c
   db0cde47d2c73bde8d4e87424daca74a5e9174b1eb80c84632b628ce121d5cac  geoarrow/geoarrow.h
   abdc436530c715318d843424f4f9b7b817f80f592678526942c2070ace3cba71  nanoarrow/LICENSE.txt
   09026abb630fd06cb418815d48535cd46cb102fe6fc307debb586fa2ac49482e  nanoarrow/NOTICE.txt
