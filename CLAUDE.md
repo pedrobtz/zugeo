@@ -210,19 +210,19 @@ of a mixed-dimension `sfc` drops Z, and wk prints the largest double as
 Calls from `pedrobtz/r-actions@v1`: `r-cmd-check.yml` (with Windows
 R-devel added to `runners`), `coverage.yml`, the native checks in
 `native-checks.yaml` (sanitizers with ASan, valgrind, LTO, rchk,
-analyzers, cran-special), `gctorture.yml` (quick step on pushes, step 20
-on a daily schedule), `vendor.yml`, and `vendor-upstream.yml` weekly.
-Its own workflows: `pkgdown.yaml`, `benchmark.yaml`, and `oracles.yaml`,
-which runs the `test-ci-*.R` files with `ZUGEO_ORACLES=true` because
-r-actions has no workflow for tests outside the tarball, in
-`rocker/r-ver` with Posit’s current binaries, with gpq v0.24.0
-(`ZUGEO_GPQ`), then a `gdal` job in `ghcr.io/osgeo/gdal` that reads the
-GeoParquet files the tests leave in `ZUGEO_PARQUET_OUT`
-(`tools/gdal-oracle.py`); `fuzz.yaml` fuzzes the vendored WKB and WKT
-readers (`tools/fuzz/harness.c`, seeds from `tools/fuzz/make-corpus.R`),
-short on pull requests and an hour weekly; `arch.yaml` runs the 32-bit
-and musl builds weekly. Stages 2, 3 and 6 are `full`, with the closing
-three.
+analyzers, cran-special), `gctorture.yml` (step 1000 on pull requests
+and pushes under a 10-minute budget, step 20 on a daily schedule),
+`vendor.yml`, and `vendor-upstream.yml` weekly. Its own workflows:
+`pkgdown.yaml`, `benchmark.yaml`, and `oracles.yaml`, which runs the
+`test-ci-*.R` files with `ZUGEO_ORACLES=true` because r-actions has no
+workflow for tests outside the tarball, in `rocker/r-ver` with Posit’s
+current binaries, with gpq v0.24.0 (`ZUGEO_GPQ`), then a `gdal` job in
+`ghcr.io/osgeo/gdal` that reads the GeoParquet files the tests leave in
+`ZUGEO_PARQUET_OUT` (`tools/gdal-oracle.py`); `fuzz.yaml` fuzzes the
+vendored WKB and WKT readers (`tools/fuzz/harness.c`, seeds from
+`tools/fuzz/make-corpus.R`), short on pull requests and an hour weekly;
+`arch.yaml` runs the 32-bit and musl builds weekly. Stages 2, 3 and 6
+are `full`, with the closing three.
 
 ## Vendored native code
 
