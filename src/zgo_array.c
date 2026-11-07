@@ -19,8 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "geoarrow/geoarrow.h"
-#include "nanoarrow/nanoarrow.h"
+#include "zgo_array.h"
 
 /* ---- Scratch: C resources an external pointer owns ------------------- */
 
@@ -30,7 +29,7 @@ typedef struct zgo_cleanup {
   struct zgo_cleanup *next;
 } zgo_cleanup;
 
-static void zgo_scratch_run(SEXP xptr) {
+void zgo_scratch_run(SEXP xptr) {
   zgo_cleanup *c = (zgo_cleanup *)R_ExternalPtrAddr(xptr);
   while (c != NULL) {
     zgo_cleanup *next = c->next;
@@ -41,7 +40,7 @@ static void zgo_scratch_run(SEXP xptr) {
   R_ClearExternalPtr(xptr);
 }
 
-static SEXP zgo_scratch_new(void) {
+SEXP zgo_scratch_new(void) {
   SEXP xptr = PROTECT(R_MakeExternalPtr(NULL, R_NilValue, R_NilValue));
   R_RegisterCFinalizerEx(xptr, &zgo_scratch_run, TRUE);
   UNPROTECT(1);
@@ -50,7 +49,7 @@ static SEXP zgo_scratch_new(void) {
 
 /* Registers `p` for `fn`; on allocation failure frees it at once and
    raises. */
-static void zgo_scratch_add(SEXP scratch, void (*fn)(void *), void *p) {
+void zgo_scratch_add(SEXP scratch, void (*fn)(void *), void *p) {
   zgo_cleanup *c = (zgo_cleanup *)malloc(sizeof(zgo_cleanup));
   if (c == NULL) {
     fn(p);
@@ -62,7 +61,7 @@ static void zgo_scratch_add(SEXP scratch, void (*fn)(void *), void *p) {
   R_SetExternalPtrAddr(scratch, c);
 }
 
-static void *zgo_scratch_alloc(SEXP scratch, size_t size, void (*reset)(void *)) {
+void *zgo_scratch_alloc(SEXP scratch, size_t size, void (*reset)(void *)) {
   void *p = calloc(1, size);
   if (p == NULL) Rf_error("Could not allocate memory.");
   zgo_scratch_add(scratch, reset, p);
@@ -74,7 +73,7 @@ static void zgo_free_view(void *p) {
   free(p);
 }
 
-static void zgo_free_array(void *p) {
+void zgo_free_array(void *p) {
   struct ArrowArray *a = (struct ArrowArray *)p;
   if (a->release != NULL) a->release(a);
   free(p);
@@ -89,9 +88,26 @@ static void zgo_reset_wkb_reader(void *p) {
   GeoArrowWKBReaderReset((struct GeoArrowWKBReader *)p);
 }
 
+static void zgo_reset_wkt_reader(void *p) {
+  GeoArrowWKTReaderReset((struct GeoArrowWKTReader *)p);
+}
+
+/* Both serialized readers, owned by scratch. 0 on success. */
+int zgo_readers_init(SEXP scratch, zgo_readers *readers) {
+  readers->wkb = (struct GeoArrowWKBReader *)zgo_scratch_alloc(
+      scratch, sizeof(struct GeoArrowWKBReader), free);
+  if (GeoArrowWKBReaderInit(readers->wkb) != GEOARROW_OK) return 1;
+  zgo_scratch_add(scratch, zgo_reset_wkb_reader, readers->wkb);
+  readers->wkt = (struct GeoArrowWKTReader *)zgo_scratch_alloc(
+      scratch, sizeof(struct GeoArrowWKTReader), free);
+  if (GeoArrowWKTReaderInit(readers->wkt) != GEOARROW_OK) return 1;
+  zgo_scratch_add(scratch, zgo_reset_wkt_reader, readers->wkt);
+  return 0;
+}
+
 /* ---- Handles and views ----------------------------------------------- */
 
-static const struct ArrowArray *zgo_array_from_xptr(SEXP x) {
+const struct ArrowArray *zgo_array_from_xptr(SEXP x) {
   if (TYPEOF(x) != EXTPTRSXP || !Rf_inherits(x, "nanoarrow_array")) {
     Rf_error("Expected an array handle.");
   }
@@ -100,17 +116,9 @@ static const struct ArrowArray *zgo_array_from_xptr(SEXP x) {
   return a;
 }
 
-typedef struct {
-  const struct ArrowSchema *schema;
-  int code;  /* zgo_extension_code() */
-  int dims;  /* for native types 1 to 6 */
-  int n_chunks;
-  struct ArrowArrayView **views;
-} zgo_column;
-
 /* Array views of every chunk, owned by `scratch`. NULL and a message on
    failure; nothing to free then beyond what scratch owns. */
-static const char *zgo_column_init(SEXP scratch, SEXP chunks, SEXP schema,
+const char *zgo_column_init(SEXP scratch, SEXP chunks, SEXP schema,
                                    zgo_column *col, char *message, size_t n) {
   col->schema = zgo_schema_from_xptr(schema);
   col->code = zgo_extension_code(col->schema);
@@ -139,7 +147,7 @@ static const char *zgo_column_init(SEXP scratch, SEXP chunks, SEXP schema,
 
 /* Is element i of view v null? A union has no validity of its own: an
    element is null when the child element it points to is. */
-static int zgo_is_null(const struct ArrowArrayView *v, int64_t i) {
+int zgo_is_null(const struct ArrowArrayView *v, int64_t i) {
   if (v->storage_type == NANOARROW_TYPE_DENSE_UNION ||
       v->storage_type == NANOARROW_TYPE_SPARSE_UNION) {
     int8_t k = ArrowArrayViewUnionChildIndex(v, i);
@@ -149,7 +157,7 @@ static int zgo_is_null(const struct ArrowArrayView *v, int64_t i) {
 }
 
 /* Reads the (chunk, row) of position p, 0-based, from R vectors; -1 for NA. */
-static int zgo_position(SEXP chunk, SEXP row, R_xlen_t p, int n_chunks, int64_t *out_row) {
+int zgo_position(SEXP chunk, SEXP row, R_xlen_t p, int n_chunks, int64_t *out_row) {
   int k = INTEGER(chunk)[p];
   double r = REAL(row)[p];
   if (k == NA_INTEGER || ISNAN(r)) return -1;
@@ -294,13 +302,19 @@ static int zgo_visit_union(const struct ArrowArrayView *v, int64_t i,
 }
 
 /* One feature: element r of the column's chunk view, or a null. */
-static int zgo_visit_feature(const zgo_column *col, int k, int64_t r,
-                             struct GeoArrowWKBReader *wkb, struct GeoArrowVisitor *vis) {
-  /* geoarrow-c's WKB visit makes its own feat_start() and feat_end(). */
+int zgo_visit_feature(const zgo_column *col, int k, int64_t r, zgo_readers *readers,
+                      struct GeoArrowVisitor *vis) {
+  /* geoarrow-c's WKB and WKT visits make their own feat_start() and
+     feat_end(). */
   if (col->code == ZGO_CODE_WKB && k >= 0 && !zgo_is_null(col->views[k], r)) {
     struct ArrowBufferView bytes = ArrowArrayViewGetBytesUnsafe(col->views[k], r);
     struct GeoArrowBufferView src = {bytes.data.as_uint8, bytes.size_bytes};
-    return GeoArrowWKBReaderVisit(wkb, src, vis);
+    return GeoArrowWKBReaderVisit(readers->wkb, src, vis);
+  }
+  if (col->code == ZGO_CODE_WKT && k >= 0 && !zgo_is_null(col->views[k], r)) {
+    struct ArrowStringView text = ArrowArrayViewGetStringUnsafe(col->views[k], r);
+    struct GeoArrowStringView src = {text.data, text.size_bytes};
+    return GeoArrowWKTReaderVisit(readers->wkt, src, vis);
   }
   ZGO_RETURN(vis->feat_start(vis));
   if (k < 0 || zgo_is_null(col->views[k], r)) {
@@ -383,17 +397,10 @@ SEXP zgo_c_format(SEXP chunks, SEXP schema, SEXP chunk, SEXP row, SEXP max_bytes
   /* Geometries: through geoarrow-c's WKT writer, one feature per position. */
   struct GeoArrowWKTWriter *writer = (struct GeoArrowWKTWriter *)zgo_scratch_alloc(
       scratch, sizeof(struct GeoArrowWKTWriter), free);
-  struct GeoArrowWKBReader *wkb = NULL;
   int status = GeoArrowWKTWriterInit(writer);
   if (status == GEOARROW_OK) {
     /* From now on the reset frees what Init allocated. */
     zgo_scratch_add(scratch, zgo_reset_wkt_writer, writer);
-    wkb = (struct GeoArrowWKBReader *)zgo_scratch_alloc(
-        scratch, sizeof(struct GeoArrowWKBReader), free);
-    status = GeoArrowWKBReaderInit(wkb);
-    if (status == GEOARROW_OK) {
-      zgo_scratch_add(scratch, zgo_reset_wkb_reader, wkb);
-    }
   }
   if (status != GEOARROW_OK) {
     zgo_scratch_run(scratch);
@@ -401,6 +408,11 @@ SEXP zgo_c_format(SEXP chunks, SEXP schema, SEXP chunk, SEXP row, SEXP max_bytes
   }
   writer->max_element_size_bytes = (int64_t)Rf_asReal(max_bytes);
 
+  zgo_readers readers;
+  if (zgo_readers_init(scratch, &readers)) {
+    zgo_scratch_run(scratch);
+    Rf_error("Could not start the geometry readers.");
+  }
   struct GeoArrowError error;
   error.message[0] = '\0';
   struct GeoArrowVisitor vis;
@@ -410,7 +422,7 @@ SEXP zgo_c_format(SEXP chunks, SEXP schema, SEXP chunk, SEXP row, SEXP max_bytes
   for (R_xlen_t p = 0; p < n && status == GEOARROW_OK; p++) {
     int64_t r = 0;
     int k = zgo_position(chunk, row, p, col.n_chunks, &r);
-    status = zgo_visit_feature(&col, k, r, wkb, &vis);
+    status = zgo_visit_feature(&col, k, r, &readers, &vis);
     /* EAGAIN: the writer reached max_element_size_bytes and stopped the
        feature early; it is ended here, as geoarrow-c's own reader does. */
     if (status == EAGAIN) status = vis.feat_end(&vis);
@@ -555,7 +567,7 @@ static void zgo_free_schema(void *p) {
   free(p);
 }
 
-static void zgo_array_finalize(SEXP xptr) {
+void zgo_array_finalize(SEXP xptr) {
   struct ArrowArray *a = (struct ArrowArray *)R_ExternalPtrAddr(xptr);
   if (a == NULL) return;
   if (a->release != NULL) a->release(a);

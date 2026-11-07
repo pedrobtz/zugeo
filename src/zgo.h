@@ -30,5 +30,16 @@ SEXP zgo_c_is_na(SEXP chunks, SEXP schema, SEXP chunk, SEXP row);
 SEXP zgo_c_format(SEXP chunks, SEXP schema, SEXP chunk, SEXP row, SEXP max_bytes);
 SEXP zgo_c_take(SEXP chunks, SEXP schema, SEXP chunk, SEXP row);
 SEXP zgo_c_array_length(SEXP array);
+SEXP zgo_c_scan(SEXP chunks, SEXP schema, SEXP chunk, SEXP row);
+SEXP zgo_c_write(SEXP chunks, SEXP schema, SEXP chunk, SEXP row, SEXP type,
+                 SEXP metadata, SEXP as_r);
+SEXP zgo_c_array_set_schema(SEXP array, SEXP schema);
+SEXP zgo_c_from_wkb(SEXP x);
+SEXP zgo_c_from_wkt(SEXP x);
+SEXP zgo_c_hex_to_raw(SEXP x);
+SEXP zgo_c_type_schema(SEXP type, SEXP metadata);
+SEXP zgo_c_coords(SEXP chunks, SEXP schema, SEXP chunk, SEXP row);
+SEXP zgo_c_from_coords(SEXP x, SEXP y, SEXP z, SEXP m, SEXP feature, SEXP part,
+                       SEXP ring, SEXP n_features, SEXP type, SEXP out_type);
 
 #endif

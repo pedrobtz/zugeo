@@ -25,6 +25,8 @@ Depends:
 Imports: 
     zuarrow,
     zujson
+LinkingTo: 
+    zufast
 Suggests: 
     testthat (>= 3.0.0),
     withr

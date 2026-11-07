@@ -1,36 +1,3 @@
-#' Geometry vectors over Arrow memory
-#'
-#' A `geo_vctr` is a vector of geometries that stay in the Arrow arrays they
-#' came in (design section 6.1). It is an integer vector of row positions
-#' into those arrays, so subsetting, reversing and sorting never copy a
-#' buffer; rows are gathered only when the vector is written back to Arrow.
-#' Reading a GeoArrow column with zuarrow gives one, once zugeo is loaded,
-#' and writing one gives the column back with its extension metadata
-#' unchanged.
-#'
-#' @param x An Arrow array handle of a GeoArrow field, from zuarrow or
-#'   nanoarrow, or a `geo_vctr`.
-#' @return A `geo_vctr`.
-#' @export
-#' @examples
-#' is_geo_vctr(1)
-geo_vctr <- function(x) {
-  call <- sys.call()
-  if (is_geo_vctr(x)) {
-    return(x)
-  }
-  if (!inherits(x, "nanoarrow_array")) {
-    zgo_abort(NULL, "`x` must be an Arrow array handle of a GeoArrow field.",
-      call = call
-    )
-  }
-  zgo_from_array(x, zuarrow::arrow_schema(x), call = call)
-}
-
-#' @rdname geo_vctr
-#' @export
-is_geo_vctr <- function(x) inherits(x, "geo_vctr")
-
 # One chunk read from Arrow: every row, in order. Validates the layout and
 # metadata first, so a bad column fails as it is read.
 zgo_from_array <- function(array, schema, call) {
