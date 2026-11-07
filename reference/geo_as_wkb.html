@@ -57,9 +57,9 @@ bare WKB and WKT have no place for one (design section 6.3).</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">geo_as_wkb</span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">geo_as_wkb</span><span class="op">(</span><span class="va">x</span>, lossy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"error"</span>, <span class="st">"warn"</span>, <span class="st">"allow"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">geo_as_wkt</span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
+<span><span class="fu">geo_as_wkt</span><span class="op">(</span><span class="va">x</span>, lossy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"error"</span>, <span class="st">"warn"</span>, <span class="st">"allow"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">geo_as_native</span><span class="op">(</span><span class="va">x</span>, layout <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"separated"</span>, <span class="st">"interleaved"</span><span class="op">)</span>, type <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -70,6 +70,14 @@ bare WKB and WKT have no place for one (design section 6.3).</p>
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
 <dd><p>A <code>geo_vctr</code>.</p></dd>
+
+
+<dt id="arg-lossy">lossy<a class="anchor" aria-label="anchor" href="#arg-lossy"></a></dt>
+<dd><p>What to do when the conversion would lose information: a
+non-planar edge type on geometries with edges, which WKB and WKT
+cannot carry. <code>"error"</code> (a <code>zugeo_edges_error</code>), <code>"warn"</code> (a
+<code>zugeo_edges_warning</code>) or <code>"allow"</code>. The CRS is never lost: it rides
+as the <code>crs</code> attribute.</p></dd>
 
 
 <dt id="arg-layout">layout<a class="anchor" aria-label="anchor" href="#arg-layout"></a></dt>

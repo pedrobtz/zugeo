@@ -1,11 +1,13 @@
 # Coordinates as columns
 
-`geo_coords()` gives one row per vertex: `x`, `y`, and `z` and `m` when
-present, with `feature` (the element of `x`), `part` (the simple
-geometry within a multi-geometry or collection) and `ring` (the polygon
-ring, `NA` outside polygons). Null and empty geometries have no rows.
-`geo_from_coords()` is the reverse for one native type, and
-`geo_points()` makes points straight from vectors (design section 6.10).
+`geo_coords()` gives one row per vertex, with the CRS and edge type as
+the attributes `crs` and `edges`, which `geo_from_coords()` takes back:
+`x`, `y`, and `z` and `m` when present, with `feature` (the element of
+`x`), `part` (the simple geometry within a multi-geometry or collection)
+and `ring` (the polygon ring, `NA` outside polygons). Null and empty
+geometries have no rows. `geo_from_coords()` is the reverse for one
+native type, and `geo_points()` makes points straight from vectors
+(design section 6.10).
 
 ## Usage
 
@@ -57,7 +59,8 @@ geo_points(
 - crs, edges:
 
   As for
-  [`geo_vctr()`](https://pedrobtz.github.io/zugeo/reference/geo_vctr.md).
+  [`geo_vctr()`](https://pedrobtz.github.io/zugeo/reference/geo_vctr.md);
+  by default the `crs` and `edges` attributes of `coords`.
 
 - layout:
 

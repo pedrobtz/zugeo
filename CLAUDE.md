@@ -39,8 +39,9 @@ interchange with sf, geos, s2 and wk by WKB. Stage 2 gave `geo_vctr`
 over Arrow memory, registered with zuarrow; Stage 1
 [`geo_type_of()`](https://pedrobtz.github.io/zugeo/reference/geo_type_of.md)
 and the CRS functions; Stage 0 the package, CI and vendored
-`geoarrow-c`. No exactness errors for edges yet (Stage 4). The roadmap
-in `.agents/roadmap.md` takes it to v0.1.0.
+`geoarrow-c`. No kernels or indexes yet (Stages 5 and 6). Stage 4
+(2026-11-07) added the `lossy` policy for edges and the inner-null
+layout check. The roadmap in `.agents/roadmap.md` takes it to v0.1.0.
 
 ## Versions and dependents
 

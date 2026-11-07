@@ -11,9 +11,9 @@ bare WKB and WKT have no place for one (design section 6.3).
 ## Usage
 
 ``` r
-geo_as_wkb(x)
+geo_as_wkb(x, lossy = c("error", "warn", "allow"))
 
-geo_as_wkt(x)
+geo_as_wkt(x, lossy = c("error", "warn", "allow"))
 
 geo_as_native(x, layout = c("separated", "interleaved"), type = NULL)
 ```
@@ -23,6 +23,13 @@ geo_as_native(x, layout = c("separated", "interleaved"), type = NULL)
 - x:
 
   A `geo_vctr`.
+
+- lossy:
+
+  What to do when the conversion would lose information: a non-planar
+  edge type on geometries with edges, which WKB and WKT cannot carry.
+  `"error"` (a `zugeo_edges_error`), `"warn"` (a `zugeo_edges_warning`)
+  or `"allow"`. The CRS is never lost: it rides as the `crs` attribute.
 
 - layout:
 
