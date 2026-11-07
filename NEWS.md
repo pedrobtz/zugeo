@@ -37,3 +37,10 @@
 * `geo_hilbert()` and `geo_sort()` give flatbush's Hilbert keys exactly,
   the same as DuckDB's `ST_Hilbert`. `geo_validate()` reports unclosed or
   short rings, non-finite coordinates, mixed dimensions and winding.
+
+* `geo_rtree()` and `geo_kdtree()` build packed indexes in flatbush's and
+  kdbush's formats, byte for byte, so `geo_index_raw()` bytes load in
+  flatbush, kdbush and geo-index. `geo_query_box()`, `geo_query_radius()`,
+  `geo_query_nearest()` and `geo_join_box()` query them; `geo_join_box()`
+  descends two indexes together. `geo_index_from_raw()` checks bytes before
+  use.

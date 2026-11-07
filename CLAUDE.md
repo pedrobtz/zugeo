@@ -40,7 +40,8 @@ the native types, coordinates as columns, exact WKT through zufast, and
 interchange with sf, geos, s2 and wk by WKB. Stage 2 gave `geo_vctr` over
 Arrow memory, registered with zuarrow; Stage 1 `geo_type_of()` and the
 CRS functions; Stage 0 the package, CI and vendored `geoarrow-c`. No
-indexes yet (Stage 6). Stage 4 (2026-11-07) added the `lossy` policy for
+GeoParquet yet (Stage 7). Stage 6 (2026-11-07) added the packed
+indexes. Stage 4 (2026-11-07) added the `lossy` policy for
 edges and the inner-null layout check; Stage 5 (2026-11-07) the kernels,
 `geo_extent`, Hilbert keys and `geo_validate()`. The roadmap in
 `.agents/roadmap.md` takes it to v0.1.0.
@@ -90,6 +91,10 @@ listed in `src/Makevars` (and its copy `Makevars.win`).
   the rows (`zgo_visit_feature()`, shared through `src/zgo_array.h`) into
   `geoarrow-c`'s `GeoArrowArrayWriter` of the target type; EWKB SRIDs
   are read before `geoarrow-c` sees the bytes.
+- `src/zgo_index.c` and `R/index.R`: the flatbush R-tree and kdbush
+  k-d tree, built step for step as the JavaScript builds them, with
+  queries and the two-tree join; `tools/index-oracle.mjs` compares the
+  bytes in node.
 - `src/zgo_kernel.c`, `R/kernel.R` and `R/extent.R`: the per-row
   kernels as one visitor pass, flatbush's Hilbert function, validation,
   and the `geo_extent` record vector.
@@ -120,7 +125,12 @@ listed in `src/Makevars` (and its copy `Makevars.win`).
   for line, and the grid mapping is `finish()`'s arithmetic in its order.
   `tests/testthat/data/hilbert-flatbush.csv` (made by
   `tools/make-hilbert-fixture.js` from flatbush's own source) and DuckDB
-  check it; Stage 6's index format depends on it.
+  check it; the index bytes depend on it.
+- **Index builds must stay byte-identical to flatbush and kdbush**: the
+  sorts in `src/zgo_index.c` are theirs, pivot and stack order included.
+  A tidier sort changes the bytes. Any offset or item number read from
+  index bytes is checked before use (`geo_index_from_raw()` takes
+  outside bytes).
 - **R CMD check's registration check needs every `.Call()` literal**:
   the routine named directly, never through a variable, and no literal
   `NA` among the arguments (it crashes the checker); use a named
@@ -155,7 +165,10 @@ union-encoded `geoarrow.geometry` file; Stage 2 makes one. Helpers:
 `helper-abi.R` reads the shared object's export and import tables
 (`nm`, or `objdump` on Windows; a failure on CI, a skip elsewhere);
 `helper-ci-oracles.R` has `skip_without_oracle()`, which fails under
-`ZUGEO_ORACLES=true`; `helper-schema.R` builds GeoArrow schemas from
+`ZUGEO_ORACLES=true` (the index oracles also need `ZUGEO_NODE_MODULES`,
+a directory with flatbush@4.7.0 and kdbush@4.1.0 installed, and
+`ZUGEO_GEOINDEX_PYTHON`, a Python with `geoindex-rs`); `helper-schema.R`
+builds GeoArrow schemas from
 specs (`ga_schema()`, `ga_union()`, `ga_field()`); `helper-corpus.R`
 fetches the corpus; `helper-vctr.R` reads the union fixture
 (`tests/testthat/data/geometry-union.arrows`, zuarrow's, from

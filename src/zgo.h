@@ -44,6 +44,13 @@ SEXP zgo_c_info_kernel(SEXP chunks, SEXP schema, SEXP chunk, SEXP row);
 SEXP zgo_c_hilbert(SEXP cx, SEXP cy, SEXP extent);
 SEXP zgo_c_validate(SEXP chunks, SEXP schema, SEXP chunk, SEXP row);
 SEXP zgo_c_geoarrow_box(SEXP array, SEXP schema);
+SEXP zgo_c_rtree_build(SEXP xmin, SEXP ymin, SEXP xmax, SEXP ymax, SEXP node_size);
+SEXP zgo_c_index_info(SEXP raw);
+SEXP zgo_c_rtree_search(SEXP raw, SEXP qminx, SEXP qminy, SEXP qmaxx, SEXP qmaxy);
+SEXP zgo_c_rtree_join(SEXP raw_a, SEXP raw_b);
+SEXP zgo_c_rtree_nearest(SEXP raw, SEXP x, SEXP y, SEXP k, SEXP max_distance);
+SEXP zgo_c_kdtree_build(SEXP x, SEXP y, SEXP node_size);
+SEXP zgo_c_kdtree_query(SEXP raw, SEXP mode, SEXP a, SEXP b, SEXP c, SEXP d);
 SEXP zgo_c_coords(SEXP chunks, SEXP schema, SEXP chunk, SEXP row);
 SEXP zgo_c_from_coords(SEXP x, SEXP y, SEXP z, SEXP m, SEXP feature, SEXP part,
                        SEXP ring, SEXP n_features, SEXP type, SEXP out_type);

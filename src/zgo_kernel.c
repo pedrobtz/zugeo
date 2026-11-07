@@ -190,7 +190,7 @@ SEXP zgo_c_info_kernel(SEXP chunks, SEXP schema, SEXP chunk, SEXP row) {
    rawrunprotected (public domain), line for line. flatbush shifts the
    result by -2^31 to keep JavaScript integers small; the unsigned value
    kept here sorts in the same order. */
-static uint32_t zgo_hilbert(uint32_t x, uint32_t y) {
+uint32_t zgo_hilbert_key(uint32_t x, uint32_t y) {
   uint32_t a = x ^ y;
   uint32_t b = 0xFFFF ^ a;
   uint32_t c = 0xFFFF ^ (x | y);
@@ -255,7 +255,7 @@ SEXP zgo_c_hilbert(SEXP cx, SEXP cy, SEXP extent) {
     /* Centres outside a given extent are clamped onto its edge. */
     hx = hx < 0 ? 0 : (hx > 65535 ? 65535 : hx);
     hy = hy < 0 ? 0 : (hy > 65535 ? 65535 : hy);
-    o[i] = (double)zgo_hilbert((uint32_t)hx, (uint32_t)hy);
+    o[i] = (double)zgo_hilbert_key((uint32_t)hx, (uint32_t)hy);
   }
   UNPROTECT(1);
   return out;
