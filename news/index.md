@@ -73,3 +73,21 @@
   [`geo_validate()`](https://pedrobtz.github.io/zugeo/reference/geo_validate.md)
   reports unclosed or short rings, non-finite coordinates, mixed
   dimensions and winding.
+
+- [`geo_rtree()`](https://pedrobtz.github.io/zugeo/reference/geo_rtree.md)
+  and
+  [`geo_kdtree()`](https://pedrobtz.github.io/zugeo/reference/geo_rtree.md)
+  build packed indexes in flatbush’s and kdbush’s formats, byte for
+  byte, so
+  [`geo_index_raw()`](https://pedrobtz.github.io/zugeo/reference/geo_rtree.md)
+  bytes load in flatbush, kdbush and geo-index.
+  [`geo_query_box()`](https://pedrobtz.github.io/zugeo/reference/geo_query_box.md),
+  [`geo_query_radius()`](https://pedrobtz.github.io/zugeo/reference/geo_query_box.md),
+  [`geo_query_nearest()`](https://pedrobtz.github.io/zugeo/reference/geo_query_box.md)
+  and
+  [`geo_join_box()`](https://pedrobtz.github.io/zugeo/reference/geo_query_box.md)
+  query them;
+  [`geo_join_box()`](https://pedrobtz.github.io/zugeo/reference/geo_query_box.md)
+  descends two indexes together.
+  [`geo_index_from_raw()`](https://pedrobtz.github.io/zugeo/reference/geo_rtree.md)
+  checks bytes before use.

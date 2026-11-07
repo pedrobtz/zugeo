@@ -30,6 +30,16 @@
 - [`geo_hilbert()`](https://pedrobtz.github.io/zugeo/reference/geo_hilbert.md)
   [`geo_sort()`](https://pedrobtz.github.io/zugeo/reference/geo_hilbert.md)
   : Hilbert keys and spatial sorting
+- [`geo_query_box()`](https://pedrobtz.github.io/zugeo/reference/geo_query_box.md)
+  [`geo_query_radius()`](https://pedrobtz.github.io/zugeo/reference/geo_query_box.md)
+  [`geo_query_nearest()`](https://pedrobtz.github.io/zugeo/reference/geo_query_box.md)
+  [`geo_join_box()`](https://pedrobtz.github.io/zugeo/reference/geo_query_box.md)
+  : Query packed indexes
+- [`geo_rtree()`](https://pedrobtz.github.io/zugeo/reference/geo_rtree.md)
+  [`geo_kdtree()`](https://pedrobtz.github.io/zugeo/reference/geo_rtree.md)
+  [`geo_index_raw()`](https://pedrobtz.github.io/zugeo/reference/geo_rtree.md)
+  [`geo_index_from_raw()`](https://pedrobtz.github.io/zugeo/reference/geo_rtree.md)
+  : Packed spatial indexes
 - [`geo_type_of()`](https://pedrobtz.github.io/zugeo/reference/geo_type_of.md)
   : Describe a GeoArrow field
 - [`geo_validate()`](https://pedrobtz.github.io/zugeo/reference/geo_validate.md)
