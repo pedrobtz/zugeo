@@ -1,0 +1,16 @@
+# 32-bit and musl builds (r-actions arch.yml), weekly: zugeo's sizes and
+# offsets are int64 arithmetic over Arrow buffers, which a 64-bit glibc
+# check never stresses. Every dependency builds from source in these
+# containers, so this stays off pull requests.
+on:
+  schedule:
+    - cron: "0 5 * * 2"
+  workflow_dispatch:
+
+name: arch
+
+permissions: read-all
+
+jobs:
+  arch:
+    uses: pedrobtz/r-actions/.github/workflows/arch.yml@v1

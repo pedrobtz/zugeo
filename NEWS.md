@@ -15,3 +15,12 @@
   positions, so subsetting, `rev()` and `c()` copy no buffer. With zugeo
   loaded, zuarrow reads every GeoArrow column as one and writes it back
   with its extension metadata unchanged; `format()` gives WKT.
+
+* `geo_vctr()` reads WKB, EWKB (its SRID becomes the CRS), hex WKB and WKT,
+  checking every element, and `geo_as_wkb()`, `geo_as_wkt()` and
+  `geo_as_native()` convert between encodings. Coordinates round-trip
+  through WKT bit for bit: numbers print as the shortest text that reads
+  back the same, through zufast.
+* `geo_coords()`, `geo_from_coords()` and `geo_points()` move coordinates
+  to and from columns; `geo_crs_text()` gives the CRS as one string for
+  sf and PROJ.

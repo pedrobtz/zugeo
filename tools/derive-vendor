@@ -74,6 +74,14 @@ NSRC="$WORK/$NANOARROW_TAG"
 cp "$WORK/nbundle/nanoarrow.c" "$WORK/nbundle/nanoarrow.h" "$TREE/nanoarrow/"
 cp "$NSRC/LICENSE.txt" "$NSRC/NOTICE.txt" "$TREE/nanoarrow/"
 
+# zugeo's local patches, in order (src/vendor/PROVENANCE lists them).
+ROOT=$(pwd)
+for p in "$ROOT"/tools/patches/*.patch; do
+  [ -f "$p" ] || continue
+  patch -s -p1 -d "$TREE" < "$p"
+done
+find "$TREE" \( -name '*.orig' -o -name '*.rej' \) -delete
+
 rm -rf "$OUT"
 mkdir -p "$(dirname "$OUT")"
 cp -R "$TREE" "$OUT"

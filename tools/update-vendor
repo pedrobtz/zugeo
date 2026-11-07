@@ -30,7 +30,8 @@ Vendored dependency: geoarrow-c, with the nanoarrow core it ships
                  --symbol-namespace=ZugeoNanoarrow; the release archive is
                  checked by Apache's published SHA-512
   License:       Apache-2.0 (geoarrow-c, nanoarrow)
-  Local patches: none
+  Local patches: applied in this order, from tools/patches/
+$(for p in tools/patches/*.patch; do [ -f "$p" ] && printf '                 %s\n' "$(basename "$p")"; done)
 
 src/vendor/geoarrow/geoarrow.h and geoarrow.c are the output of
 upstream's CMake bundler (GEOARROW_BUNDLE=ON) with
@@ -39,6 +40,19 @@ C++) and GEOARROW_USE_RYU=OFF (ryu's assert() calls; design Q11 decides
 how numbers are printed); the C++ geoarrow.hpp is left out.
 tools/derive-vendor is the derivation; tools/verify-vendor re-runs it
 and fails on any difference.
+
+Patches:
+  0001-zufast-numbers.patch  prints numbers in geoarrow.c through
+      zufast's shortest round-trip formatter at the default precision and
+      parses them with zufast's correctly rounded parser instead of
+      strtod(), so WKT round-trips exactly on every platform (zugeo design
+      D18, Q11). A value outside the double range becomes a parse error.
+  0002-wkb-reader-bounds.patch  makes the WKB reader take a coordinate
+      sequence's bytes off size_bytes as well as data, and compute their
+      size in 64 bits. Upstream advanced only data, so after one
+      coordinate sequence every bounds check counted bytes already read,
+      and a truncated buffer was read past its end (found by Stage 3's
+      truncation test). To be offered upstream.
 
 SHA-256 of every vendored file:
 HEADER

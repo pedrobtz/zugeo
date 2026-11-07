@@ -1,0 +1,40 @@
+# Coverage-guided fuzzing of the parsers zugeo hands untrusted input to:
+# geoarrow-c's WKB and WKT readers with zugeo's patches (tools/fuzz/harness.c,
+# design section 9). Pull requests get a short run; the weekly run is long,
+# and a finding fails it, with the input uploaded to replay.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "23 5 * * 3"
+  workflow_dispatch:
+
+name: fuzz
+
+permissions: read-all
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  fuzz:
+    uses: pedrobtz/r-actions/.github/workflows/fuzz.yml@v1
+    with:
+      harness: tools/fuzz/harness.c
+      # The vendored C alone: zugeo's own C talks to R. Listed, because the
+      # default src/*.c does not reach src/vendor/.
+      sources: |
+        src/vendor/geoarrow/geoarrow.c
+        src/vendor/nanoarrow/nanoarrow.c
+      seed-corpus: tools/fuzz/corpus
+      # geoarrow.c includes zufast/number.h (tools/patches/0001).
+      github-packages: pedrobtz/zufast
+      cflags: -g -O1 -fno-omit-frame-pointer -Isrc/vendor -I.github-packages/zufast/inst/include
+      max-total-time: ${{ github.event_name == 'schedule' && 3600 || 180 }}
+      timeout-minutes: ${{ github.event_name == 'schedule' && 75 || 20 }}
+
+# Scheduled findings could become issues through r-actions' report.yml,
+# which its README documents but its v1 tag does not carry yet; add that
+# job once it does. A failing weekly run shows on the Actions page.

@@ -618,6 +618,13 @@ and writes it and none of them has to be a dependency to do so.
   `geos::geos_write_wkb()` all arrive the same way, and a character
   vector as WKT. Both are parsed in C by `geoarrow-c` into native
   buffers with no R object per feature.
+  *Decided 2026-11-07 (Stage 3):* WKB is checked by parsing and stored
+  as ISO little-endian WKB in a `geoarrow.wkb` column; WKT is checked by
+  parsing and stored as given, byte for byte, in a `geoarrow.wkt`
+  column. Neither is turned into native buffers until
+  `geo_as_native()` asks, because a native type needs one geometry type
+  and WKB or WKT input often mixes them. A character vector whose every
+  element is hex text is hex WKB; anything else is WKT.
 - **Databases.** PostGIS returns EWKB, often as hex text, and DuckDB
   has `ST_AsHEXWKB`; `orb` and `go-geom` read both for that reason.
   `geo_vctr()` accepts EWKB and hex WKB as well. An EWKB SRID becomes a
@@ -985,6 +992,14 @@ any of them.
   only when its type ids are its child indices; zugeo builds against a
   copy of the schema whose unions are numbered `0..n-1` and rewrites the
   type id buffer to GeoArrow's ids after, which changes no value.
+- **D22 (C, 2026-11-07, Stage 3).** `geoarrow-c`'s WKB reader at
+  `b3db89f` reads past the end of a truncated buffer: after a coordinate
+  sequence it advances its data pointer but not its remaining size, so
+  every later bounds check counts bytes already read, and the size of
+  the sequence is a `uint32_t` product that can wrap. Stage 3's
+  truncation test returned garbage coordinates for WKB cut short by a
+  few bytes. `tools/patches/0002` fixes both; the fuzz target covers the
+  reader from now on. To be reported upstream.
 - **D17 (maintainer, 2026-11-05).** `geo_parquet_info()` joins the
   GeoParquet functions and shares their gate (D12).
 
@@ -1058,8 +1073,10 @@ assumption is named.
   needs.*
 - **Q2.** Should `geo_as_wkb()` mark its result with a class? *Decided
   2026-11-06: no, a plain list of raw vectors with the `crs`
-  attribute; a borrowed class would couple zugeo to `wk`. Stage 3
-  checks that `sf`, `geos` and `s2` accept it.*
+  attribute; a borrowed class would couple zugeo to `wk`. Verified
+  2026-11-07 (Stage 3): `sf::st_as_sfc()`, `geos::geos_read_wkb()` and
+  `s2::s2_geog_from_wkb()` take it; `wk::new_wk_wkb()` wants the list
+  without attributes.*
 - **Q3.** Does zugeo drop its own nanoarrow copy when zuarrow publishes
   a C table? *Decided 2026-11-06: not in 0.x. The copy costs 174 KB
   (D2); linking through zuarrow would tie zugeo's releases to its ABI.
@@ -1073,10 +1090,10 @@ assumption is named.
   owns the `geo` key and CRS meaning. The decision is qio's.* Blocks
   Stage 7.
 - **Q5.** Does `sf::st_crs()` accept every string `geo_crs_text()`
-  returns, PROJJSON included? *Assumed yes on 2026-11-06: GDAL's
-  `SetFromUserInput()` and PROJ's `proj_create()` read PROJJSON. The
-  Stage 3 oracle verifies it; if not, the documentation says to pass
-  the authority code or WKT2 instead.*
+  returns, PROJJSON included? *Verified 2026-11-07 (Stage 3):
+  `sf::st_crs()` reads `OGC:CRS84`, `EPSG:4326`, `EPSG:3857` and a
+  compact PROJJSON WGS 84 as `geo_crs_text()` writes them; the last
+  equals `st_crs(4326)`, though PROJ finds no EPSG code in it.*
 - **Q6.** Is v0.1.0 a CRAN submission? *Decided 2026-11-06: yes, after
   zuarrow is on CRAN, because `Remotes:` is refused there. #14 carries
   that as its first item.*
@@ -1087,7 +1104,11 @@ assumption is named.
   WKT number edge cases in Stage 3) as pull requests.*
 - **Q8.** Does `geoarrow-c`'s WKB reader keep EWKB's SRID? *Answered
   2026-11-06: it reads EWKB and discards the SRID; zugeo reads it
-  first (§6.6). Reported upstream with the metadata parser bug below.*
+  first (§6.6). Reported upstream as geoarrow/geoarrow-c#191.
+  Implemented 2026-11-07 (Stage 3) for the outer geometry, the one
+  PostGIS and DuckDB write; an SRID on a nested geometry is still read
+  past by `geoarrow-c` and dropped, which no producer zugeo knows of
+  writes.*
 - **Q9.** Do DuckDB's `ST_Hilbert`, `geopandas`' `hilbert_distance()`
   and flatbush use the same grid and curve orientation? *Decided
   2026-11-06: zugeo follows flatbush, because its index format depends
@@ -1097,8 +1118,12 @@ assumption is named.
   2026-11-06: renamed `geo_query_nearest()` (D19).*
 - **Q11.** `geoarrow-c`'s WKT writer prints at most 16 digits after the
   point, so small values lose digits and values below 1e-16 print as 0.
-  *Decided 2026-11-06: print and parse through `zufast` (D18). Stage 3's
-  property test proves the round trip.*
+  *Decided 2026-11-06: print and parse through `zufast` (D18).
+  Implemented 2026-11-07 (Stage 3) as `tools/patches/0001`; the
+  property test of §6.3 passes on every corpus coordinate and on edge
+  cases down to 5e-324. A number outside the double range (`1e400`) is
+  now a parse error rather than an infinity, and a leading `+` is
+  accepted as `strtod()` did.*
 
 Found while answering Q8, not yet reported upstream: `geoarrow-c`'s
 metadata parser (`metadata.c`, `crs_type`) compares the key rather than

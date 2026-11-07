@@ -32,6 +32,15 @@ static const R_CallMethodDef zgo_call_methods[] = {
     ZGO_CALL(zgo_c_format, 5),
     ZGO_CALL(zgo_c_take, 4),
     ZGO_CALL(zgo_c_array_length, 1),
+    ZGO_CALL(zgo_c_scan, 4),
+    ZGO_CALL(zgo_c_write, 7),
+    ZGO_CALL(zgo_c_array_set_schema, 2),
+    ZGO_CALL(zgo_c_from_wkb, 1),
+    ZGO_CALL(zgo_c_from_wkt, 1),
+    ZGO_CALL(zgo_c_hex_to_raw, 1),
+    ZGO_CALL(zgo_c_type_schema, 2),
+    ZGO_CALL(zgo_c_coords, 4),
+    ZGO_CALL(zgo_c_from_coords, 10),
     {NULL, NULL, 0}};
 
 void attribute_visible R_init_zugeo(DllInfo *dll) {
