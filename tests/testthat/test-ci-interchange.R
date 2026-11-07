@@ -5,8 +5,8 @@
 # significant digits by default.
 
 # A list of raw vectors with no attributes, as wk insists.
-bare_wkb <- function(x) {
-  out <- unclass(geo_as_wkb(x))
+bare_wkb <- function(x, lossy = "error") {
+  out <- unclass(geo_as_wkb(x, lossy = lossy))
   attributes(out) <- NULL
   out
 }
@@ -73,7 +73,9 @@ test_that("s2 reads geo_as_wkb() of points and polygons on the sphere", {
   skip_without_oracle("s2")
   x <- geo_vctr(c("POINT (30 10)", "LINESTRING (30 10, 10 30, 40 40)", "POLYGON ((0 0, 10 0, 0 10, 0 0))"),
     crs = "OGC:CRS84", edges = "spherical")
-  s <- s2::s2_geog_from_wkb(bare_wkb(x))
+  # s2 reads all WKB as spherical, so the edge type WKB drops is the one s2
+  # assumes: passing it on is allowed explicitly.
+  s <- s2::s2_geog_from_wkb(bare_wkb(x, lossy = "allow"))
   expect_length(s, 3L)
   back <- geo_vctr(unclass(s2::s2_as_binary(s)))
   expect_equal(geo_coords(back)$x, geo_coords(x)$x, tolerance = 1e-12)

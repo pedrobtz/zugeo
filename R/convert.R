@@ -39,6 +39,11 @@ zgo_check_vctr <- function(x, call) {
 #' where both appear; mixed types and geometry collections need WKB or WKT.
 #'
 #' @param x A `geo_vctr`.
+#' @param lossy What to do when the conversion would lose information: a
+#'   non-planar edge type on geometries with edges, which WKB and WKT
+#'   cannot carry. `"error"` (a `zugeo_edges_error`), `"warn"` (a
+#'   `zugeo_edges_warning`) or `"allow"`. The CRS is never lost: it rides
+#'   as the `crs` attribute.
 #' @param layout `"separated"` (a struct of coordinate arrays, as GeoArrow
 #'   advises) or `"interleaved"`.
 #' @param type `NULL` to infer, or one of `"point"`, `"linestring"`,
@@ -52,8 +57,11 @@ zgo_check_vctr <- function(x, call) {
 #' x <- geo_vctr(c("POINT (1 2)", "LINESTRING (0 0, 1 1)", NA))
 #' geo_as_wkt(x)
 #' lengths(geo_as_wkb(x))
-geo_as_wkb <- function(x) {
-  zgo_check_vctr(x, sys.call())
+geo_as_wkb <- function(x, lossy = c("error", "warn", "allow")) {
+  call <- sys.call()
+  lossy <- match.arg(lossy)
+  zgo_check_vctr(x, call)
+  zgo_check_edges_kept(x, lossy, "WKB", call)
   loc <- zgo_locate(x)
   out <- .Call(
     zgo_c_write, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row,
@@ -65,8 +73,11 @@ geo_as_wkb <- function(x) {
 
 #' @rdname geo_as_wkb
 #' @export
-geo_as_wkt <- function(x) {
-  zgo_check_vctr(x, sys.call())
+geo_as_wkt <- function(x, lossy = c("error", "warn", "allow")) {
+  call <- sys.call()
+  lossy <- match.arg(lossy)
+  zgo_check_vctr(x, call)
+  zgo_check_edges_kept(x, lossy, "WKT", call)
   loc <- zgo_locate(x)
   out <- .Call(
     zgo_c_write, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row,
@@ -114,6 +125,34 @@ geo_as_native <- function(x, layout = c("separated", "interleaved"), type = NULL
     as.integer(code), meta, FALSE
   )
   zgo_from_array(res$array, res$schema, call = call)
+}
+
+# Bare WKB and WKT have no place for an edge type, so non-planar edges are
+# lost in them, except where the geometries have no edges: points,
+# multipoints, empties (extension-types.md; design section 6.3).
+zgo_check_edges_kept <- function(x, lossy, encoding, call) {
+  edges <- geo_type_of(x)$edges
+  if (identical(edges, "planar")) {
+    return(invisible())
+  }
+  loc <- zgo_locate(x)
+  scan <- .Call(zgo_c_scan, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row)
+  if (!isTRUE(scan$has_edges)) {
+    return(invisible())
+  }
+  zgo_lossy(
+    lossy, "edges",
+    sprintf(
+      paste(
+        "%s has no place for the \"%s\" edge type, so its lines and rings would",
+        "read as planar. Keep the column in Arrow, or pass `lossy = \"warn\"`",
+        "or `\"allow\"` to write it anyway."
+      ),
+      encoding, edges
+    ),
+    call = call,
+    edges = edges
+  )
 }
 
 # The one native type holding top-level types `types` (1 to 7): a single
@@ -312,7 +351,8 @@ geo_crs_text <- function(x) {
 
 #' Coordinates as columns
 #'
-#' `geo_coords()` gives one row per vertex: `x`, `y`, and `z` and `m` when
+#' `geo_coords()` gives one row per vertex, with the CRS and edge type as
+#' the attributes `crs` and `edges`, which `geo_from_coords()` takes back: `x`, `y`, and `z` and `m` when
 #' present, with `feature` (the element of `x`), `part` (the simple geometry
 #' within a multi-geometry or collection) and `ring` (the polygon ring, `NA`
 #' outside polygons). Null and empty geometries have no rows.
@@ -329,7 +369,8 @@ geo_crs_text <- function(x) {
 #' @param n The number of features; by default the largest `feature`.
 #'   Features with no rows are empty.
 #' @param y,z,m Coordinate vectors; `z` and `m` may be `NULL`.
-#' @param crs,edges As for [geo_vctr()].
+#' @param crs,edges As for [geo_vctr()]; by default the `crs` and `edges`
+#'   attributes of `coords`.
 #' @param layout As for [geo_as_native()].
 #' @return `geo_coords()`: a data frame; the others: a `geo_vctr`.
 #' @export
@@ -341,7 +382,11 @@ geo_coords <- function(x) {
   zgo_check_vctr(x, sys.call())
   loc <- zgo_locate(x)
   res <- .Call(zgo_c_coords, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row)
-  as.data.frame(Filter(Negate(is.null), res))
+  out <- as.data.frame(Filter(Negate(is.null), res))
+  type <- geo_type_of(x)
+  attr(out, "crs") <- type$crs
+  attr(out, "edges") <- type$edges
+  out
 }
 
 #' @rdname geo_coords
@@ -350,6 +395,9 @@ geo_from_coords <- function(coords, type, n = NULL, crs = NULL, edges = NULL,
                             layout = c("separated", "interleaved")) {
   call <- sys.call()
   layout <- match.arg(layout)
+  # The CRS and edges geo_coords() carried, unless given.
+  if (is.null(crs)) crs <- attr(coords, "crs")
+  if (is.null(edges)) edges <- attr(coords, "edges")
   edges <- zgo_check_edges(edges, call)
   if (!(is.character(type) && length(type) == 1L && type %in% names(zgo_geometry_types))) {
     zgo_abort(NULL, "`type` must name a native geometry type.", call = call)

@@ -41,7 +41,8 @@ geo_points(
 \item{n}{The number of features; by default the largest \code{feature}.
 Features with no rows are empty.}
 
-\item{crs, edges}{As for \code{\link[=geo_vctr]{geo_vctr()}}.}
+\item{crs, edges}{As for \code{\link[=geo_vctr]{geo_vctr()}}; by default the \code{crs} and \code{edges}
+attributes of \code{coords}.}
 
 \item{layout}{As for \code{\link[=geo_as_native]{geo_as_native()}}.}
 
@@ -51,7 +52,8 @@ Features with no rows are empty.}
 \code{geo_coords()}: a data frame; the others: a \code{geo_vctr}.
 }
 \description{
-\code{geo_coords()} gives one row per vertex: \code{x}, \code{y}, and \code{z} and \code{m} when
+\code{geo_coords()} gives one row per vertex, with the CRS and edge type as
+the attributes \code{crs} and \code{edges}, which \code{geo_from_coords()} takes back: \code{x}, \code{y}, and \code{z} and \code{m} when
 present, with \code{feature} (the element of \code{x}), \code{part} (the simple geometry
 within a multi-geometry or collection) and \code{ring} (the polygon ring, \code{NA}
 outside polygons). Null and empty geometries have no rows.

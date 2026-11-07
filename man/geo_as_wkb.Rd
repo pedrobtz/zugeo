@@ -6,14 +6,20 @@
 \alias{geo_as_native}
 \title{Convert geometries between encodings}
 \usage{
-geo_as_wkb(x)
+geo_as_wkb(x, lossy = c("error", "warn", "allow"))
 
-geo_as_wkt(x)
+geo_as_wkt(x, lossy = c("error", "warn", "allow"))
 
 geo_as_native(x, layout = c("separated", "interleaved"), type = NULL)
 }
 \arguments{
 \item{x}{A \code{geo_vctr}.}
+
+\item{lossy}{What to do when the conversion would lose information: a
+non-planar edge type on geometries with edges, which WKB and WKT
+cannot carry. \code{"error"} (a \code{zugeo_edges_error}), \code{"warn"} (a
+\code{zugeo_edges_warning}) or \code{"allow"}. The CRS is never lost: it rides
+as the \code{crs} attribute.}
 
 \item{layout}{\code{"separated"} (a struct of coordinate arrays, as GeoArrow
 advises) or \code{"interleaved"}.}

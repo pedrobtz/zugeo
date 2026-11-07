@@ -648,3 +648,48 @@ SEXP zgo_c_take(SEXP chunks, SEXP schema, SEXP chunk, SEXP row) {
 SEXP zgo_c_array_length(SEXP array) {
   return Rf_ScalarReal((double)zgo_array_from_xptr(array)->length);
 }
+
+/* ---- Nulls inside geometries ------------------------------------------- */
+
+/* Whether array `a` (a level below the outer one) or anything under it has
+   a null. */
+static int zgo_has_inner_null(const struct ArrowArray *a) {
+  int64_t nulls = a->null_count;
+  if (nulls < 0) {
+    const uint8_t *validity = a->n_buffers > 0 ? (const uint8_t *)a->buffers[0] : NULL;
+    nulls = validity == NULL ? 0 : a->length - ArrowBitCountSet(validity, a->offset, a->length);
+  }
+  if (nulls > 0) return 1;
+  for (int64_t c = 0; c < a->n_children; c++) {
+    if (zgo_has_inner_null(a->children[c])) return 1;
+  }
+  return 0;
+}
+
+/* GeoArrow allows nulls only at the outer level (format.md, "Missing
+   values"), so a null below it is a layout error when a column is read
+   (design section 6.3). A union has no validity of its own: its outer
+   nulls are its children's, so the check starts one level further down
+   for it. Unions have no buffers[0] validity bitmap in Arrow. */
+SEXP zgo_c_check_inner_nulls(SEXP array_xptr) {
+  const struct ArrowArray *a = zgo_array_from_xptr(array_xptr);
+  int found = 0;
+  for (int64_t c = 0; c < a->n_children && !found; c++) {
+    const struct ArrowArray *child = a->children[c];
+    found = zgo_has_inner_null(child);
+  }
+  return Rf_ScalarLogical(found);
+}
+
+/* The same for a union's children, whose own validity is the union's. */
+SEXP zgo_c_check_inner_nulls_union(SEXP array_xptr) {
+  const struct ArrowArray *a = zgo_array_from_xptr(array_xptr);
+  int found = 0;
+  for (int64_t c = 0; c < a->n_children && !found; c++) {
+    const struct ArrowArray *child = a->children[c];
+    for (int64_t g = 0; g < child->n_children && !found; g++) {
+      found = zgo_has_inner_null(child->children[g]);
+    }
+  }
+  return Rf_ScalarLogical(found);
+}
