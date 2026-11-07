@@ -22,8 +22,8 @@ with one sub-issue per stage;
 | 6 | [Packed indexes](#stage-6--packed-indexes) | full | [#8](https://github.com/pedrobtz/zugeo/issues/8) | [#22](https://github.com/pedrobtz/zugeo/pull/22) | 2026-11-07 |
 | 7 | [GeoParquet](#stage-7--geoparquet) | quick | [#9](https://github.com/pedrobtz/zugeo/issues/9) | [#23](https://github.com/pedrobtz/zugeo/pull/23) | 2026-11-07 |
 | 8 | [Documentation and benchmarks](#stage-8--documentation-and-benchmarks) | quick | [#10](https://github.com/pedrobtz/zugeo/issues/10) | [#24](https://github.com/pedrobtz/zugeo/pull/24) | 2026-11-07 |
-| 9 | [Full CI](#stage-9--full-ci) | full | [#11](https://github.com/pedrobtz/zugeo/issues/11) | [#25](https://github.com/pedrobtz/zugeo/pull/25), [#27](https://github.com/pedrobtz/zugeo/pull/27) | |
-| 10 | [v0.1.0 readiness](#stage-10--v010-readiness) | full | [#12](https://github.com/pedrobtz/zugeo/issues/12) | | |
+| 9 | [Full CI](#stage-9--full-ci) | full | [#11](https://github.com/pedrobtz/zugeo/issues/11) | [#25](https://github.com/pedrobtz/zugeo/pull/25), [#27](https://github.com/pedrobtz/zugeo/pull/27) | 2026-11-07 |
+| 10 | [v0.1.0 readiness](#stage-10--v010-readiness) | full | [#12](https://github.com/pedrobtz/zugeo/issues/12) | [#26](https://github.com/pedrobtz/zugeo/pull/26) | |
 | 11 | [Review](#stage-11--review) | full | [#13](https://github.com/pedrobtz/zugeo/issues/13) | | |
 <!-- markdownlint-enable MD013 -->
 

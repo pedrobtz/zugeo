@@ -20,7 +20,7 @@ ring of fewer than four positions (\code{short_ring}), a linestring of one
 position (\code{short_linestring}), a coordinate that is not finite in a
 geometry other than an empty point (\code{non_finite}), parts of different
 dimensions in one geometry (\code{mixed_dimensions}), and rings against the
-RFC 7946 winding convention, exteriors counterclockwise
+RFC 7946 winding convention, exteriors anticlockwise
 (\code{exterior_clockwise}, \code{interior_counterclockwise}), which Simple
 Features does not require and are reported for information.
 }
