@@ -202,8 +202,8 @@ Z, and wk prints the largest double as `inf`.
 Calls from `pedrobtz/r-actions@v1`: `r-cmd-check.yml` (with Windows
 R-devel added to `runners`), `coverage.yml`, the native checks in
 `native-checks.yaml` (sanitizers with ASan, valgrind, LTO, rchk,
-analyzers, cran-special), `gctorture.yml` (quick step on pushes, step 20
-on a daily schedule), `vendor.yml`, and `vendor-upstream.yml` weekly.
+analyzers, cran-special), `gctorture.yml` (step 1000 on pull requests and pushes under a
+10-minute budget, step 20 on a daily schedule), `vendor.yml`, and `vendor-upstream.yml` weekly.
 Its own workflows: `pkgdown.yaml`, `benchmark.yaml`, and `oracles.yaml`, which runs the
 `test-ci-*.R` files with `ZUGEO_ORACLES=true` because r-actions has no
 workflow for tests outside the tarball, in `rocker/r-ver` with Posit's
