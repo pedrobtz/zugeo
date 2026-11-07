@@ -149,3 +149,17 @@ abi_windows_imports <- function(out) {
   }
   imports
 }
+
+# The names in the package's own object files, from the symbols.rds that R
+# CMD check writes beside the shared object, or NULL outside a check. R's
+# compiled-code check reports a symbol only when an object file references
+# it, which leaves out the C runtime the toolchain links in: MinGW's
+# startup code imports exit, abort and __acrt_iob_func on Windows.
+abi_object_symbols <- function() {
+  path <- file.path(dirname(abi_dll_path()), "symbols.rds")
+  if (!file.exists(path)) {
+    return(NULL)
+  }
+  tables <- readRDS(path)
+  sub("^_+", "", unique(unlist(lapply(tables, function(t) t[, "name"]))))
+}

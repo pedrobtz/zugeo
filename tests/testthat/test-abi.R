@@ -30,5 +30,14 @@ test_that("no symbol CRAN's compiled-code check reports is referenced", {
     "Rf_allocVector" %in% imports,
     label = paste("imports include Rf_allocVector:", paste(head(imports, 20), collapse = " "))
   )
-  expect_identical(intersect(imports, abi_forbidden), character())
+  found <- intersect(imports, abi_forbidden)
+  if (.Platform$OS.type == "windows") {
+    # As R CMD check does: only what zugeo's own objects reference counts.
+    objects <- abi_object_symbols()
+    if (is.null(objects)) {
+      skip("On Windows the runtime imports exit and abort; checked within R CMD check.")
+    }
+    found <- intersect(found, objects)
+  }
+  expect_identical(found, character())
 })

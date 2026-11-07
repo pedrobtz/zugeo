@@ -39,6 +39,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      # The image's repository is a snapshot from its R release (March 2026),
+      # which predates zujson and the decimal version zuarrow needs.
+      - name: Use the latest binary repository
+        run: |
+          echo 'options(repos = c(CRAN = "https://p3m.dev/cran/__linux__/noble/latest"))' \
+            >> "$(Rscript -e 'cat(R.home("etc"))')/Rprofile.site"
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: |
