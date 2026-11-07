@@ -41,6 +41,10 @@ static const R_CallMethodDef zgo_call_methods[] = {
     ZGO_CALL(zgo_c_type_schema, 2),
     ZGO_CALL(zgo_c_check_inner_nulls, 1),
     ZGO_CALL(zgo_c_check_inner_nulls_union, 1),
+    ZGO_CALL(zgo_c_info_kernel, 4),
+    ZGO_CALL(zgo_c_hilbert, 3),
+    ZGO_CALL(zgo_c_validate, 4),
+    ZGO_CALL(zgo_c_geoarrow_box, 2),
     ZGO_CALL(zgo_c_coords, 4),
     ZGO_CALL(zgo_c_from_coords, 10),
     {NULL, NULL, 0}};

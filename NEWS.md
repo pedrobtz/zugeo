@@ -29,3 +29,11 @@
   edge type from geometries with edges; `lossy = "warn"` or `"allow"`
   converts anyway. A null inside a geometry is a layout error when a column
   is read. `geo_coords()` carries the CRS and edges to `geo_from_coords()`.
+
+* `geo_box()`, `geo_box_all()`, `geo_types()`, `geo_dims()` and
+  `geo_n_coords()` compute over the coordinate buffers; boxes are
+  `geo_extent` vectors with `geo_extent_union()`, `geo_extent_intersection()`
+  and `geo_extent_intersects()`.
+* `geo_hilbert()` and `geo_sort()` give flatbush's Hilbert keys exactly,
+  the same as DuckDB's `ST_Hilbert`. `geo_validate()` reports unclosed or
+  short rings, non-finite coordinates, mixed dimensions and winding.
