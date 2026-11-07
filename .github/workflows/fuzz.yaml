@@ -1,7 +1,7 @@
 # Coverage-guided fuzzing of the parsers zugeo hands untrusted input to:
 # geoarrow-c's WKB and WKT readers with zugeo's patches (tools/fuzz/harness.c,
 # design section 9). Pull requests get a short run; the weekly run is long,
-# and its findings become issues.
+# and a finding fails it, with the input uploaded to replay.
 on:
   push:
     branches: [main]
@@ -34,15 +34,6 @@ jobs:
       max-total-time: ${{ github.event_name == 'schedule' && 3600 || 180 }}
       timeout-minutes: ${{ github.event_name == 'schedule' && 75 || 20 }}
 
-  report:
-    needs: fuzz
-    if: ${{ always() && github.event_name == 'schedule' && needs.fuzz.result != 'skipped' }}
-    permissions:
-      issues: write
-    uses: pedrobtz/r-actions/.github/workflows/report.yml@v1
-    with:
-      name: fuzz
-      result: ${{ needs.fuzz.result }}
-      finding: ${{ needs.fuzz.outputs.finding }}
-      key: ${{ needs.fuzz.outputs.finding-key }}
-      details: ${{ needs.fuzz.outputs.report }}
+# Scheduled findings could become issues through r-actions' report.yml,
+# which its README documents but its v1 tag does not carry yet; add that
+# job once it does. A failing weekly run shows on the Actions page.
