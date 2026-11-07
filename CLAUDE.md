@@ -33,14 +33,18 @@ adopted from RFC 0071. It outranks this file.
 
 ## Current state
 
-Stage 1 (2026-11-06):
-[`geo_type_of()`](https://pedrobtz.github.io/zugeo/reference/geo_type_of.md)
-reads every GeoArrow 0.2 schema,
+Stage 2 (2026-11-06): `geo_vctr` over Arrow memory, registered with
+zuarrow for every GeoArrow name, with subsetting,
+[`c()`](https://rdrr.io/r/base/c.html),
+[`is.na()`](https://rdrr.io/r/base/NA.html),
+[`format()`](https://rdrr.io/r/base/format.html) as WKT and export.
+Stage 1 gave
+[`geo_type_of()`](https://pedrobtz.github.io/zugeo/reference/geo_type_of.md),
 [`geo_crs()`](https://pedrobtz.github.io/zugeo/reference/geo_crs.md) and
-[`geo_crs_equal()`](https://pedrobtz.github.io/zugeo/reference/geo_crs_equal.md)
-carry and compare CRSs. Stage 0 set up the package, CI and the vendored
-`geoarrow-c`. No geometry values yet: `geo_vctr` is Stage 2. The roadmap
-in `.agents/roadmap.md` takes it to v0.1.0.
+[`geo_crs_equal()`](https://pedrobtz.github.io/zugeo/reference/geo_crs_equal.md);
+Stage 0 the package, CI and vendored `geoarrow-c`. No encoding
+conversions yet (Stage 3). The roadmap in `.agents/roadmap.md` takes it
+to v0.1.0.
 
 ## Versions and dependents
 
@@ -53,7 +57,7 @@ consumers (design §3).
 
 - `tools/verify-vendor`: re-derives `src/vendor/` from the pinned commit
   and fails on any difference. CI runs it (`vendor.yaml`). Needs
-  `cmake`, `curl` and `shasum`.
+  `cmake`, `curl`, `shasum` and `python3`.
 - `tools/update-vendor`: after changing a pin in `tools/derive-vendor`,
   re-derives the tree and rewrites `src/vendor/PROVENANCE`; then update
   the commit in `src/zgo.h` and the versions in `test-info.R`,
@@ -78,6 +82,13 @@ listed in `src/Makevars` (and its copy `Makevars.win`).
 - `R/type.R` turns the C description into a `zugeo_type` and parses the
   extension metadata with zujson; `R/crs.R` is `zugeo_crs`,
   classification and the three equality levels.
+- `src/zgo_array.c`: [`is.na()`](https://rdrr.io/r/base/NA.html),
+  [`format()`](https://rdrr.io/r/base/format.html) and gathering over a
+  `geo_vctr`’s chunks; the native walk into `geoarrow-c`’s
+  `GeoArrowVisitor` (design D21).
+- `R/vctr.R`: the `geo_vctr` class (positions plus `chunks`, `starts`,
+  `schema` attributes) and its methods; `R/zzz.R` registers the eleven
+  names and the class with zuarrow in `.onLoad()`.
 
 ## Invariants that are easy to break
 
@@ -108,6 +119,14 @@ listed in `src/Makevars` (and its copy `Makevars.win`).
   `zugeo_<kind>_error`. Plain `Rf_error()` is only for misuse of an
   internal routine. C that holds heap memory must not call R in between
   (`zgo_build.c` lets the external pointer own the schema first).
+  `zgo_array.c` registers every view, writer and built array with a
+  scratch external pointer as soon as it exists; keep that pattern for
+  new C.
+- **Unions are built with type ids `0..n-1` and remapped** (design D21):
+  nanoarrow builds no other. A new builder over unions must do the same.
+- **`geoarrow-c`’s WKB visit emits its own `feat_start()` and
+  `feat_end()`**, and a visitor returning `EAGAIN` (the WKT writer’s
+  size limit) leaves the caller to call `feat_end()`.
 
 ## Testing
 
@@ -120,11 +139,13 @@ or `objdump` on Windows; a failure on CI, a skip elsewhere);
 `helper-ci-oracles.R` has `skip_without_oracle()`, which fails under
 `ZUGEO_ORACLES=true`; `helper-schema.R` builds GeoArrow schemas from
 specs (`ga_schema()`, `ga_union()`, `ga_field()`); `helper-corpus.R`
-fetches the corpus. The corpus is never in the package (no licence): it
-is fetched from `geoarrow-data` at commit `e8eaa04` when
-`ZUGEO_FETCH_FIXTURES=true` (set in every CI workflow), or read from
-`ZUGEO_CORPUS_DIR`, and checked against `tests/testthat/corpus.txt`;
-otherwise the corpus tests skip.
+fetches the corpus; `helper-vctr.R` reads the union fixture
+(`tests/testthat/data/geometry-union.arrows`, zuarrow’s, from
+`tools/make-union-fixture.py`) and round-trips data frames. The corpus
+is never in the package (no licence): it is fetched from `geoarrow-data`
+at commit `e8eaa04` when `ZUGEO_FETCH_FIXTURES=true` (set in every CI
+workflow), or read from `ZUGEO_CORPUS_DIR`, and checked against
+`tests/testthat/corpus.txt`; otherwise the corpus tests skip.
 
 ## Continuous integration
 
@@ -142,7 +163,8 @@ with the closing three.
 
 `geoarrow-c` at commit `b3db89f` (0.2.0-SNAPSHOT, Apache-2.0), bundled
 by upstream’s CMake bundler with `GEOARROW_NAMESPACE=Zugeo` and without
-fast_float or ryu, and the nanoarrow 0.8.0 core `geoarrow-c` vendors,
-namespaced as `ZugeoNanoarrow` in `src/Makevars`. No local patches.
+fast_float or ryu, and the nanoarrow 0.9.0 release core (not the 0.8.0
+`geoarrow-c` pins, which GCC 16 warns on), bundled by nanoarrow’s own
+`bundle.py` and namespaced as `ZugeoNanoarrow`. No local patches.
 `src/vendor/PROVENANCE` has the pins and checksums; `inst/COPYRIGHTS`
 the notices.

@@ -18,10 +18,10 @@ geo_type_of(x)
 
 - x:
 
-  An Arrow schema, array or stream handle, from zuarrow or nanoarrow. A
-  field with a `geoarrow.*` extension name is described directly; a
-  struct, such as a stream's schema, has each of its GeoArrow fields
-  described.
+  An Arrow schema, array or stream handle, from zuarrow or nanoarrow, or
+  a `geo_vctr`. A field with a `geoarrow.*` extension name is described
+  directly; a struct, such as a stream's schema, has each of its
+  GeoArrow fields described.
 
 ## Value
 

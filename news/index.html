@@ -37,6 +37,7 @@
 <ul><li><p><code><a href="../reference/zugeo_info.html">zugeo_info()</a></code> reports the bundled geoarrow-c and nanoarrow versions and the GeoArrow specification version implemented.</p></li>
 <li><p><code><a href="../reference/geo_type_of.html">geo_type_of()</a></code> describes a GeoArrow field from its Arrow schema: every GeoArrow 0.2 extension name, both coordinate layouts, <code>list</code> and <code>large_list</code> offsets and the view storage types, with layout errors for what the specification forbids.</p></li>
 <li><p><code><a href="../reference/geo_crs.html">geo_crs()</a></code> carries a coordinate reference system exactly as given, typed as GeoArrow asks, and <code><a href="../reference/geo_crs_equal.html">geo_crs_equal()</a></code> compares two at three levels without PROJ.</p></li>
+<li><p><code>geo_vctr</code> holds geometries in the Arrow arrays they were read in, as positions, so subsetting, <code><a href="https://rdrr.io/r/base/rev.html" class="external-link">rev()</a></code> and <code><a href="https://rdrr.io/r/base/c.html" class="external-link">c()</a></code> copy no buffer. With zugeo loaded, zuarrow reads every GeoArrow column as one and writes it back with its extension metadata unchanged; <code><a href="https://rdrr.io/r/base/format.html" class="external-link">format()</a></code> gives WKT.</p></li>
 </ul></div>
   </main></div>
 
