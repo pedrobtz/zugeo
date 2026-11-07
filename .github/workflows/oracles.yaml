@@ -7,7 +7,8 @@
 #
 # zuarrow, geoarrow and nanoarrow for the coexistence test (Stage 0); sf,
 # geos, s2 and wk for interchange by WKB (Stage 3); duckdb, with its spatial
-# extension, for Hilbert keys (Stage 5). arrow joins with GeoParquet.
+# extension, for Hilbert keys (Stage 5); flatbush, kdbush and geo-index for
+# packed indexes (Stage 6). arrow joins with GeoParquet.
 on:
   push:
     branches: [main]
@@ -36,6 +37,8 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       ZUGEO_ORACLES: true
       ZUGEO_FETCH_FIXTURES: true
+      ZUGEO_NODE_MODULES: /opt/zugeo-node
+      ZUGEO_GEOINDEX_PYTHON: /opt/zugeo-py/bin/python
       NOT_CRAN: true
     steps:
       - uses: actions/checkout@v6
@@ -46,6 +49,19 @@ jobs:
         run: |
           echo 'options(repos = c(CRAN = "https://p3m.dev/cran/__linux__/noble/latest"))' \
             >> "$(Rscript -e 'cat(R.home("etc"))')/Rprofile.site"
+
+      # flatbush and kdbush in node, and geo-index in Python, for the index
+      # oracles (test-ci-index.R, Stage 6).
+      - name: Install the index oracles
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends nodejs npm python3-venv
+          mkdir -p /opt/zugeo-node
+          cd /opt/zugeo-node
+          npm init -y > /dev/null
+          npm install flatbush@4.7.0 kdbush@4.1.0
+          python3 -m venv /opt/zugeo-py
+          /opt/zugeo-py/bin/pip install geoindex-rs==0.1.0 numpy
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:

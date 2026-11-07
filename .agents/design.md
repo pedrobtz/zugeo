@@ -750,6 +750,24 @@ Both indexes are immutable and bulk-loaded, and each is one raw vector.
   GeometryOps.jl's `dual_depth_first_search` does; the result is the
   same set of pairs, cheaper when both sides are large. Refining
   candidates with an exact predicate is GEOS's job.
+- *Decided 2026-11-07 (Stage 6):* builds follow flatbush v4.7.0 and
+  kdbush v4.1.0 step for step, their sorts included (flatbush's
+  quicksort that stops inside a node, kdbush's Floyd-Rivest selection
+  with its sampling arithmetic), because the bytes depend on the order:
+  on 1 to 70 000 items the bytes equal the libraries' own in node
+  (`tools/index-oracle.mjs`, `test-ci-index.R`). Null and empty
+  geometries are left out of an index; queries return positions in the
+  indexed vector, and an index read from raw bytes numbers its items 1
+  to n. One query returns a sorted integer vector, several a data frame
+  of `query` and `row`; `geo_query_nearest()` returns `query`, `row` and
+  `distance` nearest first. Every node offset and item number read from
+  bytes is checked before use, so corrupt bytes are a
+  `zugeo_index_error`. The k-d tree takes points only, and nearest
+  neighbours are the R-tree's; indexes are little-endian, as flatbush
+  writes them. *geo-index's Python package (`geoindex-rs` 0.1.0, the
+  only release) builds from arrays but neither reads nor writes bytes*,
+  so that leg compares query results over the same boxes, and the
+  cross-language claim rests on flatbush and kdbush.
 - **Queries** are box intersection, radius (k-d tree), and k nearest
   by box distance. Exact nearest by geometry distance needs a distance
   function, so `geo_query_nearest()` returns box-distance candidates and says
