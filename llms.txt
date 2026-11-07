@@ -27,15 +27,25 @@ library(zugeo)
 
 ## All functions
 
+- [`geo_as_wkb()`](https://pedrobtz.github.io/zugeo/reference/geo_as_wkb.md)
+  [`geo_as_wkt()`](https://pedrobtz.github.io/zugeo/reference/geo_as_wkb.md)
+  [`geo_as_native()`](https://pedrobtz.github.io/zugeo/reference/geo_as_wkb.md)
+  : Convert geometries between encodings
+- [`geo_coords()`](https://pedrobtz.github.io/zugeo/reference/geo_coords.md)
+  [`geo_from_coords()`](https://pedrobtz.github.io/zugeo/reference/geo_coords.md)
+  [`geo_points()`](https://pedrobtz.github.io/zugeo/reference/geo_coords.md)
+  : Coordinates as columns
 - [`geo_crs()`](https://pedrobtz.github.io/zugeo/reference/geo_crs.md) :
   Coordinate reference systems, carried exactly
 - [`geo_crs_equal()`](https://pedrobtz.github.io/zugeo/reference/geo_crs_equal.md)
   : Compare two coordinate reference systems without PROJ
+- [`geo_crs_text()`](https://pedrobtz.github.io/zugeo/reference/geo_crs_text.md)
+  : The CRS as one string for other packages
 - [`geo_type_of()`](https://pedrobtz.github.io/zugeo/reference/geo_type_of.md)
   : Describe a GeoArrow field
 - [`geo_vctr()`](https://pedrobtz.github.io/zugeo/reference/geo_vctr.md)
   [`is_geo_vctr()`](https://pedrobtz.github.io/zugeo/reference/geo_vctr.md)
-  : Geometry vectors over Arrow memory
+  : Make geometry vectors from WKB, WKT or Arrow
 - [`zugeo_info()`](https://pedrobtz.github.io/zugeo/reference/zugeo_info.md)
   : Versions zugeo is built from
 

@@ -33,18 +33,14 @@ adopted from RFC 0071. It outranks this file.
 
 ## Current state
 
-Stage 2 (2026-11-06): `geo_vctr` over Arrow memory, registered with
-zuarrow for every GeoArrow name, with subsetting,
-[`c()`](https://rdrr.io/r/base/c.html),
-[`is.na()`](https://rdrr.io/r/base/NA.html),
-[`format()`](https://rdrr.io/r/base/format.html) as WKT and export.
-Stage 1 gave
-[`geo_type_of()`](https://pedrobtz.github.io/zugeo/reference/geo_type_of.md),
-[`geo_crs()`](https://pedrobtz.github.io/zugeo/reference/geo_crs.md) and
-[`geo_crs_equal()`](https://pedrobtz.github.io/zugeo/reference/geo_crs_equal.md);
-Stage 0 the package, CI and vendored `geoarrow-c`. No encoding
-conversions yet (Stage 3). The roadmap in `.agents/roadmap.md` takes it
-to v0.1.0.
+Stage 3 (2026-11-07): conversions between WKB, EWKB, hex WKB, WKT and
+the native types, coordinates as columns, exact WKT through zufast, and
+interchange with sf, geos, s2 and wk by WKB. Stage 2 gave `geo_vctr`
+over Arrow memory, registered with zuarrow; Stage 1
+[`geo_type_of()`](https://pedrobtz.github.io/zugeo/reference/geo_type_of.md)
+and the CRS functions; Stage 0 the package, CI and vendored
+`geoarrow-c`. No exactness errors for edges yet (Stage 4). The roadmap
+in `.agents/roadmap.md` takes it to v0.1.0.
 
 ## Versions and dependents
 
@@ -57,7 +53,7 @@ consumers (design §3).
 
 - `tools/verify-vendor`: re-derives `src/vendor/` from the pinned commit
   and fails on any difference. CI runs it (`vendor.yaml`). Needs
-  `cmake`, `curl`, `shasum` and `python3`.
+  `cmake`, `curl`, `shasum`, `patch` and `python3`.
 - `tools/update-vendor`: after changing a pin in `tools/derive-vendor`,
   re-derives the tree and rewrites `src/vendor/PROVENANCE`; then update
   the commit in `src/zgo.h` and the versions in `test-info.R`,
@@ -89,6 +85,10 @@ listed in `src/Makevars` (and its copy `Makevars.win`).
 - `R/vctr.R`: the `geo_vctr` class (positions plus `chunks`, `starts`,
   `schema` attributes) and its methods; `R/zzz.R` registers the eleven
   names and the class with zuarrow in `.onLoad()`.
+- `src/zgo_convert.c` and `R/convert.R`: every conversion is one walk of
+  the rows (`zgo_visit_feature()`, shared through `src/zgo_array.h`)
+  into `geoarrow-c`’s `GeoArrowArrayWriter` of the target type; EWKB
+  SRIDs are read before `geoarrow-c` sees the bytes.
 
 ## Invariants that are easy to break
 
@@ -106,8 +106,16 @@ listed in `src/Makevars` (and its copy `Makevars.win`).
 - **Index bytes stay flatbush- and kdbush-compatible** (D13).
 - **Never edit `src/vendor/` by hand.** It is `tools/derive-vendor`’s
   output, byte for byte; `vendor.yaml` fails otherwise. A change to
-  vendored code is a patch the derivation applies, recorded in
-  `src/vendor/PROVENANCE`.
+  vendored code is a patch in `tools/patches/`, applied in order by the
+  derivation, listed in `src/vendor/PROVENANCE` (`tools/update-vendor`
+  writes the list) and marked “Modified for the zugeo R package” in the
+  file it changes. Two so far: 0001 numbers through zufast (D18), 0002
+  the WKB reader’s bounds (D22).
+- **R CMD check’s registration check needs every
+  [`.Call()`](https://rdrr.io/r/base/CallExternal.html) literal**: the
+  routine named directly, never through a variable, and no literal `NA`
+  among the arguments (it crashes the checker); use a named constant
+  such as `zgo_no_metadata`.
 - **`R_init_zugeo` is the only exported symbol, and no `assert`, `abort`
   or `printf` is imported.** Keep `$(C_VISIBILITY)`, `-DNANOARROW_DLL=`
   and `src/zugeo-win.def`. Don’t rely on `-DNDEBUG`: the gctorture build
@@ -146,6 +154,12 @@ is never in the package (no licence): it is fetched from `geoarrow-data`
 at commit `e8eaa04` when `ZUGEO_FETCH_FIXTURES=true` (set in every CI
 workflow), or read from `ZUGEO_CORPUS_DIR`, and checked against
 `tests/testthat/corpus.txt`; otherwise the corpus tests skip.
+`helper-convert.R` has EWKB builders, bit-for-bit double comparison and
+the hard doubles of the exactness property test (`test-exact.R`). The
+oracle tests compare with sf, geos, s2 and wk by WKB or coordinates,
+never by WKT text: `sf::st_as_text()` prints 7 digits,
+`sf::st_as_binary()` of a mixed-dimension `sfc` drops Z, and wk prints
+the largest double as `inf`.
 
 ## Continuous integration
 
@@ -156,8 +170,12 @@ analyzers, cran-special), `gctorture.yml` (quick step on pushes, step 20
 on a daily schedule), `vendor.yml`, and `vendor-upstream.yml` weekly.
 Its own workflows: `pkgdown.yaml`, and `oracles.yaml`, which runs the
 `test-ci-*.R` files with `ZUGEO_ORACLES=true` because r-actions has no
-workflow for tests outside the tarball. Stages 2, 3 and 6 are `full`,
-with the closing three.
+workflow for tests outside the tarball, in `rocker/r-ver` with Posit’s
+current binaries; `fuzz.yaml` fuzzes the vendored WKB and WKT readers
+(`tools/fuzz/harness.c`, seeds from `tools/fuzz/make-corpus.R`), short
+on pull requests and an hour weekly; `arch.yaml` runs the 32-bit and
+musl builds weekly. Stages 2, 3 and 6 are `full`, with the closing
+three.
 
 ## Vendored native code
 
