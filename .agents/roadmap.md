@@ -22,7 +22,7 @@ with one sub-issue per stage;
 | 6 | [Packed indexes](#stage-6--packed-indexes) | full | [#8](https://github.com/pedrobtz/zugeo/issues/8) | [#22](https://github.com/pedrobtz/zugeo/pull/22) | 2026-11-07 |
 | 7 | [GeoParquet](#stage-7--geoparquet) | quick | [#9](https://github.com/pedrobtz/zugeo/issues/9) | [#23](https://github.com/pedrobtz/zugeo/pull/23) | 2026-11-07 |
 | 8 | [Documentation and benchmarks](#stage-8--documentation-and-benchmarks) | quick | [#10](https://github.com/pedrobtz/zugeo/issues/10) | [#24](https://github.com/pedrobtz/zugeo/pull/24) | 2026-11-07 |
-| 9 | [Full CI](#stage-9--full-ci) | full | [#11](https://github.com/pedrobtz/zugeo/issues/11) | | |
+| 9 | [Full CI](#stage-9--full-ci) | full | [#11](https://github.com/pedrobtz/zugeo/issues/11) | [#25](https://github.com/pedrobtz/zugeo/pull/25) | |
 | 10 | [v0.1.0 readiness](#stage-10--v010-readiness) | full | [#12](https://github.com/pedrobtz/zugeo/issues/12) | | |
 | 11 | [Review](#stage-11--review) | full | [#13](https://github.com/pedrobtz/zugeo/issues/13) | | |
 <!-- markdownlint-enable MD013 -->
@@ -369,6 +369,13 @@ targets are measured.
   commit.
 
 **Design.** [§12](design.md#12-acceptance-criteria-for-v010).
+
+**Found (2026-11-07).** The full run on Stage 8's merge (`dfd6ae4`) was
+green except gctorture's push run at `quick-step` 500, which ran past its
+10-minute budget once Stage 7's GeoParquet corpus tests joined the suite:
+no memory error, only time. `quick-step` is now 1000, as r-actions advises
+("widen the step ... rather than gating tests"); step 20 runs by dispatch
+on this branch and daily on the default branch.
 
 ## Stage 10 — v0.1.0 readiness
 
