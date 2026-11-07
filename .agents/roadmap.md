@@ -19,7 +19,7 @@ with one sub-issue per stage;
 | 3 | [Encodings and interchange](#stage-3--encodings-and-interchange) | full | [#5](https://github.com/pedrobtz/zugeo/issues/5) | [#19](https://github.com/pedrobtz/zugeo/pull/19) | 2026-11-07 |
 | 4 | [Exactness errors](#stage-4--exactness-errors) | quick | [#6](https://github.com/pedrobtz/zugeo/issues/6) | [#20](https://github.com/pedrobtz/zugeo/pull/20) | 2026-11-07 |
 | 5 | [Visitor, extents and kernels](#stage-5--visitor-extents-and-kernels) | quick | [#7](https://github.com/pedrobtz/zugeo/issues/7) | [#21](https://github.com/pedrobtz/zugeo/pull/21) | 2026-11-07 |
-| 6 | [Packed indexes](#stage-6--packed-indexes) | full | [#8](https://github.com/pedrobtz/zugeo/issues/8) | | 2026-11-07 |
+| 6 | [Packed indexes](#stage-6--packed-indexes) | full | [#8](https://github.com/pedrobtz/zugeo/issues/8) | [#22](https://github.com/pedrobtz/zugeo/pull/22) | 2026-11-07 |
 | 7 | [GeoParquet](#stage-7--geoparquet) | quick | [#9](https://github.com/pedrobtz/zugeo/issues/9) | | |
 | 8 | [Documentation and benchmarks](#stage-8--documentation-and-benchmarks) | quick | [#10](https://github.com/pedrobtz/zugeo/issues/10) | | |
 | 9 | [Full CI](#stage-9--full-ci) | full | [#11](https://github.com/pedrobtz/zugeo/issues/11) | | |
