@@ -52,3 +52,7 @@
   their statistics. `geo_parquet_info()` reads the footer alone, and
   `geo_validate_parquet()` reports what `gpq validate` checks, what
   GeoParquet 2.0 adds and the distribution guide's advice.
+
+* `geo_sort()` and `geo_hilbert()` compute each box once, not twice.
+* A README, the article "Geometry columns from DuckDB to sf", and a
+  reference index by task.

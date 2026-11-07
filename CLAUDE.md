@@ -65,6 +65,13 @@ consumers (design §3).
   `inst/COPYRIGHTS` and `DESCRIPTION`.
 - `ZUGEO_ORACLES=true Rscript -e 'devtools::test(filter = "^ci-")'`:
   the CI-only oracle tests, with a missing oracle as a failure.
+- `Rscript tools/benchmark.R [--n 1000000] [--reps 5]`: design §10's
+  measurements against the installed zugeo, with sf and wk beside it.
+  `benchmark.yaml` runs it on Ubuntu (the platform §10 names) when the
+  script or workflow changes, or by hand; copy its table into §10.
+- `README.Rmd` renders with `devtools::build_readme()`; the article is
+  `vignettes/articles/duckdb-to-sf.Rmd` (needs duckdb, DBI, sf and qio,
+  which `pkgdown.yaml` installs).
 
 ## Architecture
 
@@ -197,7 +204,7 @@ R-devel added to `runners`), `coverage.yml`, the native checks in
 `native-checks.yaml` (sanitizers with ASan, valgrind, LTO, rchk,
 analyzers, cran-special), `gctorture.yml` (quick step on pushes, step 20
 on a daily schedule), `vendor.yml`, and `vendor-upstream.yml` weekly.
-Its own workflows: `pkgdown.yaml`, and `oracles.yaml`, which runs the
+Its own workflows: `pkgdown.yaml`, `benchmark.yaml`, and `oracles.yaml`, which runs the
 `test-ci-*.R` files with `ZUGEO_ORACLES=true` because r-actions has no
 workflow for tests outside the tarball, in `rocker/r-ver` with Posit's
 current binaries, with gpq v0.24.0 (`ZUGEO_GPQ`), then a `gdal` job in

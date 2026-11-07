@@ -986,6 +986,33 @@ CI-only benchmark script, like the oracles:
 
 Targets missed are recorded with the measurement, not hidden.
 
+*Measured 2026-11-07 (Stage 8)* by `tools/benchmark.R` in `benchmark.yaml`
+(ubuntu-latest, `rocker/r-ver:4.5.2`, x86-64), 10⁶ decagons, the median of
+five runs. Two runs on two commits a few minutes apart differed by about
+25% throughout, GitHub's runners being shared, so both are given:
+
+| Operation | Target | Run 1 | Run 2 | |
+| --- | --- | --- | --- | --- |
+| `arrow_to_r()` to `geo_vctr` | under 1 ms; no copy | about 1 ms | 0.89 ms | met; no copy, but an O(n) check for nulls inside geometries |
+| `geo_box()` | 10x `sf::st_bbox()` per feature | 129 ms, 123x | 161 ms, 125x | met |
+| `geo_sort()` | under 200 ms | 183 ms | 233 ms | borderline |
+| `geo_rtree()` | under 300 ms | 210 ms | 267 ms | met |
+| 10⁴ box queries | under 50 ms | 15 ms | 19 ms | met |
+| `geo_as_wkb()` | under 100 ms | 365 ms | 439 ms | **missed** |
+
+`geo_sort()` met its target only after Stage 8 stopped `geo_hilbert()`
+computing every box twice (699 to 400 ms on an Apple M-series laptop).
+What remains of both it and `geo_box()` is D15's visitor, about 15 ns per
+coordinate: `wk::wk_envelope()` over the same polygons as WKB takes 150 to
+187 ms, so the visitor is on par with wk, and a bounds kernel specialised
+to the native layouts is the way under 200 ms reliably. `geo_as_wkb()`
+misses by its result, not its writer: building the WKB as one Arrow array
+takes about a third of the time, and the rest is R allocating 10⁶ raw
+vectors, which R alone does no faster. The list of raw vectors is the form
+sf, geos and s2 take (Q2), so the target is not reachable in that form;
+a WKB Arrow array (`geo_as_native()`'s counterpart for WKB) would meet it
+and waits for a caller who wants it (§14).
+
 ## 11. Roadmap
 
 The stages to v0.1.0, with their exit criteria and CI tiers, are in
@@ -1151,6 +1178,9 @@ any of them.
 - **Memory-mapped indexes and GeoParquet** through zuarrow's mmap item
   and `zufs`.
 - **Threads** for sort and pack, if §10's measurements ask for it.
+- **Faster kernels** (§10, 2026-11-07): a bounds pass specialised to the
+  native layouts beside D15's visitor, and WKB written to an Arrow array
+  rather than a list of raw vectors.
 - **`zuclip` on buffers**: polygon booleans, offsets, clipping to a
   box and simplification over `geo_vctr`, once `zuclip` exists.
 - **Triangulation in `zucdt`**: `earcut.hpp` (ISC) belongs beside
