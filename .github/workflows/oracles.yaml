@@ -5,8 +5,9 @@
 # the source tree, with every oracle installed and ZUGEO_ORACLES=true, so a
 # missing oracle fails rather than skips.
 #
-# Stage 0 needs only zuarrow, geoarrow and nanoarrow, for the coexistence
-# test; Stage 3 adds sf, geos, s2, wk, arrow and duckdb.
+# zuarrow, geoarrow and nanoarrow for the coexistence test (Stage 0); sf,
+# geos, s2 and wk for interchange by WKB (Stage 3). arrow and duckdb join
+# with the stages that need them.
 on:
   push:
     branches: [main]
@@ -52,6 +53,10 @@ jobs:
             any::devtools
             any::geoarrow
             any::nanoarrow
+            any::sf
+            any::geos
+            any::s2
+            any::wk
             github::pedrobtz/zuarrow
 
       - name: Run the oracle tests

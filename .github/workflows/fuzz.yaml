@@ -1,0 +1,48 @@
+# Coverage-guided fuzzing of the parsers zugeo hands untrusted input to:
+# geoarrow-c's WKB and WKT readers with zugeo's patches (tools/fuzz/harness.c,
+# design section 9). Pull requests get a short run; the weekly run is long,
+# and its findings become issues.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "23 5 * * 3"
+  workflow_dispatch:
+
+name: fuzz
+
+permissions: read-all
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  fuzz:
+    uses: pedrobtz/r-actions/.github/workflows/fuzz.yml@v1
+    with:
+      harness: tools/fuzz/harness.c
+      # zugeo's own C talks to R; the target is the vendored C alone.
+      exclude-sources: |
+        src/zugeo.c
+        src/zgo_*.c
+      seed-corpus: tools/fuzz/corpus
+      # geoarrow.c includes zufast/number.h (tools/patches/0001).
+      github-packages: pedrobtz/zufast
+      cflags: -g -O1 -fno-omit-frame-pointer -Isrc/vendor -I.github-packages/zufast/inst/include
+      max-total-time: ${{ github.event_name == 'schedule' && 3600 || 180 }}
+      timeout-minutes: ${{ github.event_name == 'schedule' && 75 || 20 }}
+
+  report:
+    needs: fuzz
+    if: ${{ always() && github.event_name == 'schedule' && needs.fuzz.result != 'skipped' }}
+    permissions:
+      issues: write
+    uses: pedrobtz/r-actions/.github/workflows/report.yml@v1
+    with:
+      name: fuzz
+      result: ${{ needs.fuzz.result }}
+      finding: ${{ needs.fuzz.outputs.finding }}
+      key: ${{ needs.fuzz.outputs.finding-key }}
+      details: ${{ needs.fuzz.outputs.report }}
