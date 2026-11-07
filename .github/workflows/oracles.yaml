@@ -6,8 +6,8 @@
 # missing oracle fails rather than skips.
 #
 # zuarrow, geoarrow and nanoarrow for the coexistence test (Stage 0); sf,
-# geos, s2 and wk for interchange by WKB (Stage 3). arrow and duckdb join
-# with the stages that need them.
+# geos, s2 and wk for interchange by WKB (Stage 3); duckdb, with its spatial
+# extension, for Hilbert keys (Stage 5). arrow joins with GeoParquet.
 on:
   push:
     branches: [main]
@@ -57,6 +57,7 @@ jobs:
             any::geos
             any::s2
             any::wk
+            any::duckdb
             github::pedrobtz/zuarrow
 
       - name: Run the oracle tests
