@@ -370,6 +370,13 @@ targets are measured.
 
 **Design.** [§12](design.md#12-acceptance-criteria-for-v010).
 
+**Found (2026-11-07).** The full run on Stage 8's merge (`dfd6ae4`) was
+green except gctorture's push run at `quick-step` 500, which ran past its
+10-minute budget once Stage 7's GeoParquet corpus tests joined the suite:
+no memory error, only time. `quick-step` is now 1000, as r-actions advises
+("widen the step ... rather than gating tests"); step 20 runs by dispatch
+on this branch and daily on the default branch.
+
 ## Stage 10 — v0.1.0 readiness
 
 **Issue.** [#12](https://github.com/pedrobtz/zugeo/issues/12), sub-issue of

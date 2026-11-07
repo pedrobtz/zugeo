@@ -27,6 +27,10 @@ jobs:
     uses: pedrobtz/r-actions/.github/workflows/gctorture.yml@v1
     with:
       profile: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'full' || 'quick' }}
+      # 1000, not the default 500, since Stage 7's GeoParquet corpus tests:
+      # at 500 the push run on dfd6ae4 (Stage 8's merge) ran past the 10-minute
+      # budget (run 42373601171) and pull requests finished just under it.
+      quick-step: 1000
       # Inverted, because `cond && 0 || 10` is always 10: an expression
       # treats 0 as false.
       test-timeout-minutes: ${{ (github.event_name != 'schedule' && github.event_name != 'workflow_dispatch') && 10 || 0 }}
