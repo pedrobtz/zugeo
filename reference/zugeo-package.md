@@ -1,6 +1,6 @@
 # zugeo: 'GeoArrow' Geometry Columns, Exact or an Error
 
-Makes 'GeoArrow' geometry columns first-class R vectors. Points, lines
+Makes 'GeoArrow' geometry columns first-class 'R' vectors. Points, lines
 and polygons stay in 'Apache Arrow' memory with their coordinate
 reference system and edge type, move between the native, well-known
 binary and well-known text encodings exactly or raise an error, and get
@@ -35,3 +35,6 @@ Other contributors:
 
 - The Apache Software Foundation (nanoarrow, bundled in
   src/vendor/nanoarrow) \[copyright holder\]
+
+- Vladimir Agafonkin (flatbush and kdbush, whose index formats and
+  Hilbert function are ported in src/) \[copyright holder\]

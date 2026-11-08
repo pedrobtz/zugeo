@@ -86,6 +86,15 @@ level, outer first), <code>storage</code> (the Arrow format string), <code>union
 exactly as given, or <code>NA</code>). For a struct, a named list of them.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="geo_vctr.html">geo_vctr</a></span><span class="op">(</span><span class="st">"POINT (1 2)"</span>, crs <span class="op">=</span> <span class="st">"OGC:CRS84"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">geo_type_of</span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;geoarrow.wkt wkt; crs authority_code; edges planar&gt;</span>
+<span class="r-in"><span><span class="fu">geo_type_of</span><span class="op">(</span><span class="fu"><a href="geo_as_wkb.html">geo_as_native</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">coord_type</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "separated"</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

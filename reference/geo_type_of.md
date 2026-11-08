@@ -32,3 +32,13 @@ storage does not fix them), `coord_type` (`"separated"`,
 level, outer first), `storage` (the Arrow format string), `union_ids`,
 `crs` (a `zugeo_crs`), `edges` and `metadata` (the extension metadata
 exactly as given, or `NA`). For a struct, a named list of them.
+
+## Examples
+
+``` r
+x <- geo_vctr("POINT (1 2)", crs = "OGC:CRS84")
+geo_type_of(x)
+#> <geoarrow.wkt wkt; crs authority_code; edges planar>
+geo_type_of(geo_as_native(x))$coord_type
+#> [1] "separated"
+```

@@ -10,6 +10,10 @@
 - **The Apache Software Foundation**. Copyright holder.  
   nanoarrow, bundled in src/vendor/nanoarrow
 
+- **Vladimir Agafonkin**. Copyright holder.  
+  flatbush and kdbush, whose index formats and Hilbert function are
+  ported in src/
+
 ## Citation
 
 Source:
