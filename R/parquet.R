@@ -470,7 +470,7 @@ zgo_pq_query_box <- function(bbox, column, call) {
 geo_read_parquet <- function(path, bbox = NULL, columns = NULL,
                              lossy = c("error", "warn", "allow")) {
   call <- sys.call()
-  lossy <- match.arg(lossy)
+  lossy <- zgo_match_arg(lossy)
   pf <- zgo_pq_open(path, call)
   on.exit(qio::close_parquet(pf), add = TRUE)
   desc <- zgo_pq_describe(pf, call)
