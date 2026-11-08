@@ -1276,7 +1276,8 @@ assumption is named.
   property test of §6.3 passes on every corpus coordinate and on edge
   cases down to 5e-324. A number outside the double range (`1e400`) is
   now a parse error rather than an infinity, and a leading `+` is
-  accepted as `strtod()` did.*
+  accepted as `strtod()` did, though not before another sign (`+-1`, #35,
+  2026-11-08).*
 
 Found while answering Q8, not yet reported upstream: `geoarrow-c`'s
 metadata parser (`metadata.c`, `crs_type`) compares the key rather than

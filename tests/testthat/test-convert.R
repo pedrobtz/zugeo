@@ -181,3 +181,10 @@ test_that("geo_points() makes points from vectors", {
   expect_identical(geo_crs_text(p), "OGC:CRS84")
   expect_identical(geo_type_of(geo_points(1, 2, layout = "interleaved"))$coord_type, "interleaved")
 })
+
+test_that("a WKT number takes one sign at most", {
+  expect_identical(geo_coords(geo_vctr("POINT (+1 -2)"))$x, 1)
+  for (wkt in c("POINT (+-1 2)", "POINT (++1 2)", "POINT (1 +-2)")) {
+    expect_error(geo_vctr(wkt), "not valid WKT", label = wkt)
+  }
+})
