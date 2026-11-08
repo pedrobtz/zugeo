@@ -48,6 +48,26 @@ test_that("a box column formats each box", {
   expect_identical(is.na(b), c(FALSE, FALSE, TRUE, FALSE))
 })
 
+test_that("a box column is its own boxes, and refuses the geometry kernels", {
+  b <- collection_data()$box
+  e <- geo_box(b)
+  expect_s3_class(e, "geo_extent")
+  expect_identical(
+    as.data.frame(e),
+    data.frame(xmin = c(0, -1.5, NA, 10), ymin = c(1, -2.5, NA, 10),
+      xmax = c(2, 0.25, NA, 10), ymax = c(3, 0.125, NA, 10))
+  )
+  expect_identical(format(geo_box(b[c(4, 1)])), c("[10 10, 10 10]", "[0 1, 2 3]"))
+  # What builds on boxes works; what needs geometries says why it cannot.
+  expect_identical(geo_query_box(geo_rtree(b), geo_extent(1, 2, 1.5, 2.5)), 1L)
+  expect_identical(length(geo_sort(b)), 4L)
+  for (f in list(geo_types, geo_dims, geo_n_coords, geo_validate, geo_coords,
+    geo_as_wkb, geo_as_wkt, geo_as_native, geo_kdtree)) {
+    expect_error(f(b), class = "zugeo_layout_error")
+  }
+  expect_snapshot(geo_types(b), error = TRUE)
+})
+
 test_that("geo_from_coords() makes XYZM geometries", {
   coords <- data.frame(
     x = c(0, 1, 2), y = c(0, 1, 0), z = c(5, 6, 7), m = c(10, 11, 12), feature = 1L

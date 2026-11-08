@@ -62,6 +62,7 @@ geo_as_wkb <- function(x, lossy = c("error", "warn", "allow")) {
   lossy <- match.arg(lossy)
   zgo_check_vctr(x, call)
   zgo_check_edges_kept(x, lossy, "WKB", call)
+  zgo_check_not_box(x, call)
   loc <- zgo_locate(x)
   out <- zgo_check(.Call(
     zgo_c_write, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row,
@@ -78,6 +79,7 @@ geo_as_wkt <- function(x, lossy = c("error", "warn", "allow")) {
   lossy <- match.arg(lossy)
   zgo_check_vctr(x, call)
   zgo_check_edges_kept(x, lossy, "WKT", call)
+  zgo_check_not_box(x, call)
   loc <- zgo_locate(x)
   out <- zgo_check(.Call(
     zgo_c_write, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row,
@@ -93,6 +95,7 @@ geo_as_native <- function(x, layout = c("separated", "interleaved"), type = NULL
   call <- sys.call()
   zgo_check_vctr(x, call)
   layout <- match.arg(layout)
+  zgo_check_not_box(x, call)
   loc <- zgo_locate(x)
   scan <- zgo_check(
     .Call(zgo_c_scan, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row),
@@ -406,6 +409,7 @@ geo_crs_text <- function(x) {
 geo_coords <- function(x) {
   call <- sys.call()
   zgo_check_vctr(x, call)
+  zgo_check_not_box(x, call)
   loc <- zgo_locate(x)
   res <- zgo_check(
     .Call(zgo_c_coords, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row),

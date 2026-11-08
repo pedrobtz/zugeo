@@ -361,6 +361,49 @@ static SEXP zgo_box_text(const struct ArrowArrayView *v, int64_t r) {
   return Rf_mkCharCE(buf, CE_UTF8);
 }
 
+/* A geoarrow.box column's values, one double vector per bound in the
+   struct's order (xmin, ymin[, zmin, mmin], xmax, ymax, ...), NA for a null
+   box or position: the column as a geo_extent, exactly (design 6.7). */
+SEXP zgo_c_box_values(SEXP chunks, SEXP schema, SEXP chunk, SEXP row) {
+  R_xlen_t n = Rf_xlength(chunk);
+  SEXP scratch = PROTECT(zgo_scratch_new());
+  zgo_column col;
+  char message[512];
+  if (zgo_column_init(scratch, chunks, schema, &col, message, sizeof(message))) {
+    zgo_scratch_run(scratch);
+    UNPROTECT(1);
+    return zgo_failure("layout", message);
+  }
+  if (col.code != ZGO_CODE_BOX) {
+    zgo_scratch_run(scratch);
+    Rf_error("zgo_c_box_values(): not a geoarrow.box column.");
+  }
+  int64_t bounds = col.views[0]->n_children;
+  SEXP out = PROTECT(Rf_allocVector(VECSXP, (R_xlen_t)bounds));
+  for (int64_t b = 0; b < bounds; b++) {
+    SET_VECTOR_ELT(out, (R_xlen_t)b, Rf_allocVector(REALSXP, n));
+  }
+  for (R_xlen_t p = 0; p < n; p++) {
+    int64_t r = 0;
+    int k = zgo_position(chunk, row, p, col.n_chunks, &r);
+    if (k >= 0 && r >= col.views[k]->length) {
+      zgo_scratch_run(scratch);
+      UNPROTECT(2);
+      return zgo_failure("layout", "A geo_vctr position is past the end of its chunk.");
+    }
+    int null = k < 0 || zgo_is_null(col.views[k], r);
+    for (int64_t b = 0; b < bounds; b++) {
+      REAL(VECTOR_ELT(out, (R_xlen_t)b))[p] =
+          null ? NA_REAL
+               : ArrowArrayViewGetDoubleUnsafe(col.views[k]->children[b],
+                                               col.views[k]->offset + r);
+    }
+  }
+  zgo_scratch_run(scratch);
+  UNPROTECT(2);
+  return out;
+}
+
 SEXP zgo_c_format(SEXP chunks, SEXP schema, SEXP chunk, SEXP row, SEXP max_bytes) {
   R_xlen_t n = Rf_xlength(chunk);
   SEXP out = PROTECT(Rf_allocVector(STRSXP, n));

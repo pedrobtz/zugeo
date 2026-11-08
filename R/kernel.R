@@ -7,6 +7,7 @@ zgo_dims_labels <- c("xy", "xyz", "xym", "xyzm")
 # One walk over the rows for every per-row kernel.
 zgo_info <- function(x, call) {
   zgo_check_vctr(x, call)
+  zgo_check_not_box(x, call)
   loc <- zgo_locate(x)
   zgo_check(
     .Call(zgo_c_info_kernel, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row),
@@ -45,8 +46,41 @@ zgo_info <- function(x, call) {
 geo_box <- function(x, lossy = c("error", "warn", "allow")) {
   call <- sys.call()
   lossy <- match.arg(lossy)
+  zgo_check_vctr(x, call)
+  if (identical(geo_type_of(x)$encoding, "box")) {
+    return(zgo_box_column(x, call))
+  }
   info <- zgo_info(x, call)
   zgo_box_from_info(x, info, lossy, call)
+}
+
+# A geoarrow.box column is its own boxes: its values as a geo_extent,
+# exactly, xmin > xmax included (design section 6.7).
+zgo_box_column <- function(x, call) {
+  loc <- zgo_locate(x)
+  values <- zgo_check(
+    .Call(zgo_c_box_values, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row),
+    call = call
+  )
+  type <- geo_type_of(x)
+  d <- c("x", "y", if (grepl("z", type$dimensions)) "z", if (grepl("m", type$dimensions)) "m")
+  names(values) <- c(paste0(d, "min"), paste0(d, "max"))
+  order <- c("xmin", "ymin", "xmax", "ymax", intersect(c("zmin", "zmax", "mmin", "mmax"), names(values)))
+  zgo_extent_new(values[order], type$crs, type$edges)
+}
+
+# The kernels that need geometries refuse a box column, which holds boxes.
+zgo_check_not_box <- function(x, call) {
+  if (identical(geo_type_of(x)$encoding, "box")) {
+    zgo_abort(
+      "layout",
+      paste(
+        "`x` is a geoarrow.box column: it holds boxes, not geometries.",
+        "geo_box() gives them as a geo_extent."
+      ),
+      call = call
+    )
+  }
 }
 
 zgo_box_from_info <- function(x, info, lossy, call) {
@@ -179,6 +213,7 @@ zgo_finding_labels <- c(
 geo_validate <- function(x) {
   call <- sys.call()
   zgo_check_vctr(x, call)
+  zgo_check_not_box(x, call)
   loc <- zgo_locate(x)
   res <- zgo_check(
     .Call(zgo_c_validate, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row),
