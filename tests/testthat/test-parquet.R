@@ -387,6 +387,57 @@ test_that("malformed files are errors, not guesses", {
   )
 })
 
+test_that("CRS and metadata reconciliation covers every form", {
+  skip_without_qio()
+  dir <- withr::local_tempdir()
+  df <- data.frame(id = 1:2)
+  df$geometry <- wkb_list(c("POINT (1 2)", "POINT (3 4)"))
+  key <- function(...) {
+    zujson::json_write(list(
+      version = "2.0.0", primary_column = "geometry",
+      columns = list(geometry = c(list(encoding = "WKB", geometry_types = list()), list(...)))
+    ))
+  }
+  # A projjson: footer key that does not hold PROJJSON.
+  p <- write_raw_parquet(df, file.path(dir, "key.parquet"),
+    schema = qio::parquet_schema(geometry = list("GEOMETRY", crs = "projjson:k")),
+    extra = c(k = "EPSG:4326")
+  )
+  err <- expect_error(geo_read_parquet(p), class = "zugeo_metadata_error")
+  expect_identical(err$issue, "crs_key_missing")
+  # A geo key that is JSON but not an object, or has no columns.
+  for (geo in c("[1, 2]", '{"version": "1.1.0"}')) {
+    p <- write_raw_parquet(df, file.path(dir, "geo.parquet"), geo = geo)
+    expect_error(geo_read_parquet(p), class = "zugeo_metadata_error", label = geo)
+  }
+  # Unknown edges in the geo key.
+  p <- write_raw_parquet(df, file.path(dir, "edges.parquet"), geo = key(edges = "curvy"))
+  expect_error(geo_read_parquet(p), class = "zugeo_metadata_error")
+  # PROJJSON without an id beside a code: zugeo cannot tell without PROJ,
+  # so the two are taken on trust and the geo key's PROJJSON is kept.
+  anonymous <- list(type = "GeographicCRS", name = "Somewhere")
+  p <- write_raw_parquet(df, file.path(dir, "trust.parquet"),
+    schema = qio::parquet_schema(geometry = list("GEOMETRY", crs = "EPSG:4326")),
+    geo = key(crs = anonymous)
+  )
+  crs <- geo_crs(geo_read_parquet(p)$geometry)
+  expect_identical(crs$type, "projjson")
+  expect_identical(crs$value$name, "Somewhere")
+})
+
+test_that("an srid CRS goes through the Parquet type both ways", {
+  skip_without_qio()
+  path <- withr::local_tempfile(fileext = ".parquet")
+  x <- geo_points(1:2, 3:4, crs = geo_crs("5070", crs_type = "srid"))
+  geo_write_parquet(x, path, sort = "none")
+  f <- parquet_footer(path)
+  expect_identical(f$schema$logical_details[f$schema$path == "geometry"], "crs=srid:5070")
+  expect_null(f$geo)
+  back <- geo_crs(geo_read_parquet(path)$geometry)
+  expect_identical(back$type, "srid")
+  expect_identical(back$value, "5070")
+})
+
 test_that("geo_validate_parquet() passes zugeo's own files", {
   skip_without_qio()
   dir <- withr::local_tempdir()
