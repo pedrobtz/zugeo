@@ -336,9 +336,9 @@ zgo_pq_row_group_boxes <- function(pf, desc, column) {
   n <- nrow(qio::row_groups(pf))
   out <- data.frame(
     xmin = rep(NA_real_, n),
-    ymin = NA_real_,
-    xmax = NA_real_,
-    ymax = NA_real_
+    ymin = rep(NA_real_, n),
+    xmax = rep(NA_real_, n),
+    ymax = rep(NA_real_, n)
   )
   stats <- qio::geospatial_statistics(pf)
   stats <- stats[stats$path == column$name, , drop = FALSE]
@@ -513,11 +513,8 @@ geo_read_parquet <- function(path, bbox = NULL, columns = NULL,
     groups <- which(!miss)
     read <- unique(c(read, primary$name))
   }
-  if (!is.null(groups) && length(groups) == 0L) {
-    df <- qio::collect(pf, columns = read, row_groups = 1L)[0L, , drop = FALSE]
-  } else {
-    df <- qio::collect(pf, columns = read, row_groups = groups)
-  }
+  # An empty `groups` reads no row group: qio returns the empty columns.
+  df <- qio::collect(pf, columns = read, row_groups = groups)
   for (name in intersect(
     c(geometry, if (!is.null(bbox)) primary$name),
     names(df)
