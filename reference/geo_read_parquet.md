@@ -8,7 +8,12 @@ through qio's own mapping.
 ## Usage
 
 ``` r
-geo_read_parquet(path, bbox = NULL, columns = NULL)
+geo_read_parquet(
+  path,
+  bbox = NULL,
+  columns = NULL,
+  lossy = c("error", "warn", "allow")
+)
 
 geo_write_parquet(
   x,
@@ -35,6 +40,11 @@ geo_write_parquet(
 
   `NULL` for every column qio reads, or a character vector of column
   names.
+
+- lossy:
+
+  For `bbox` over non-planar edges: `"error"`, `"warn"` or `"allow"` the
+  planar row filter.
 
 - x:
 
@@ -80,9 +90,12 @@ PROJ is taken on trust, and the geo key's PROJJSON is kept.
 
 `bbox` skips the row groups whose box, from the native statistics or
 else a `covering` column's, misses it, and then keeps the rows whose
-geometry's box intersects it. GeoParquet 1.1's native GeoArrow encodings
-are nested Parquet columns, which qio does not read yet; such a column
-is a `zugeo_parquet_error`.
+geometry's box intersects it. That row filter is planar, so on lines and
+polygons with non-planar edges, which can bulge past their vertices'
+box, it is a `zugeo_edges_error` unless `lossy` says otherwise, as for
+[`geo_box()`](https://pedrobtz.github.io/zugeo/reference/geo_box.md).
+GeoParquet 1.1's native GeoArrow encodings are nested Parquet columns,
+which qio does not read yet; such a column is a `zugeo_parquet_error`.
 
 `geo_write_parquet()` writes GeoParquet 2.0 by default: WKB in the
 native `GEOMETRY` type, or `GEOGRAPHY` with its algorithm for non-planar

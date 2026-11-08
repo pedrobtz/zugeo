@@ -52,7 +52,12 @@ through qio's own mapping.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">geo_read_parquet</span><span class="op">(</span><span class="va">path</span>, bbox <span class="op">=</span> <span class="cn">NULL</span>, columns <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">geo_read_parquet</span><span class="op">(</span></span>
+<span>  <span class="va">path</span>,</span>
+<span>  bbox <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  columns <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  lossy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"error"</span>, <span class="st">"warn"</span>, <span class="st">"allow"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">geo_write_parquet</span><span class="op">(</span></span>
 <span>  <span class="va">x</span>,</span>
@@ -80,6 +85,11 @@ through qio's own mapping.</p>
 <dt id="arg-columns">columns<a class="anchor" aria-label="anchor" href="#arg-columns"></a></dt>
 <dd><p><code>NULL</code> for every column qio reads, or a character vector
 of column names.</p></dd>
+
+
+<dt id="arg-lossy">lossy<a class="anchor" aria-label="anchor" href="#arg-lossy"></a></dt>
+<dd><p>For <code>bbox</code> over non-planar edges: <code>"error"</code>, <code>"warn"</code> or
+<code>"allow"</code> the planar row filter.</p></dd>
 
 
 <dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
@@ -123,7 +133,10 @@ PROJJSON differs structurally; one that zugeo cannot compare without
 PROJ is taken on trust, and the geo key's PROJJSON is kept.</p>
 <p><code>bbox</code> skips the row groups whose box, from the native statistics or
 else a <code>covering</code> column's, misses it, and then keeps the rows whose
-geometry's box intersects it. GeoParquet 1.1's native GeoArrow encodings
+geometry's box intersects it. That row filter is planar, so on lines
+and polygons with non-planar edges, which can bulge past their vertices'
+box, it is a <code>zugeo_edges_error</code> unless <code>lossy</code> says otherwise, as for
+<code><a href="geo_box.html">geo_box()</a></code>. GeoParquet 1.1's native GeoArrow encodings
 are nested Parquet columns, which qio does not read yet; such a column
 is a <code>zugeo_parquet_error</code>.</p>
 <p><code>geo_write_parquet()</code> writes GeoParquet 2.0 by default: WKB in the
