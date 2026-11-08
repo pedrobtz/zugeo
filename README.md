@@ -49,7 +49,13 @@ zuarrow and zujson.
 
 ## Installation
 
-zugeo is not on CRAN yet. Install the development version from GitHub:
+Install the released version from CRAN:
+
+``` r
+install.packages("zugeo")
+```
+
+Or the development version from GitHub:
 
 ``` r
 # install.packages("pak")
@@ -88,7 +94,7 @@ identical(geo_coords(geo_vctr(geo_as_wkb(x)))$x, 0.1 + 0.2)
 
 An R-tree finds what intersects a box. Its bytes are in flatbush’s
 format, magic byte `fb` first, so flatbush in JavaScript and geo-index
-in Rust and Python load them unchanged.
+in Python load them unchanged.
 
 ``` r
 tree <- geo_rtree(cities)

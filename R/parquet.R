@@ -463,7 +463,7 @@ zgo_pq_query_box <- function(bbox, column, call) {
 #' @seealso [geo_parquet_info()] for the metadata alone,
 #'   [geo_validate_parquet()].
 #' @export
-#' @examplesIf requireNamespace("qio", quietly = TRUE) && getNamespaceVersion("qio") >= "0.1.1.9000"
+#' @examplesIf requireNamespace("qio", quietly = TRUE) && package_version(getNamespaceVersion("qio")) >= "0.1.1.9000"
 #' path <- tempfile(fileext = ".parquet")
 #' df <- data.frame(id = 1:3)
 #' df$geometry <- geo_points(c(0, 5, 9), c(0, 5, 9), crs = "OGC:CRS84")
@@ -723,7 +723,7 @@ zgo_pq_plan_column <- function(x, name, version, call) {
 #'   `bbox` (a `geo_extent` of one, from the `geo` key or else the union of
 #'   the row groups) and `row_group_bbox` (a `geo_extent` per row group).
 #' @export
-#' @examplesIf requireNamespace("qio", quietly = TRUE) && getNamespaceVersion("qio") >= "0.1.1.9000"
+#' @examplesIf requireNamespace("qio", quietly = TRUE) && package_version(getNamespaceVersion("qio")) >= "0.1.1.9000"
 #' path <- tempfile(fileext = ".parquet")
 #' geo_write_parquet(geo_points(1:4, 1:4), path, row_group_size = 2)
 #' geo_parquet_info(path)

@@ -45,7 +45,7 @@ zgo_pq_edges <- function(major) {
 #'   (`"error"` or `"warning"`) and `message`; no rows when nothing is wrong.
 #' @seealso [geo_validate()], [geo_parquet_info()]
 #' @export
-#' @examplesIf requireNamespace("qio", quietly = TRUE) && getNamespaceVersion("qio") >= "0.1.1.9000"
+#' @examplesIf requireNamespace("qio", quietly = TRUE) && package_version(getNamespaceVersion("qio")) >= "0.1.1.9000"
 #' path <- tempfile(fileext = ".parquet")
 #' geo_write_parquet(geo_points(1:3, 1:3, crs = "OGC:CRS84"), path)
 #' geo_validate_parquet(path)

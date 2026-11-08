@@ -6,7 +6,7 @@
 \alias{zugeo-package}
 \title{zugeo: 'GeoArrow' Geometry Columns, Exact or an Error}
 \description{
-Makes 'GeoArrow' geometry columns first-class R vectors. Points, lines and polygons stay in 'Apache Arrow' memory with their coordinate reference system and edge type, move between the native, well-known binary and well-known text encodings exactly or raise an error, and get bounding boxes, spatial sorting and packed spatial indexes computed over the coordinate buffers. With the 'qio' package it reads, writes and validates 'GeoParquet'. The bundled 'geoarrow-c' library (\url{https://github.com/geoarrow/geoarrow-c}) needs no system library. The format is specified at \url{https://geoarrow.org/}.
+Makes 'GeoArrow' geometry columns first-class 'R' vectors. Points, lines and polygons stay in 'Apache Arrow' memory with their coordinate reference system and edge type, move between the native, well-known binary and well-known text encodings exactly or raise an error, and get bounding boxes, spatial sorting and packed spatial indexes computed over the coordinate buffers. With the 'qio' package it reads, writes and validates 'GeoParquet'. The bundled 'geoarrow-c' library (\url{https://github.com/geoarrow/geoarrow-c}) needs no system library. The format is specified at \url{https://geoarrow.org/}.
 }
 \seealso{
 Useful links:
@@ -29,6 +29,7 @@ Other contributors:
 \itemize{
   \item Dewey Dunnington (geoarrow-c, bundled in src/vendor/geoarrow) [copyright holder]
   \item The Apache Software Foundation (nanoarrow, bundled in src/vendor/nanoarrow) [copyright holder]
+  \item Vladimir Agafonkin (flatbush and kdbush, whose index formats and Hilbert function are ported in src/) [copyright holder]
 }
 
 }
