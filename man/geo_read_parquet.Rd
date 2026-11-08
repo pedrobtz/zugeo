@@ -5,7 +5,12 @@
 \alias{geo_write_parquet}
 \title{Read and write GeoParquet}
 \usage{
-geo_read_parquet(path, bbox = NULL, columns = NULL)
+geo_read_parquet(
+  path,
+  bbox = NULL,
+  columns = NULL,
+  lossy = c("error", "warn", "allow")
+)
 
 geo_write_parquet(
   x,
@@ -24,6 +29,9 @@ geo_write_parquet(
 
 \item{columns}{\code{NULL} for every column qio reads, or a character vector
 of column names.}
+
+\item{lossy}{For \code{bbox} over non-planar edges: \code{"error"}, \code{"warn"} or
+\code{"allow"} the planar row filter.}
 
 \item{x}{A data frame with at least one \code{geo_vctr} column, or a
 \code{geo_vctr}, written as the column \code{geometry}.}
@@ -61,7 +69,10 @@ PROJ is taken on trust, and the geo key's PROJJSON is kept.
 
 \code{bbox} skips the row groups whose box, from the native statistics or
 else a \code{covering} column's, misses it, and then keeps the rows whose
-geometry's box intersects it. GeoParquet 1.1's native GeoArrow encodings
+geometry's box intersects it. That row filter is planar, so on lines
+and polygons with non-planar edges, which can bulge past their vertices'
+box, it is a \code{zugeo_edges_error} unless \code{lossy} says otherwise, as for
+\code{\link[=geo_box]{geo_box()}}. GeoParquet 1.1's native GeoArrow encodings
 are nested Parquet columns, which qio does not read yet; such a column
 is a \code{zugeo_parquet_error}.
 
