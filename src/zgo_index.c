@@ -436,6 +436,8 @@ SEXP zgo_c_rtree_search(SEXP raw, SEXP qminx, SEXP qminy, SEXP qmaxx, SEXP qmaxy
   char message[256];
   const char *type = zgo_index_view(raw, &t, &ki, &kn, message, sizeof(message));
   if (type == NULL || strcmp(type, "rtree") != 0) {
+    /* The type half is not reachable from R, whose zgo_check_index() checks
+       the index type first; bytes that do not parse are (test-index.R). */
     return zgo_index_failure(type == NULL ? message : "Not an R-tree.");
   }
   R_xlen_t n = Rf_xlength(qminx);
@@ -465,10 +467,14 @@ SEXP zgo_c_rtree_join(SEXP raw_a, SEXP raw_b) {
   char message[256];
   const char *type = zgo_index_view(raw_a, &ta, &ki, &kn, message, sizeof(message));
   if (type == NULL || strcmp(type, "rtree") != 0) {
+    /* The type half is not reachable from R, whose zgo_check_index() checks
+       the index type first; bytes that do not parse are (test-index.R). */
     return zgo_index_failure(type == NULL ? message : "Not an R-tree.");
   }
   type = zgo_index_view(raw_b, &tb, &ki, &kn, message, sizeof(message));
   if (type == NULL || strcmp(type, "rtree") != 0) {
+    /* The type half is not reachable from R, whose zgo_check_index() checks
+       the index type first; bytes that do not parse are (test-index.R). */
     return zgo_index_failure(type == NULL ? message : "Not an R-tree.");
   }
   zgo_pairs pairs = {NULL, NULL, 0, 0};
@@ -610,6 +616,8 @@ SEXP zgo_c_rtree_nearest(SEXP raw, SEXP px, SEXP py, SEXP k_sexp, SEXP max_sexp)
   char message[256];
   const char *type = zgo_index_view(raw, &t, &ki, &kn, message, sizeof(message));
   if (type == NULL || strcmp(type, "rtree") != 0) {
+    /* The type half is not reachable from R, whose zgo_check_index() checks
+       the index type first; bytes that do not parse are (test-index.R). */
     return zgo_index_failure(type == NULL ? message : "Not an R-tree.");
   }
   R_xlen_t n = Rf_xlength(px);
