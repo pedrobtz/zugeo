@@ -408,7 +408,7 @@ test_that("geo_validate_parquet() finds what is wrong", {
 test_that("the distribution guide's advice is reported as warnings", {
   skip_without_qio()
   dir <- withr::local_tempdir()
-  set.seed(3)
+  withr::local_seed(3)
   n <- 400L
   x <- data.frame(id = seq_len(n))
   x$geometry <- geo_points(stats::runif(n), stats::runif(n), crs = "OGC:CRS84")

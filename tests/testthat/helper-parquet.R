@@ -20,7 +20,7 @@ crs84_projjson <- paste0(
 )
 
 parquet_cases <- function() {
-  set.seed(7)
+  withr::local_seed(7)
   n <- 1000L
   many <- data.frame(id = seq_len(n), value = stats::runif(n))
   many$geometry <- geo_points(
