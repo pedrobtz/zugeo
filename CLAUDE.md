@@ -182,23 +182,28 @@ The conformance corpus is `geoarrow-data` `v0.2.0` (design §9), with
 `gpq`, and flatbush/kdbush under `node` as oracles. The corpus has no
 union-encoded `geoarrow.geometry` file; Stage 2 makes one. Helpers:
 `helper-abi.R` reads the shared object’s export and import tables (`nm`,
-or `objdump` on Windows; a failure on CI, a skip elsewhere);
-`helper-ci-oracles.R` has `skip_without_oracle()`, which fails under
-`ZUGEO_ORACLES=true` (the index oracles also need `ZUGEO_NODE_MODULES`,
-a directory with <flatbush@4.7.0> and <kdbush@4.1.0> installed, and
-`ZUGEO_GEOINDEX_PYTHON`, a Python with `geoindex-rs`); `helper-schema.R`
-builds GeoArrow schemas from specs (`ga_schema()`, `ga_union()`,
-`ga_field()`); `helper-corpus.R` fetches the corpus; `helper-vctr.R`
-reads the union fixture (`tests/testthat/data/geometry-union.arrows`,
-zuarrow’s, from `tools/make-union-fixture.py`) and round-trips data
-frames. The corpus is never in the package (no licence): it is fetched
-from `geoarrow-data` at commit `e8eaa04` when
-`ZUGEO_FETCH_FIXTURES=true` (set in every CI workflow), or read from
-`ZUGEO_CORPUS_DIR`, and checked against `tests/testthat/corpus.txt`;
-otherwise the corpus tests skip. `helper-convert.R` has EWKB builders,
-bit-for-bit double comparison and the hard doubles of the exactness
-property test (`test-exact.R`). The oracle tests compare with sf, geos,
-s2 and wk by WKB or coordinates, never by WKT text:
+or `objdump` on Windows; a failure on CI, a skip elsewhere); Test files
+hold only `test_that()` calls: anything shared, even within one file,
+lives in a `helper-*.R` (`helper-ci-*.R` for the CI-only tests, so
+`.Rbuildignore` keeps it out of the tarball), because
+`devtools::test(shuffle = TRUE)` reorders a file’s top-level
+expressions. `helper-ci-oracles.R` has `skip_without_oracle()`, which
+fails under `ZUGEO_ORACLES=true` (the index oracles also need
+`ZUGEO_NODE_MODULES`, a directory with <flatbush@4.7.0> and
+<kdbush@4.1.0> installed, and `ZUGEO_GEOINDEX_PYTHON`, a Python with
+`geoindex-rs`); `helper-schema.R` builds GeoArrow schemas from specs
+(`ga_schema()`, `ga_union()`, `ga_field()`); `helper-corpus.R` fetches
+the corpus; `helper-vctr.R` reads the union fixture
+(`tests/testthat/data/geometry-union.arrows`, zuarrow’s, from
+`tools/make-union-fixture.py`) and round-trips data frames. The corpus
+is never in the package (no licence): it is fetched from `geoarrow-data`
+at commit `e8eaa04` when `ZUGEO_FETCH_FIXTURES=true` (set in every CI
+workflow), or read from `ZUGEO_CORPUS_DIR`, and checked against
+`tests/testthat/corpus.txt`; otherwise the corpus tests skip.
+`helper-convert.R` has EWKB builders, bit-for-bit double comparison and
+the hard doubles of the exactness property test (`test-exact.R`). The
+oracle tests compare with sf, geos, s2 and wk by WKB or coordinates,
+never by WKT text:
 [`sf::st_as_text()`](https://r-spatial.github.io/sf/reference/st_as_text.html)
 prints 7 digits,
 [`sf::st_as_binary()`](https://r-spatial.github.io/sf/reference/st_as_binary.html)
