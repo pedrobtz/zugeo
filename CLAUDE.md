@@ -191,7 +191,9 @@ a directory with flatbush@4.7.0 and kdbush@4.1.0 installed, and
 `ZUGEO_GEOINDEX_PYTHON`, a Python with `geoindex-rs`); `helper-schema.R`
 builds GeoArrow schemas from
 specs (`ga_schema()`, `ga_union()`, `ga_field()`); `helper-corpus.R`
-fetches the corpus; `helper-vctr.R` reads the union fixture
+fetches the corpus; `tests/testthat/data/geo-grouped.parquet` (a geo key over a struct
+column, which zugeo and qio cannot write) comes from
+`tools/make-parquet-fixtures.R`, run once with DuckDB. `helper-vctr.R` reads the union fixture
 (`tests/testthat/data/geometry-union.arrows`, zuarrow's, from
 `tools/make-union-fixture.py`) and round-trips data frames. The corpus
 is never in the package (no licence):

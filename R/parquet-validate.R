@@ -314,6 +314,9 @@ zgo_pq_check_columns <- function(v) {
   }
   for (name in unique(c(declared, native))) {
     meta <- v$geo$columns[[name]]
+    # An entry that is not an object is reported as columns_invalid; read
+    # the column as though the geo key did not list it.
+    if (!zgo_is_object(meta)) meta <- NULL
     encoding <- if (zgo_is_string(meta$encoding)) meta$encoding else "WKB"
     row <- s[s$path == name, , drop = FALSE]
     if (nrow(row) == 0L) {
