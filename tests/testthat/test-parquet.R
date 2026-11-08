@@ -120,6 +120,54 @@ test_that("a CRS given by a code goes in the Parquet type only", {
   )
 })
 
+test_that("geo_write_parquet() takes a geo_vctr and refuses other input", {
+  skip_without_qio()
+  path <- withr::local_tempfile(fileext = ".parquet")
+  geo_write_parquet(geo_points(1:2, 3:4, crs = "OGC:CRS84"), path)
+  back <- geo_read_parquet(path)
+  expect_named(back, "geometry")
+  expect_identical(geo_coords(back$geometry)$y, c(3, 4))
+  expect_error(geo_write_parquet(list(1), path), class = "zugeo_error")
+  expect_error(geo_write_parquet(data.frame(a = 1), path), class = "zugeo_error")
+})
+
+test_that("two geometry columns each keep their CRS, types and box", {
+  skip_without_qio()
+  path <- withr::local_tempfile(fileext = ".parquet")
+  long <- zgo_crs_new(list(type = "GeographicCRS", name = strrep("n", 200)), "projjson")
+  x <- data.frame(id = 1:3)
+  x$a <- geo_vctr(c(NA, NA, NA), crs = "OGC:CRS84")
+  x$b <- geo_points(c(5, 1, 3), c(5, 1, 3), crs = long)
+  geo_write_parquet(x, path, sort = "none")
+  f <- parquet_footer(path)
+  # The first geometry column is primary, even when it is all null.
+  expect_identical(f$geo$primary_column, "a")
+  expect_identical(f$geo$columns$a$geometry_types, list())
+  expect_null(f$geo$columns$a$bbox)
+  expect_equal(unlist(f$geo$columns$b$bbox), c(1, 1, 5, 5))
+  expect_identical(
+    f$schema$logical_details[f$schema$path == "b"], "crs=projjson:projjson_crs_b"
+  )
+  back <- geo_read_parquet(path)
+  expect_true(all(is.na(back$a)))
+  expect_true(geo_crs_equal(back$b, x$b))
+  expect_identical(geo_crs(back$a)$value, "OGC:CRS84")
+  expect_false(any(geo_validate_parquet(path)$severity == "error"))
+})
+
+test_that("geo_read_parquet() checks columns and bbox", {
+  skip_without_qio()
+  path <- withr::local_tempfile(fileext = ".parquet")
+  geo_write_parquet(geo_points(1:2, 3:4), path)
+  expect_error(geo_read_parquet(path, columns = 1), class = "zugeo_error")
+  expect_error(geo_read_parquet(path, columns = NA_character_), class = "zugeo_error")
+  expect_error(
+    geo_read_parquet(path, bbox = geo_extent(c(0, 1), 0, 2, 2)),
+    class = "zugeo_error"
+  )
+  expect_error(geo_read_parquet(path, bbox = c(0, 0, 1)), class = "zugeo_error")
+})
+
 test_that("GeoParquet 1.1 writes plain binary and refuses other edges", {
   skip_without_qio()
   dir <- withr::local_tempdir()
