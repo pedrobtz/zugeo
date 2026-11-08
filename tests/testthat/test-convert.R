@@ -97,6 +97,24 @@ test_that("malformed WKB and WKT are errors naming the element", {
   }
 })
 
+test_that("geo_as_native() refuses a type that would reshape the geometries", {
+  mp <- geo_vctr("MULTIPOLYGON (((0 0, 1 0, 0 1, 0 0)), ((5 5, 6 5, 5 6, 5 5)))")
+  expect_error(geo_as_native(mp, type = "polygon"), class = "zugeo_layout_error")
+  expect_error(
+    geo_as_native(geo_vctr("POLYGON ((0 0, 1 0, 0 1, 0 0))"), type = "linestring"),
+    class = "zugeo_layout_error"
+  )
+  expect_error(
+    geo_as_native(geo_vctr("POINT (1 1)"), type = "polygon"),
+    class = "zugeo_layout_error"
+  )
+  # The single type promotes to its multi type, and the multi type stays.
+  p <- geo_as_native(geo_vctr(c("POINT (1 1)", NA)), type = "multipoint")
+  expect_identical(geo_coords(p)[c("x", "y")], data.frame(x = 1, y = 1))
+  expect_identical(geo_types(p), c("multipoint", NA))
+  expect_identical(geo_as_wkt(geo_as_native(mp, type = "multipolygon")), geo_as_wkt(mp))
+})
+
 test_that("geo_as_native() infers one type, promoting to multi", {
   x <- geo_vctr(c("POLYGON ((0 0, 1 0, 0 1, 0 0))", NA,
     "MULTIPOLYGON (((0 0, 2 0, 0 2, 0 0)), ((5 5, 6 5, 5 6, 5 5)))"))

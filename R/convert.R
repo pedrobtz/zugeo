@@ -108,7 +108,23 @@ geo_as_native <- function(x, layout = c("separated", "interleaved"), type = NULL
         call = call
       )
     }
-    zgo_geometry_types[[type]]
+    requested <- zgo_geometry_types[[type]]
+    # The geometries must already be `type`, or its single type when `type`
+    # is a multi type: anything else would be reshaped, not converted.
+    if (length(scan$types)) {
+      inferred <- zgo_infer_type(scan$types, call)
+      if (!(requested == inferred || (inferred <= 3L && requested == inferred + 3L))) {
+        zgo_abort(
+          "layout",
+          sprintf(
+            "The geometries are %ss, which `type = \"%s\"` cannot hold without changing them.",
+            names(zgo_geometry_types)[inferred], type
+          ),
+          call = call
+        )
+      }
+    }
+    requested
   }
   if (length(scan$dims) > 1L) {
     zgo_abort(
