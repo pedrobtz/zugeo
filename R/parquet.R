@@ -284,8 +284,10 @@ zgo_pq_column <- function(name, meta, row, schema, kv, call) {
       )
     }
   } else {
+    # Neither the geo key nor a native type: only the validator asks about
+    # such a column, and it keeps the planar default.
     out$crs <- native_crs
-    out$edges <- native_edges
+    if (!is.null(native_edges)) out$edges <- native_edges
   }
   if (!out$edges %in% zgo_edges) {
     zgo_abort(

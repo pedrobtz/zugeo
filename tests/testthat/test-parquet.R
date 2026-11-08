@@ -502,6 +502,97 @@ test_that("geo_validate_parquet() passes zugeo's own files", {
   )
 })
 
+test_that("geo_validate_parquet() reports a malformed geo key's structure", {
+  skip_without_qio()
+  dir <- withr::local_tempdir()
+  df <- data.frame(id = 1:2)
+  df$geometry <- wkb_list(c("POINT (1 2)", "POINT (3 4)"))
+  issues <- function(geo, ...) {
+    p <- write_raw_parquet(df, file.path(dir, "f.parquet"), geo = geo, ...)
+    geo_validate_parquet(p, metadata_only = TRUE)$issue
+  }
+  json <- function(...) as.character(zujson::json_write(list(...)))
+  entry <- list(encoding = "WKB", geometry_types = list())
+  expect_true("columns_invalid" %in% issues(json(
+    version = "1.1.0", primary_column = "geometry", columns = structure(list(), names = character())
+  )))
+  expect_true("columns_invalid" %in% issues(json(
+    version = "1.1.0", primary_column = "geometry", columns = list(geometry = 1)
+  )))
+  expect_true("primary_column_not_in_columns" %in% issues(json(
+    version = "1.1.0", primary_column = "nope", columns = list(geometry = entry)
+  )))
+  expect_true("orientation_invalid" %in% issues(json(
+    version = "1.1.0", primary_column = "geometry",
+    columns = list(geometry = c(entry, list(orientation = "clockwise")))
+  )))
+  expect_true("column_not_byte_array" %in% issues(json(
+    version = "1.1.0", primary_column = "id", columns = list(id = entry)
+  )))
+  expect_true("column_undeclared" %in% issues(
+    json(version = "2.0.0", primary_column = "id", columns = list(id = entry)),
+    schema = qio::parquet_schema(geometry = "GEOMETRY")
+  ))
+})
+
+test_that("geo_validate_parquet() finds a grouped geometry column", {
+  skip_without_qio()
+  # Written by DuckDB with tools/make-parquet-fixtures.R: the geo key names a
+  # struct column as WKB, which neither zugeo nor qio can write.
+  v <- geo_validate_parquet(test_path("data", "geo-grouped.parquet"), metadata_only = TRUE)
+  expect_true("column_grouped" %in% v$issue)
+  # column_repeated needs a repeated BYTE_ARRAY at the root, the legacy
+  # two-level list, which no writer zugeo's tests can reach still produces;
+  # the branch (R/parquet-validate.R) stays as a guard.
+})
+
+test_that("geo_validate_parquet() finds statistics that miss their data", {
+  skip_without_qio()
+  path <- withr::local_tempfile(fileext = ".parquet")
+  df <- data.frame(id = 1:2)
+  df$geometry <- geo_points(c(0.25, 0.5), c(0.75, 0.625), crs = "OGC:CRS84")
+  geo_write_parquet(df, path, sort = "none", compression = "uncompressed")
+  expect_false(any(geo_validate_parquet(path)$issue %in%
+    c("statistics_exceeded", "statistics_types")))
+  # Patch the footer's GeospatialStatistics in place: xmax 0.5 becomes 0.375
+  # (data now outside the box), and the one-type list [1] becomes [2].
+  b <- readBin(path, "raw", file.size(path))
+  n <- length(b)
+  len <- readBin(b[(n - 7L):(n - 4L)], "integer", size = 4L, endian = "little")
+  start <- n - 8L - len
+  find <- function(needle, from = 1L) {
+    hits <- which(vapply(seq_len(len - length(needle) + 1L), function(i) {
+      all(b[start + i:(i + length(needle) - 1L)] == needle)
+    }, logical(1)))
+    hits[hits >= from]
+  }
+  xmax <- find(writeBin(0.5, raw(), size = 8L, endian = "little"))
+  expect_length(xmax, 1L)
+  b[start + xmax:(xmax + 7L)] <- writeBin(0.375, raw(), size = 8L, endian = "little")
+  # list<i32> of one element (0x15), the zigzag varint of 1 (0x02).
+  types <- find(as.raw(c(0x15, 0x02)), from = xmax + 8L)[1L]
+  expect_false(is.na(types))
+  b[start + types + 1L] <- as.raw(0x04)
+  writeBin(b, path)
+  stats <- qio::geospatial_statistics(qio::open_parquet(path))
+  expect_identical(stats$xmax, 0.375)
+  expect_identical(unlist(stats$geometry_types), 2L)
+  v <- geo_validate_parquet(path)
+  expect_true(all(c("statistics_exceeded", "statistics_types") %in% v$issue))
+  expect_identical(v$row_group[v$issue == "statistics_exceeded"], 1L)
+})
+
+test_that("geo_validate_parquet() advises against row groups over 200,000 rows", {
+  skip_without_qio()
+  path <- withr::local_tempfile(fileext = ".parquet")
+  x <- data.frame(id = seq_len(200001L))
+  x$geometry <- geo_vctr(rep(NA_character_, 200001L), crs = "OGC:CRS84")
+  geo_write_parquet(x, path, sort = "none", row_group_size = 300000L)
+  v <- geo_validate_parquet(path, metadata_only = TRUE)
+  expect_identical(v$issue[v$issue == "row_group_large"], "row_group_large")
+  expect_identical(v$severity[v$issue == "row_group_large"], "warning")
+})
+
 test_that("geo_validate_parquet() finds what is wrong", {
   skip_without_qio()
   dir <- withr::local_tempdir()
