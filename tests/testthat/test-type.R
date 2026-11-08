@@ -1,4 +1,3 @@
-describe_spec <- function(spec) geo_type_of(zgo_schema(spec))
 
 test_that("every native type, dimension, coordinate layout and list width", {
   levels <- c(point = 0L, linestring = 1L, polygon = 2L, multipoint = 1L,

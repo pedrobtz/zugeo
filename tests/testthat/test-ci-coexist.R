@@ -4,8 +4,6 @@
 # package tarball (.Rbuildignore) and runs from the source tree, in CI by
 # oracles.yaml.
 
-oracles <- c("zuarrow", "geoarrow", "nanoarrow")
-
 test_that("zugeo, zuarrow, geoarrow and nanoarrow load and work together", {
   for (package in oracles) {
     skip_without_oracle(package)

@@ -177,6 +177,10 @@ The conformance corpus is `geoarrow-data` `v0.2.0` (design §9), with
 union-encoded `geoarrow.geometry` file; Stage 2 makes one. Helpers:
 `helper-abi.R` reads the shared object's export and import tables
 (`nm`, or `objdump` on Windows; a failure on CI, a skip elsewhere);
+Test files hold only `test_that()` calls: anything shared, even within
+one file, lives in a `helper-*.R` (`helper-ci-*.R` for the CI-only tests,
+so `.Rbuildignore` keeps it out of the tarball), because
+`devtools::test(shuffle = TRUE)` reorders a file's top-level expressions.
 `helper-ci-oracles.R` has `skip_without_oracle()`, which fails under
 `ZUGEO_ORACLES=true` (the index oracles also need `ZUGEO_NODE_MODULES`,
 a directory with flatbush@4.7.0 and kdbush@4.1.0 installed, and
