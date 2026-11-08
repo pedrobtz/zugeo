@@ -90,6 +90,12 @@ test_that("malformed WKB and WKT are errors naming the element", {
   for (n in seq_len(length(wkb) - 1L) - 1L) {
     expect_error(geo_vctr(list(wkb[seq_len(n)])), "not valid WKB", label = n)
   }
+  # A coordinate count whose size overflows 32 bits: 2^31 XY coordinates
+  # are 2^35 bytes, which patch 0002 computes in 64 bits. In 32 bits the
+  # product wraps to 0 and the linestring read as empty (D22).
+  big <- as.raw(c(0x01, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80))
+  expect_error(geo_vctr(list(big)), "not valid WKB")
+  expect_error(geo_vctr(list(c(big, as.raw(rep(0, 32))))), "not valid WKB")
   # And every truncation of valid WKT that is not itself valid.
   text <- "POLYGON ((0 0, 1 0, 0 1, 0 0), (0.1 0.1, 0.2 0.1, 0.1 0.2, 0.1 0.1))"
   for (n in seq_len(nchar(text) - 1L)) {
