@@ -336,9 +336,9 @@ zgo_pq_row_group_boxes <- function(pf, desc, column) {
   n <- nrow(qio::row_groups(pf))
   out <- data.frame(
     xmin = rep(NA_real_, n),
-    ymin = NA_real_,
-    xmax = NA_real_,
-    ymax = NA_real_
+    ymin = rep(NA_real_, n),
+    xmax = rep(NA_real_, n),
+    ymax = rep(NA_real_, n)
   )
   stats <- qio::geospatial_statistics(pf)
   stats <- stats[stats$path == column$name, , drop = FALSE]
@@ -470,7 +470,7 @@ zgo_pq_query_box <- function(bbox, column, call) {
 geo_read_parquet <- function(path, bbox = NULL, columns = NULL,
                              lossy = c("error", "warn", "allow")) {
   call <- sys.call()
-  lossy <- match.arg(lossy)
+  lossy <- zgo_match_arg(lossy)
   pf <- zgo_pq_open(path, call)
   on.exit(qio::close_parquet(pf), add = TRUE)
   desc <- zgo_pq_describe(pf, call)
@@ -513,11 +513,8 @@ geo_read_parquet <- function(path, bbox = NULL, columns = NULL,
     groups <- which(!miss)
     read <- unique(c(read, primary$name))
   }
-  if (!is.null(groups) && length(groups) == 0L) {
-    df <- qio::collect(pf, columns = read, row_groups = 1L)[0L, , drop = FALSE]
-  } else {
-    df <- qio::collect(pf, columns = read, row_groups = groups)
-  }
+  # An empty `groups` reads no row group: qio returns the empty columns.
+  df <- qio::collect(pf, columns = read, row_groups = groups)
   for (name in intersect(
     c(geometry, if (!is.null(bbox)) primary$name),
     names(df)
@@ -561,9 +558,9 @@ geo_write_parquet <- function(
 ) {
   call <- sys.call()
   zgo_need_qio(call)
-  sort <- match.arg(sort)
-  version <- match.arg(version)
-  compression <- match.arg(compression)
+  sort <- zgo_match_arg(sort)
+  version <- zgo_match_arg(version)
+  compression <- zgo_match_arg(compression)
   if (is_geo_vctr(x)) {
     geometry <- x
     x <- data.frame(row.names = seq_along(geometry))

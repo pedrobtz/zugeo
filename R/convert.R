@@ -59,7 +59,7 @@ zgo_check_vctr <- function(x, call) {
 #' lengths(geo_as_wkb(x))
 geo_as_wkb <- function(x, lossy = c("error", "warn", "allow")) {
   call <- sys.call()
-  lossy <- match.arg(lossy)
+  lossy <- zgo_match_arg(lossy)
   zgo_check_vctr(x, call)
   zgo_check_edges_kept(x, lossy, "WKB", call)
   zgo_check_not_box(x, call)
@@ -76,7 +76,7 @@ geo_as_wkb <- function(x, lossy = c("error", "warn", "allow")) {
 #' @export
 geo_as_wkt <- function(x, lossy = c("error", "warn", "allow")) {
   call <- sys.call()
-  lossy <- match.arg(lossy)
+  lossy <- zgo_match_arg(lossy)
   zgo_check_vctr(x, call)
   zgo_check_edges_kept(x, lossy, "WKT", call)
   zgo_check_not_box(x, call)
@@ -94,7 +94,7 @@ geo_as_wkt <- function(x, lossy = c("error", "warn", "allow")) {
 geo_as_native <- function(x, layout = c("separated", "interleaved"), type = NULL) {
   call <- sys.call()
   zgo_check_vctr(x, call)
-  layout <- match.arg(layout)
+  layout <- zgo_match_arg(layout)
   zgo_check_not_box(x, call)
   loc <- zgo_locate(x)
   scan <- zgo_check(
@@ -427,7 +427,7 @@ geo_coords <- function(x) {
 geo_from_coords <- function(coords, type, n = NULL, crs = NULL, edges = NULL,
                             layout = c("separated", "interleaved")) {
   call <- sys.call()
-  layout <- match.arg(layout)
+  layout <- zgo_match_arg(layout)
   # The CRS and edges geo_coords() carried, unless given.
   if (is.null(crs)) crs <- attr(coords, "crs")
   if (is.null(edges)) edges <- attr(coords, "edges")

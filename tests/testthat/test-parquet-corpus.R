@@ -6,16 +6,21 @@
 test_that("every WKB corpus file reads, equal to its IPC twin", {
   skip_without_qio()
   ipc <- names(corpus_manifest())
+  twins <- 0L
   for (file in parquet_wkb_files()) {
     df <- geo_read_parquet(parquet_corpus_path(file))
     expect_s3_class(df$geometry, "geo_vctr")
     stem <- sub("(_geo)?\\.parquet$", "", basename(file))
     twin <- paste0(stem, "_wkb.arrows")
     if (twin %in% ipc) {
+      twins <- twins + 1L
       want <- zuarrow::arrow_read(corpus_path(twin))$geometry
       expect_identical(bare_wkt(df$geometry), bare_wkt(want), label = file)
     }
   }
+  # Every example/ file has its IPC twin; the other directories have none.
+  expect_identical(twins, sum(startsWith(parquet_wkb_files(), "example/files/")))
+  expect_gt(twins, 0L)
 })
 
 test_that("a file's geo key and native twin read to the same geometries", {

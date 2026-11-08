@@ -7399,6 +7399,9 @@ int64_t GeoArrowPrintDouble(double f, uint32_t precision, char* result) {
 GeoArrowErrorCode GeoArrowFromChars(const char* first, const char* last, double* out) {
   if (first < last && *first == '+') {
     first++;
+    if (first < last && (*first == '+' || *first == '-')) {
+      return EINVAL;
+    }
   }
   zuf_result zugeo_result = zuf_parse_f64(first, last, out);
   if (zugeo_result.status != ZUF_OK || zugeo_result.ptr != last) {

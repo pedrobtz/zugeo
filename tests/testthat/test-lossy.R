@@ -38,7 +38,10 @@ test_that("conversions that keep the edge type never complain", {
 
 test_that("an invalid lossy policy is an error", {
   x <- geo_vctr("POINT (1 2)")
-  expect_error(geo_as_wkb(x, lossy = "maybe"))
+  expect_error(geo_as_wkb(x, lossy = "maybe"), class = "zugeo_error")
+  # No partial matching: "w" is not "warn".
+  expect_error(geo_as_wkb(x, lossy = "w"), class = "zugeo_error")
+  expect_snapshot(geo_as_wkb(x, lossy = "maybe"), error = TRUE)
 })
 
 test_that("every CRS form survives every route, never invented or dropped", {

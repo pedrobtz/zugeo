@@ -33,7 +33,7 @@
 #' geo_query_box(geo_index_from_raw(bytes), geo_extent(4, 4, 10, 10))
 geo_rtree <- function(x, node_size = 16L, lossy = c("error", "warn", "allow")) {
   call <- sys.call()
-  lossy <- match.arg(lossy)
+  lossy <- zgo_match_arg(lossy)
   node_size <- zgo_check_node_size(node_size, call)
   box <- if (inherits(x, "geo_extent")) x else geo_box(x, lossy = lossy)
   zgo_extent_check_planar(box, call)
@@ -226,7 +226,7 @@ geo_query_nearest <- function(index, x, y, k = 1L, max_distance = Inf) {
 #' @export
 geo_join_box <- function(index, y, lossy = c("error", "warn", "allow")) {
   call <- sys.call()
-  lossy <- match.arg(lossy)
+  lossy <- zgo_match_arg(lossy)
   zgo_check_index(index, "rtree", call)
   if (inherits(y, "zugeo_index")) {
     zgo_check_index(y, "rtree", call)

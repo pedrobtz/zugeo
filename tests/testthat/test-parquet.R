@@ -408,7 +408,7 @@ test_that("geo_validate_parquet() finds what is wrong", {
 test_that("the distribution guide's advice is reported as warnings", {
   skip_without_qio()
   dir <- withr::local_tempdir()
-  set.seed(3)
+  withr::local_seed(3)
   n <- 400L
   x <- data.frame(id = seq_len(n))
   x$geometry <- geo_points(stats::runif(n), stats::runif(n), crs = "OGC:CRS84")
@@ -443,6 +443,22 @@ test_that("geometry findings are warnings with their rows", {
   expect_identical(v$issue, c("unclosed_ring", "short_ring"))
   expect_identical(v$row, c(2L, 2L))
   expect_true(all(v$severity == "warning"))
+})
+
+test_that("a file with no rows reads, describes and validates", {
+  skip_without_qio()
+  path <- withr::local_tempfile(fileext = ".parquet")
+  geo_write_parquet(geo_points(numeric(), numeric(), crs = "OGC:CRS84"), path)
+  info <- geo_parquet_info(path)
+  expect_identical(info$rows, 0)
+  expect_identical(nrow(info$row_groups), 0L)
+  expect_length(info$columns$geometry$row_group_bbox, 0L)
+  for (bbox in list(NULL, c(0, 0, 1, 1))) {
+    df <- geo_read_parquet(path, bbox = bbox)
+    expect_identical(nrow(df), 0L)
+    expect_s3_class(df$geometry, "geo_vctr")
+  }
+  expect_false(any(geo_validate_parquet(path)$severity == "error"))
 })
 
 test_that("bbox over non-planar edges follows the lossy policy", {
