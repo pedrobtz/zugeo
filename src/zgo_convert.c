@@ -480,6 +480,7 @@ SEXP zgo_c_hex_to_raw(SEXP x) {
     if (el == NA_STRING) continue;
     const char *text = CHAR(el);
     size_t len = strlen(text);
+    /* Not reachable from R: geo_vctr() sends only strings of hex pairs here. */
     if (len % 2 != 0) {
       char message[96];
       snprintf(message, sizeof(message), "Element %ld is not hex WKB: odd length.", (long)(i + 1));
@@ -491,6 +492,7 @@ SEXP zgo_c_hex_to_raw(SEXP x) {
       int hi = zgo_hex_digit(text[2 * j]), lo = zgo_hex_digit(text[2 * j + 1]);
       if (hi < 0 || lo < 0) {
         char message[96];
+        /* Not reachable from R, for the same reason: a guard for misuse. */
         snprintf(message, sizeof(message), "Element %ld is not hex WKB: '%c%c' is not a hex byte.",
                  (long)(i + 1), text[2 * j], text[2 * j + 1]);
         UNPROTECT(2);

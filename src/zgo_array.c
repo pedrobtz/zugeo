@@ -187,6 +187,7 @@ SEXP zgo_c_is_na(SEXP chunks, SEXP schema, SEXP chunk, SEXP row) {
     }
     if (r >= col.views[k]->length) {
       zgo_scratch_run(scratch);
+      /* Not reachable from R: positions come only from zgo_vctr_new() and zgo_rebuild(), within each chunk. */
       Rf_error("A geo_vctr position is past the end of its chunk.");
     }
     LOGICAL(out)[p] = zgo_is_null(col.views[k], r);
@@ -377,6 +378,7 @@ SEXP zgo_c_format(SEXP chunks, SEXP schema, SEXP chunk, SEXP row, SEXP max_bytes
     int k = zgo_position(chunk, row, p, col.n_chunks, &r);
     if (k >= 0 && r >= col.views[k]->length) {
       zgo_scratch_run(scratch);
+      /* Not reachable from R: positions come only from zgo_vctr_new() and zgo_rebuild(), within each chunk. */
       Rf_error("A geo_vctr position is past the end of its chunk.");
     }
     if (k < 0 || zgo_is_null(col.views[k], r)) {
