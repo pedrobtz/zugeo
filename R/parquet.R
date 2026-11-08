@@ -419,7 +419,10 @@ zgo_pq_query_box <- function(bbox, column, call) {
 #'
 #' `bbox` skips the row groups whose box, from the native statistics or
 #' else a `covering` column's, misses it, and then keeps the rows whose
-#' geometry's box intersects it. GeoParquet 1.1's native GeoArrow encodings
+#' geometry's box intersects it. That row filter is planar, so on lines
+#' and polygons with non-planar edges, which can bulge past their vertices'
+#' box, it is a `zugeo_edges_error` unless `lossy` says otherwise, as for
+#' [geo_box()]. GeoParquet 1.1's native GeoArrow encodings
 #' are nested Parquet columns, which qio does not read yet; such a column
 #' is a `zugeo_parquet_error`.
 #'
@@ -442,6 +445,8 @@ zgo_pq_query_box <- function(bbox, column, call) {
 #'   `c(xmin, ymin, xmax, ymax)`, applied to the primary geometry column.
 #' @param columns `NULL` for every column qio reads, or a character vector
 #'   of column names.
+#' @param lossy For `bbox` over non-planar edges: `"error"`, `"warn"` or
+#'   `"allow"` the planar row filter.
 #' @param x A data frame with at least one `geo_vctr` column, or a
 #'   `geo_vctr`, written as the column `geometry`.
 #' @param sort `"hilbert"` to order the rows by [geo_hilbert()] of the first
@@ -462,8 +467,10 @@ zgo_pq_query_box <- function(bbox, column, call) {
 #' df$geometry <- geo_points(c(0, 5, 9), c(0, 5, 9), crs = "OGC:CRS84")
 #' geo_write_parquet(df, path)
 #' geo_read_parquet(path, bbox = c(4, 4, 10, 10))
-geo_read_parquet <- function(path, bbox = NULL, columns = NULL) {
+geo_read_parquet <- function(path, bbox = NULL, columns = NULL,
+                             lossy = c("error", "warn", "allow")) {
   call <- sys.call()
+  lossy <- match.arg(lossy)
   pf <- zgo_pq_open(path, call)
   on.exit(qio::close_parquet(pf), add = TRUE)
   desc <- zgo_pq_describe(pf, call)
@@ -519,7 +526,18 @@ geo_read_parquet <- function(path, bbox = NULL, columns = NULL) {
     df[[name]] <- geo_vctr(df[[name]], crs = column$crs, edges = column$edges)
   }
   if (!is.null(bbox)) {
-    box <- zgo_extent_parts(geo_box(df[[primary$name]]))
+    # geo_box()'s edges condition, raised from this call: it is
+    # geo_read_parquet()'s `lossy` that the message points to.
+    box <- withCallingHandlers(
+      zgo_extent_parts(geo_box(df[[primary$name]], lossy = lossy)),
+      zugeo_edges_error = function(e) {
+        zgo_abort("edges", conditionMessage(e), call = call, edges = e$edges)
+      },
+      zugeo_edges_warning = function(w) {
+        zgo_warn("edges", conditionMessage(w), call = call, edges = w$edges)
+        invokeRestart("muffleWarning")
+      }
+    )
     keep <- !is.na(box$xmin) &
       box$xmin <= query[[3L]] &
       box$xmax >= query[[1L]] &

@@ -160,3 +160,19 @@ test_that("arguments are checked", {
   expect_error(geo_rtree(geo_extent(170, 0, -170, 1)), class = "zugeo_edges_error")
   expect_error(geo_rtree(geo_vctr("LINESTRING (0 0, 1 1)", edges = "spherical")), class = "zugeo_edges_error")
 })
+
+test_that("geometries with a non-finite box are left out of both indexes", {
+  withr::local_seed(30)
+  n <- 5000L
+  x <- stats::runif(n)
+  y <- stats::runif(n)
+  y[sample(n, 2000L)] <- NaN
+  x[c(1L, 2L)] <- c(Inf, -Inf)
+  p <- geo_points(x, y)
+  q <- geo_extent(0, 0, 0.5, 0.5)
+  truth <- which(is.finite(x) & is.finite(y) & x >= 0 & x <= 0.5 & y >= 0 & y <= 0.5)
+  expect_identical(geo_query_box(geo_kdtree(p, node_size = 2), q), truth)
+  expect_identical(geo_query_box(geo_rtree(p, node_size = 2), q), truth)
+  expect_identical(geo_query_box(geo_rtree(p), q), truth)
+  expect_error(geo_rtree(geo_points(NaN, 1)), class = "zugeo_index_error")
+})

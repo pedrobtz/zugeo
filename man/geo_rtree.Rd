@@ -42,7 +42,9 @@ unchanged, and \code{geo_index_from_raw()} reads such bytes back, checking
 them first.
 }
 \details{
-Null and empty geometries are left out of an index, and queries return
+Null and empty geometries are left out of an index, as is any geometry
+whose box has a bound that is not finite (\code{NaN} or infinite), which no
+query box could contain and which would make the build undefined. Queries return
 positions in the vector the index was built from. An index read from raw
 bytes numbers its items 1 to n in the order they were added.
 }

@@ -8,7 +8,9 @@
 #' unchanged, and `geo_index_from_raw()` reads such bytes back, checking
 #' them first.
 #'
-#' Null and empty geometries are left out of an index, and queries return
+#' Null and empty geometries are left out of an index, as is any geometry
+#' whose box has a bound that is not finite (`NaN` or infinite), which no
+#' query box could contain and which would make the build undefined. Queries return
 #' positions in the vector the index was built from. An index read from raw
 #' bytes numbers its items 1 to n in the order they were added.
 #'
@@ -36,9 +38,9 @@ geo_rtree <- function(x, node_size = 16L, lossy = c("error", "warn", "allow")) {
   box <- if (inherits(x, "geo_extent")) x else geo_box(x, lossy = lossy)
   zgo_extent_check_planar(box, call)
   p <- zgo_extent_parts(box)
-  rows <- which(!is.na(p$xmin))
+  rows <- which(is.finite(p$xmin) & is.finite(p$ymin) & is.finite(p$xmax) & is.finite(p$ymax))
   if (length(rows) == 0L) {
-    zgo_abort("index", "An R-tree needs at least one geometry that is neither null nor empty.",
+    zgo_abort("index", "An R-tree needs at least one geometry with a finite box.",
       call = call
     )
   }
@@ -59,7 +61,7 @@ geo_kdtree <- function(x, node_size = 64L) {
     )
   }
   b <- zgo_extent_parts(geo_box(x))
-  rows <- which(!is.na(b$xmin))
+  rows <- which(is.finite(b$xmin) & is.finite(b$ymin))
   raw <- .Call(zgo_c_kdtree_build, b$xmin[rows], b$ymin[rows], node_size)
   type <- geo_type_of(x)
   zgo_index_new(raw, "kdtree", rows, length(x), type$crs, type$edges)

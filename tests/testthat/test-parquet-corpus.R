@@ -3,19 +3,6 @@
 # GEOMETRY types and no geo key, and its 1.1 native-encoding files
 # (`_native`), which need nested reads qio does not have yet.
 
-# WKT without the `crs` attribute: the plain files state OGC:CRS84, the
-# Parquet default, where their geo key twins and IPC files state none.
-bare_wkt <- function(x) {
-  out <- geo_as_wkt(x, lossy = "allow")
-  attributes(out) <- NULL
-  out
-}
-
-parquet_wkb_files <- function() {
-  files <- parquet_corpus_files()
-  files[!grepl("_native\\.parquet$", files)]
-}
-
 test_that("every WKB corpus file reads, equal to its IPC twin", {
   skip_without_qio()
   ipc <- names(corpus_manifest())
