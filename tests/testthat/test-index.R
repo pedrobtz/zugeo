@@ -124,6 +124,7 @@ test_that("hostile bytes are an index error, never a crash", {
   expect_error(geo_index_from_raw(1:10), class = "zugeo_index_error")
   # Flipped bytes in the boxes and indices: a result or an index error.
   q <- geo_extent(0, 0, 100, 100)
+  queried <- 0L
   withr::with_seed(11, {
     for (i in 1:300) {
       flipped <- bytes
@@ -131,6 +132,7 @@ test_that("hostile bytes are an index error, never a crash", {
       flipped[at] <- as.raw(sample(0:255, 4))
       tree <- tryCatch(geo_index_from_raw(flipped), zugeo_index_error = function(e) NULL)
       if (is.null(tree)) next
+      queried <- queried + 1L
       res <- tryCatch(geo_query_box(tree, q), zugeo_index_error = function(e) "refused")
       expect_true(is.character(res) || all(res >= 1L & res <= 400L))
       res <- tryCatch(geo_query_nearest(tree, 50, 50, k = 3), zugeo_index_error = function(e) "refused")
@@ -147,6 +149,8 @@ test_that("hostile bytes are an index error, never a crash", {
       expect_true(is.character(res) || all(res >= 1L & res <= 100L))
     }
   })
+  # Most flips leave a parseable tree, so the queries above really ran.
+  expect_gt(queried, 100L)
 })
 
 test_that("arguments are checked", {
