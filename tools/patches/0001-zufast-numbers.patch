@@ -19,7 +19,7 @@
    // For very large numbers, use scientific notation ignoring user precision
    if (f > 1.0e17 || f < -1.0e17) {
      return snprintf(result, 40, "%0.*e", 16, f);
-@@ -7374,32 +7385,19 @@
+@@ -7374,32 +7385,22 @@
  
  #if !defined(GEOARROW_USE_FAST_FLOAT) || !GEOARROW_USE_FAST_FLOAT
  
@@ -32,6 +32,9 @@
 -    return EINVAL;
 +  if (first < last && *first == '+') {
 +    first++;
++    if (first < last && (*first == '+' || *first == '-')) {
++      return EINVAL;
++    }
    }
 -
 -  int64_t size_bytes = last - first;
