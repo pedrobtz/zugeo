@@ -275,6 +275,26 @@ test_that("the geo key and the native type must agree", {
   expect_true("crs_key_missing" %in% geo_validate_parquet(p)$issue)
 })
 
+test_that("a GeoArrow-encoded column is refused, not misread", {
+  skip_without_qio()
+  dir <- withr::local_tempdir()
+  df <- data.frame(id = 1:2)
+  df$geometry <- wkb_list(c("POINT (1 2)", "POINT (3 4)"))
+  for (encoding in c("point", "multipolygon")) {
+    geo <- zujson::json_write(list(
+      version = "1.1.0", primary_column = "geometry",
+      columns = list(geometry = list(encoding = encoding, geometry_types = list()))
+    ))
+    p <- write_raw_parquet(df, file.path(dir, paste0(encoding, ".parquet")), geo = geo)
+    err <- expect_error(geo_read_parquet(p), class = "zugeo_parquet_error")
+    expect_identical(err$column, "geometry")
+    expect_error(geo_read_parquet(p, bbox = c(0, 0, 5, 5)), class = "zugeo_parquet_error")
+    expect_identical(geo_parquet_info(p)$columns$geometry$encoding, encoding)
+    # The other columns still read.
+    expect_identical(geo_read_parquet(p, columns = "id")$id, 1:2)
+  }
+})
+
 test_that("malformed files are errors, not guesses", {
   skip_without_qio()
   dir <- withr::local_tempdir()
