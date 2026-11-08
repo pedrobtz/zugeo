@@ -68,7 +68,7 @@ test_that("geo_hilbert() takes an extent; geo_sort() orders, nulls last", {
     geo_hilbert(geo_points(c(-5, 0), c(-5, 0)), extent = e)[2])
   expect_error(geo_hilbert(p, extent = c(e, e)), class = "zugeo_error")
   expect_identical(geo_hilbert(geo_vctr(c(NA, NA))), c(NA_real_, NA_real_))
-  expect_error(geo_sort(p, by = "morton"))
+  expect_error(geo_sort(p, by = "morton"), class = "zugeo_error")
 })
 
 test_that("extents combine, subset and print", {

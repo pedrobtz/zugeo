@@ -94,6 +94,12 @@ test_that("malformed WKB and WKT are errors naming the element", {
   for (n in seq_len(length(wkb) - 1L) - 1L) {
     expect_error(geo_vctr(list(wkb[seq_len(n)])), "not valid WKB", label = n, class = "zugeo_layout_error")
   }
+  # A coordinate count whose size overflows 32 bits: 2^31 XY coordinates
+  # are 2^35 bytes, which patch 0002 computes in 64 bits. In 32 bits the
+  # product wraps to 0 and the linestring read as empty (D22).
+  big <- as.raw(c(0x01, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80))
+  expect_error(geo_vctr(list(big)), "not valid WKB")
+  expect_error(geo_vctr(list(c(big, as.raw(rep(0, 32))))), "not valid WKB")
   # And every truncation of valid WKT that is not itself valid.
   text <- "POLYGON ((0 0, 1 0, 0 1, 0 0), (0.1 0.1, 0.2 0.1, 0.1 0.2, 0.1 0.1))"
   for (n in seq_len(nchar(text) - 1L)) {
@@ -184,6 +190,13 @@ test_that("geo_points() makes points from vectors", {
   expect_identical(as.vector(geo_as_wkt(p)), c("POINT M (1 3 5)", "POINT M (2 4 6)"))
   expect_identical(geo_crs_text(p), "OGC:CRS84")
   expect_identical(geo_type_of(geo_points(1, 2, layout = "interleaved"))$coord_type, "interleaved")
+})
+
+test_that("a WKT number takes one sign at most", {
+  expect_identical(geo_coords(geo_vctr("POINT (+1 -2)"))$x, 1)
+  for (wkt in c("POINT (+-1 2)", "POINT (++1 2)", "POINT (1 +-2)")) {
+    expect_error(geo_vctr(wkt), "not valid WKT", label = wkt)
+  }
 })
 
 test_that("geo_from_coords() reads only columns named exactly", {

@@ -38,3 +38,24 @@ zgo_abort <- function(kind, message, call = NULL, ...) {
     list(message = message, call = call, ...)
   ))
 }
+
+# match.arg() for zugeo: the choices come from the caller's formals, as
+# match.arg() takes them, but a bad value is a zugeo_error (design section
+# 8) and there is no partial matching, so `lossy = "w"` is refused rather
+# than read as "warn".
+zgo_match_arg <- function(arg) {
+  parent <- sys.parent()
+  name <- as.character(substitute(arg))
+  choices <- eval(formals(sys.function(parent))[[name]], envir = sys.frame(parent))
+  if (identical(arg, choices)) {
+    return(choices[[1L]])
+  }
+  if (is.character(arg) && length(arg) == 1L && !is.na(arg) && arg %in% choices) {
+    return(arg)
+  }
+  zgo_abort(
+    NULL,
+    sprintf("`%s` must be one of %s.", name, paste0("\"", choices, "\"", collapse = ", ")),
+    call = sys.call(parent)
+  )
+}

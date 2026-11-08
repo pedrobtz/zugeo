@@ -44,7 +44,7 @@ zgo_info <- function(x, call) {
 #' geo_n_coords(x)
 geo_box <- function(x, lossy = c("error", "warn", "allow")) {
   call <- sys.call()
-  lossy <- match.arg(lossy)
+  lossy <- zgo_match_arg(lossy)
   info <- zgo_info(x, call)
   zgo_box_from_info(x, info, lossy, call)
 }
@@ -82,7 +82,7 @@ zgo_box_from_info <- function(x, info, lossy, call) {
 #' @rdname geo_box
 #' @export
 geo_box_all <- function(x, lossy = c("error", "warn", "allow")) {
-  geo_extent_union(geo_box(x, lossy = match.arg(lossy)))
+  geo_extent_union(geo_box(x, lossy = zgo_match_arg(lossy)))
 }
 
 #' @rdname geo_box
@@ -128,7 +128,7 @@ geo_n_coords <- function(x) {
 #' geo_sort(x)
 geo_hilbert <- function(x, extent = NULL, lossy = c("error", "warn", "allow")) {
   call <- sys.call()
-  lossy <- match.arg(lossy)
+  lossy <- zgo_match_arg(lossy)
   boxes <- geo_box(x, lossy = lossy)
   box <- zgo_extent_parts(boxes)
   if (is.null(extent)) {
@@ -149,8 +149,8 @@ geo_hilbert <- function(x, extent = NULL, lossy = c("error", "warn", "allow")) {
 #' @rdname geo_hilbert
 #' @export
 geo_sort <- function(x, by = "hilbert", lossy = c("error", "warn", "allow")) {
-  by <- match.arg(by, "hilbert")
-  order(geo_hilbert(x, lossy = match.arg(lossy)), na.last = TRUE, method = "radix")
+  by <- zgo_match_arg(by)
+  order(geo_hilbert(x, lossy = zgo_match_arg(lossy)), na.last = TRUE, method = "radix")
 }
 
 zgo_finding_labels <- c(
