@@ -152,7 +152,7 @@ test_that("layouts GeoArrow forbids are layout errors", {
   bad$format <- "+ud:1,1"
   expect_error(describe_spec(ga_field(bad, "geoarrow.geometry")), class = "zugeo_layout_error")
   bad$format <- "+us:1,2"
-  expect_error(describe_spec(ga_field(bad, "geoarrow.geometry")), "dense union")
+  expect_error(describe_spec(ga_field(bad, "geoarrow.geometry")), "dense union", class = "zugeo_error")
   # A union child whose coordinates disagree with its type id.
   wrong <- ga_union(c(11L))
   wrong$children[[1]] <- ga_native("point", "xy")
@@ -183,7 +183,7 @@ test_that("a struct has each GeoArrow field described, by name", {
 
   none <- zgo_spec("+s", children = list(zgo_spec("i", "id")))
   expect_error(describe_spec(none), "not a GeoArrow field", class = "zugeo_layout_error")
-  expect_error(geo_crs(zgo_schema(spec)), "2 GeoArrow fields")
+  expect_error(geo_crs(zgo_schema(spec)), "2 GeoArrow fields", class = "zugeo_error")
 })
 
 test_that("geo_type_of() takes array and stream handles and nothing else", {

@@ -63,10 +63,10 @@ geo_as_wkb <- function(x, lossy = c("error", "warn", "allow")) {
   zgo_check_vctr(x, call)
   zgo_check_edges_kept(x, lossy, "WKB", call)
   loc <- zgo_locate(x)
-  out <- .Call(
+  out <- zgo_check(.Call(
     zgo_c_write, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row,
     zgo_type_wkb, zgo_no_metadata, TRUE
-  )
+  ), call = call)
   attr(out, "crs") <- geo_crs(x)
   out
 }
@@ -79,10 +79,10 @@ geo_as_wkt <- function(x, lossy = c("error", "warn", "allow")) {
   zgo_check_vctr(x, call)
   zgo_check_edges_kept(x, lossy, "WKT", call)
   loc <- zgo_locate(x)
-  out <- .Call(
+  out <- zgo_check(.Call(
     zgo_c_write, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row,
     zgo_type_wkt, zgo_no_metadata, TRUE
-  )
+  ), call = call)
   attr(out, "crs") <- geo_crs(x)
   out
 }
@@ -94,7 +94,10 @@ geo_as_native <- function(x, layout = c("separated", "interleaved"), type = NULL
   zgo_check_vctr(x, call)
   layout <- match.arg(layout)
   loc <- zgo_locate(x)
-  scan <- .Call(zgo_c_scan, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row)
+  scan <- zgo_check(
+    .Call(zgo_c_scan, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row),
+    call = call
+  )
   geometry_type <- if (is.null(type)) {
     zgo_infer_type(scan$types, call)
   } else {
@@ -136,10 +139,10 @@ geo_as_native <- function(x, layout = c("separated", "interleaved"), type = NULL
   dims <- if (length(scan$dims)) scan$dims else 1L
   code <- zgo_native_type(geometry_type, dims, layout)
   meta <- geo_type_of(x)$metadata
-  res <- .Call(
+  res <- zgo_check(.Call(
     zgo_c_write, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row,
     as.integer(code), meta, FALSE
-  )
+  ), call = call)
   zgo_from_array(res$array, res$schema, call = call)
 }
 
@@ -152,7 +155,10 @@ zgo_check_edges_kept <- function(x, lossy, encoding, call) {
     return(invisible())
   }
   loc <- zgo_locate(x)
-  scan <- .Call(zgo_c_scan, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row)
+  scan <- zgo_check(
+    .Call(zgo_c_scan, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row),
+    call = call
+  )
   if (!isTRUE(scan$has_edges)) {
     return(invisible())
   }
@@ -250,7 +256,10 @@ geo_vctr <- function(x, crs = NULL, edges = NULL) {
   if (is.character(x)) {
     present <- x[!is.na(x)]
     if (length(present) > 0L && all(grepl("^([0-9A-Fa-f]{2})+$", present))) {
-      return(zgo_from_wkb(.Call(zgo_c_hex_to_raw, x), attr(x, "crs"), crs, edges, call))
+      return(zgo_from_wkb(
+        zgo_check(.Call(zgo_c_hex_to_raw, x), call = call),
+        attr(x, "crs"), crs, edges, call
+      ))
     }
     return(zgo_from_wkt(x, crs, edges, call))
   }
@@ -283,7 +292,7 @@ zgo_check_edges <- function(edges, call) {
 }
 
 zgo_from_wkb <- function(x, attr_crs, crs, edges, call) {
-  res <- .Call(zgo_c_from_wkb, unclass(x))
+  res <- zgo_check(.Call(zgo_c_from_wkb, unclass(x)), call = call)
   if (is.null(crs)) {
     srids <- unique(res$srid[!vapply(x, is.null, logical(1))])
     crs <- if (!is.null(attr_crs)) {
@@ -305,7 +314,7 @@ zgo_from_wkb <- function(x, attr_crs, crs, edges, call) {
 }
 
 zgo_from_wkt <- function(x, crs, edges, call) {
-  array <- .Call(zgo_c_from_wkt, enc2utf8(as.character(x)))
+  array <- zgo_check(.Call(zgo_c_from_wkt, enc2utf8(as.character(x))), call = call)
   if (is.null(crs)) crs <- attr(x, "crs")
   zgo_wrap(array, "u", "geoarrow.wkt", geo_crs(crs), edges, call)
 }
@@ -395,9 +404,13 @@ geo_crs_text <- function(x) {
 #' geo_coords(x)
 #' geo_points(1:3, 4:6)
 geo_coords <- function(x) {
-  zgo_check_vctr(x, sys.call())
+  call <- sys.call()
+  zgo_check_vctr(x, call)
   loc <- zgo_locate(x)
-  res <- .Call(zgo_c_coords, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row)
+  res <- zgo_check(
+    .Call(zgo_c_coords, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row),
+    call = call
+  )
   out <- as.data.frame(Filter(Negate(is.null), res))
   type <- geo_type_of(x)
   attr(out, "crs") <- type$crs
@@ -435,11 +448,11 @@ geo_from_coords <- function(coords, type, n = NULL, crs = NULL, edges = NULL,
   dims <- 1L + (!is.null(z) && is.null(m)) * 1L + (is.null(z) && !is.null(m)) * 2L +
     (!is.null(z) && !is.null(m)) * 3L
   code <- as.integer(zgo_native_type(zgo_geometry_types[[type]], dims, layout))
-  array <- .Call(
+  array <- zgo_check(.Call(
     zgo_c_from_coords, as.double(coords[["x"]]), as.double(coords[["y"]]), z, m,
     feature, ints("part", 1L), ints("ring", 1L), as.integer(n), zgo_geometry_types[[type]],
     code
-  )
+  ), call = call)
   meta <- zgo_metadata_json(geo_crs(crs), edges)
   schema <- .Call(zgo_c_type_schema, code, meta)
   .Call(zgo_c_array_set_schema, array, schema)

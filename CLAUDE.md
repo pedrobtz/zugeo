@@ -155,9 +155,13 @@ listed in `src/Makevars` (and its copy `Makevars.win`).
   `test-abi.R` checks both tables.
 - **`src/Makevars` and `src/Makevars.win` stay identical.**
 - **C never raises a zugeo condition.** It returns a `zgo_failure` list
-  (`kind`, `message`) and R's `zgo_check()` raises it, as
-  `zugeo_<kind>_error`. Plain `Rf_error()` is only for misuse of an
-  internal routine. C that holds heap memory must not call R in between
+  (`kind`, `message`; `zgo_failure()` in `zgo.h`) and R's `zgo_check()`
+  raises it, as `zugeo_<kind>_error` (kind `""` for a plain
+  `zugeo_error`). Every `.Call()` that can fail on user input goes through
+  `zgo_check()`, with the exported function's `call`. Plain `Rf_error()`
+  is only for misuse of an internal routine and allocation failure. An
+  early `return zgo_failure(...)` runs `zgo_scratch_run()` first and
+  unprotects exactly what the function has protected. C that holds heap memory must not call R in between
   (`zgo_build.c` lets the external pointer own the schema first).
   `zgo_array.c` registers every view, writer and built array with a
   scratch external pointer as soon as it exists; keep that pattern for

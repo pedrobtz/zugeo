@@ -69,8 +69,8 @@ test_that("k-d trees answer box and radius queries like a scan", {
   several <- geo_query_radius(geo_kdtree(pts), c(10, 90), c(10, 90), 4)
   expect_named(several, c("query", "row"))
   expect_error(geo_kdtree(geo_vctr("LINESTRING (0 0, 1 1)")), "points", class = "zugeo_index_error")
-  expect_error(geo_query_radius(geo_rtree(pts), 0, 0, 1), "k-d tree")
-  expect_error(geo_query_nearest(geo_kdtree(pts), 0, 0), "R-tree")
+  expect_error(geo_query_radius(geo_rtree(pts), 0, 0, 1), "k-d tree", class = "zugeo_error")
+  expect_error(geo_query_nearest(geo_kdtree(pts), 0, 0), "R-tree", class = "zugeo_error")
 })
 
 test_that("nulls and empties are left out; rows refer to the indexed vector", {
@@ -151,10 +151,10 @@ test_that("hostile bytes are an index error, never a crash", {
 
 test_that("arguments are checked", {
   e <- random_boxes(10)
-  expect_error(geo_rtree(e, node_size = 1), "node_size")
-  expect_error(geo_rtree(e, node_size = 70000), "node_size")
-  expect_error(geo_query_box(1, e), "zugeo_index")
-  expect_error(geo_query_box(geo_rtree(e), 1), "geo_extent")
+  expect_error(geo_rtree(e, node_size = 1), "node_size", class = "zugeo_error")
+  expect_error(geo_rtree(e, node_size = 70000), "node_size", class = "zugeo_error")
+  expect_error(geo_query_box(1, e), "zugeo_index", class = "zugeo_error")
+  expect_error(geo_query_box(geo_rtree(e), 1), "geo_extent", class = "zugeo_error")
   crs <- geo_rtree(geo_extent(0, 0, 1, 1, crs = "OGC:CRS84"))
   expect_error(geo_query_box(crs, geo_extent(0, 0, 1, 1, crs = "EPSG:3857")), class = "zugeo_crs_error")
   expect_error(geo_rtree(geo_extent(170, 0, -170, 1)), class = "zugeo_edges_error")

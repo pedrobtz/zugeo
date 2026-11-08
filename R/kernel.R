@@ -8,7 +8,10 @@ zgo_dims_labels <- c("xy", "xyz", "xym", "xyzm")
 zgo_info <- function(x, call) {
   zgo_check_vctr(x, call)
   loc <- zgo_locate(x)
-  .Call(zgo_c_info_kernel, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row)
+  zgo_check(
+    .Call(zgo_c_info_kernel, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row),
+    call = call
+  )
 }
 
 #' Bounds, types and counts over the buffers
@@ -50,7 +53,10 @@ zgo_box_from_info <- function(x, info, lossy, call) {
   type <- geo_type_of(x)
   if (!identical(type$edges, "planar")) {
     loc <- zgo_locate(x)
-    scan <- .Call(zgo_c_scan, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row)
+    scan <- zgo_check(
+      .Call(zgo_c_scan, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row),
+      call = call
+    )
     if (isTRUE(scan$has_edges)) {
       zgo_lossy(
         lossy, "edges",
@@ -174,7 +180,10 @@ geo_validate <- function(x) {
   call <- sys.call()
   zgo_check_vctr(x, call)
   loc <- zgo_locate(x)
-  res <- .Call(zgo_c_validate, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row)
+  res <- zgo_check(
+    .Call(zgo_c_validate, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row),
+    call = call
+  )
   data.frame(
     row = res$row,
     issue = zgo_finding_labels[res$code],

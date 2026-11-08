@@ -91,7 +91,7 @@ zgo_rebuild <- function(x, positions) {
 #' @export
 is.na.geo_vctr <- function(x) {
   loc <- zgo_locate(x)
-  .Call(zgo_c_is_na, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row)
+  zgo_check(.Call(zgo_c_is_na, attr(x, "chunks"), attr(x, "schema"), loc$chunk, loc$row))
 }
 
 #' @export
@@ -175,10 +175,10 @@ zgo_check_combinable <- function(x, y, call) {
 #' @export
 format.geo_vctr <- function(x, ..., max_bytes = 1000L) {
   loc <- zgo_locate(x)
-  out <- .Call(
+  out <- zgo_check(.Call(
     zgo_c_format, attr(x, "chunks"), attr(x, "schema"),
     loc$chunk, loc$row, as.numeric(max_bytes)
-  )
+  ))
   out[is.na(out)] <- "<null>"
   out
 }
@@ -228,5 +228,5 @@ zgo_to_array <- function(x) {
     return(chunks[[1L]])
   }
   loc <- zgo_locate(x)
-  .Call(zgo_c_take, chunks, attr(x, "schema"), loc$chunk, loc$row)
+  zgo_check(.Call(zgo_c_take, chunks, attr(x, "schema"), loc$chunk, loc$row))
 }

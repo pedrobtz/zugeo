@@ -78,22 +78,26 @@ test_that("geo_crs_text() gives one string for other packages", {
 })
 
 test_that("malformed WKB and WKT are errors naming the element", {
-  expect_error(geo_vctr(c("POINT (1 2)", "POINT (1")), "Element 2 is not valid WKT")
-  expect_error(geo_vctr("POINT (1 1e400)"), "not valid WKT")
-  expect_error(geo_vctr(list(as.raw(1:3))), "Element 1 is not valid WKB")
-  expect_error(geo_vctr(list(1:3)), "list of raw vectors")
-  expect_error(geo_vctr("0101"), "not valid WKB")
+  expect_error(geo_vctr(c("POINT (1 2)", "POINT (1")), "Element 2 is not valid WKT", class = "zugeo_layout_error")
+  expect_error(geo_vctr("POINT (1 1e400)"), "not valid WKT", class = "zugeo_layout_error")
+  expect_error(geo_vctr(list(as.raw(1:3))), "Element 1 is not valid WKB", class = "zugeo_layout_error")
+  expect_error(geo_vctr(list(1:3)), "list of raw vectors", class = "zugeo_error")
+  expect_error(geo_vctr("0101"), "not valid WKB", class = "zugeo_layout_error")
   expect_error(geo_vctr(1), class = "zugeo_error")
   expect_error(geo_vctr(geo_vctr("POINT (1 2)"), crs = "x"), class = "zugeo_error")
+  expect_snapshot(geo_vctr(list(as.raw(1:3))), error = TRUE)
+  expect_snapshot(geo_vctr(c("POINT (1 2)", "POINT (1")), error = TRUE)
+  expect_error(geo_vctr("01zz"), class = "zugeo_layout_error")
+  expect_error(geo_vctr("010"), class = "zugeo_layout_error")
   # Every truncation of valid WKB is an error, never a crash.
   wkb <- geo_as_wkb(geo_vctr("MULTIPOLYGON (((0 0, 1 0, 0 1, 0 0)), ((5 5, 6 5, 5 6, 5 5)))"))[[1]]
   for (n in seq_len(length(wkb) - 1L) - 1L) {
-    expect_error(geo_vctr(list(wkb[seq_len(n)])), "not valid WKB", label = n)
+    expect_error(geo_vctr(list(wkb[seq_len(n)])), "not valid WKB", label = n, class = "zugeo_layout_error")
   }
   # And every truncation of valid WKT that is not itself valid.
   text <- "POLYGON ((0 0, 1 0, 0 1, 0 0), (0.1 0.1, 0.2 0.1, 0.1 0.2, 0.1 0.1))"
   for (n in seq_len(nchar(text) - 1L)) {
-    expect_error(geo_vctr(substr(text, 1L, n)), "not valid WKT", label = n)
+    expect_error(geo_vctr(substr(text, 1L, n)), "not valid WKT", label = n, class = "zugeo_layout_error")
   }
 })
 
@@ -169,9 +173,9 @@ test_that("coordinates come out as columns and go back", {
   pts <- geo_from_coords(e, "point", n = 3)
   expect_identical(as.vector(geo_as_wkt(pts))[3], "POINT (1 2)")
   expect_error(geo_from_coords(data.frame(x = 1, y = 1, feature = 2:1), "linestring"),
-    "increasing")
+    "increasing", class = "zugeo_error")
   expect_error(geo_from_coords(data.frame(x = 1:2, y = 1:2, feature = 1L), "point"),
-    "more than one")
+    "more than one", class = "zugeo_error")
   expect_error(geo_from_coords(list(x = 1), "point"), class = "zugeo_error")
 })
 
