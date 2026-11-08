@@ -460,3 +460,26 @@ test_that("a file with no rows reads, describes and validates", {
   }
   expect_false(any(geo_validate_parquet(path)$severity == "error"))
 })
+
+test_that("bbox over non-planar edges follows the lossy policy", {
+  skip_without_qio()
+  path <- withr::local_tempfile(fileext = ".parquet")
+  x <- data.frame(id = 1:2)
+  x$geometry <- geo_vctr(c("LINESTRING (0 0, 1 1)", "LINESTRING (10 10, 11 11)"),
+    crs = "OGC:CRS84", edges = "spherical"
+  )
+  geo_write_parquet(x, path, sort = "none")
+  err <- expect_error(geo_read_parquet(path, bbox = c(0, 0, 2, 2)), class = "zugeo_edges_error")
+  expect_identical(err$call[[1L]], quote(geo_read_parquet))
+  expect_warning(
+    w <- geo_read_parquet(path, bbox = c(0, 0, 2, 2), lossy = "warn"),
+    class = "zugeo_edges_warning"
+  )
+  expect_identical(w$id, 1L)
+  expect_identical(geo_read_parquet(path, bbox = c(0, 0, 2, 2), lossy = "allow")$id, 1L)
+  # Points have no edges, so their filter is exact and needs no policy.
+  p <- data.frame(id = 1:2)
+  p$geometry <- geo_points(c(0.5, 10), c(0.5, 10), crs = "OGC:CRS84", edges = "spherical")
+  geo_write_parquet(p, path, sort = "none")
+  expect_identical(geo_read_parquet(path, bbox = c(0, 0, 2, 2))$id, 1L)
+})

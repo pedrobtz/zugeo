@@ -173,6 +173,10 @@ SEXP zgo_c_rtree_build(SEXP xmin, SEXP ymin, SEXP xmax, SEXP ymax, SEXP node_siz
   const double *x0 = REAL(xmin), *y0 = REAL(ymin), *x1 = REAL(xmax), *y1 = REAL(ymax);
   double minX = R_PosInf, minY = R_PosInf, maxX = R_NegInf, maxY = R_NegInf;
   for (R_xlen_t i = 0; i < n; i++) {
+    /* R passes finite boxes only (R/index.R); a NaN or infinite bound
+       would make the Hilbert cast below undefined. */
+    if (!R_FINITE(x0[i]) || !R_FINITE(y0[i]) || !R_FINITE(x1[i]) || !R_FINITE(y1[i]))
+      Rf_error("zgo_c_rtree_build(): box %ld is not finite.", (long)(i + 1));
     zgo_rtree_set_index(&t, i, (uint32_t)i);
     t.boxes[4 * i] = x0[i];
     t.boxes[4 * i + 1] = y0[i];
@@ -815,6 +819,8 @@ SEXP zgo_c_kdtree_build(SEXP x, SEXP y, SEXP node_size_sexp) {
       uint16_t v = (uint16_t)i;
       memcpy(t.ids + 2 * i, &v, 2);
     }
+    if (!R_FINITE(REAL(x)[i]) || !R_FINITE(REAL(y)[i]))
+      Rf_error("zgo_c_kdtree_build(): point %ld is not finite.", (long)(i + 1));
     t.coords[2 * i] = REAL(x)[i];
     t.coords[2 * i + 1] = REAL(y)[i];
   }

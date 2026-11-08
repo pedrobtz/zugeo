@@ -1,4 +1,3 @@
-type_with <- function(metadata) geo_type_of(ga_schema("point", metadata = metadata))
 
 test_that("metadata keeps the CRS exactly as given, typed", {
   projjson <- '{"crs": {"type": "GeographicCRS", "name": "WGS 84", "id": {"authority": "EPSG", "code": 4326}}}'
