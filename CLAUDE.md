@@ -199,17 +199,19 @@ fails under `ZUGEO_ORACLES=true` (the index oracles also need
 <kdbush@4.1.0> installed, and `ZUGEO_GEOINDEX_PYTHON`, a Python with
 `geoindex-rs`); `helper-schema.R` builds GeoArrow schemas from specs
 (`ga_schema()`, `ga_union()`, `ga_field()`); `helper-corpus.R` fetches
-the corpus; `helper-vctr.R` reads the union fixture
-(`tests/testthat/data/geometry-union.arrows`, zuarrow’s, from
-`tools/make-union-fixture.py`) and round-trips data frames. The corpus
-is never in the package (no licence): it is fetched from `geoarrow-data`
-at commit `e8eaa04` when `ZUGEO_FETCH_FIXTURES=true` (set in every CI
-workflow), or read from `ZUGEO_CORPUS_DIR`, and checked against
-`tests/testthat/corpus.txt`; otherwise the corpus tests skip.
-`helper-convert.R` has EWKB builders, bit-for-bit double comparison and
-the hard doubles of the exactness property test (`test-exact.R`). The
-oracle tests compare with sf, geos, s2 and wk by WKB or coordinates,
-never by WKT text:
+the corpus; `tests/testthat/data/geo-grouped.parquet` (a geo key over a
+struct column, which zugeo and qio cannot write) comes from
+`tools/make-parquet-fixtures.R`, run once with DuckDB. `helper-vctr.R`
+reads the union fixture (`tests/testthat/data/geometry-union.arrows`,
+zuarrow’s, from `tools/make-union-fixture.py`) and round-trips data
+frames. The corpus is never in the package (no licence): it is fetched
+from `geoarrow-data` at commit `e8eaa04` when
+`ZUGEO_FETCH_FIXTURES=true` (set in every CI workflow), or read from
+`ZUGEO_CORPUS_DIR`, and checked against `tests/testthat/corpus.txt`;
+otherwise the corpus tests skip. `helper-convert.R` has EWKB builders,
+bit-for-bit double comparison and the hard doubles of the exactness
+property test (`test-exact.R`). The oracle tests compare with sf, geos,
+s2 and wk by WKB or coordinates, never by WKT text:
 [`sf::st_as_text()`](https://r-spatial.github.io/sf/reference/st_as_text.html)
 prints 7 digits,
 [`sf::st_as_binary()`](https://r-spatial.github.io/sf/reference/st_as_binary.html)
