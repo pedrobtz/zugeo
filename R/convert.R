@@ -463,6 +463,22 @@ geo_from_coords <- function(coords, type, n = NULL, crs = NULL, edges = NULL,
 #' @export
 geo_points <- function(x, y, z = NULL, m = NULL, crs = NULL, edges = NULL,
                        layout = c("separated", "interleaved")) {
+  call <- sys.call()
+  parts <- Filter(Negate(is.null), list(x = x, y = y, z = z, m = m))
+  if (!all(vapply(parts, is.numeric, logical(1)))) {
+    zgo_abort(NULL, "Coordinates must be numeric.", call = call)
+  }
+  if (length(unique(lengths(parts))) > 1L) {
+    zgo_abort(
+      NULL,
+      sprintf(
+        "`%s` must have one length; they have %s.",
+        paste(names(parts), collapse = "`, `"),
+        paste(lengths(parts), collapse = ", ")
+      ),
+      call = call
+    )
+  }
   coords <- data.frame(x = as.double(x), y = as.double(y))
   if (!is.null(z)) coords$z <- as.double(z)
   if (!is.null(m)) coords$m <- as.double(m)

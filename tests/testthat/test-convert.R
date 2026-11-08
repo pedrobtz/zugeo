@@ -192,6 +192,15 @@ test_that("geo_points() makes points from vectors", {
   expect_identical(geo_type_of(geo_points(1, 2, layout = "interleaved"))$coord_type, "interleaved")
 })
 
+test_that("geo_points() takes coordinates of one length, never recycled", {
+  expect_error(geo_points(1:4, 1:2), class = "zugeo_error")
+  expect_error(geo_points(1:3, 1:2), class = "zugeo_error")
+  expect_error(geo_points(1:2, 1:2, z = 1), class = "zugeo_error")
+  expect_error(geo_points("1", 2), class = "zugeo_error")
+  expect_length(geo_points(numeric(), numeric()), 0L)
+  expect_identical(geo_coords(geo_points(1:2, 3:4, m = 5:6))$m, c(5, 6))
+})
+
 test_that("a WKT number takes one sign at most", {
   expect_identical(geo_coords(geo_vctr("POINT (+1 -2)"))$x, 1)
   for (wkt in c("POINT (+-1 2)", "POINT (++1 2)", "POINT (1 +-2)")) {
