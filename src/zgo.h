@@ -17,6 +17,12 @@
 #define ZGO_CODE_WKT 101
 #define ZGO_CODE_BOX 990
 
+/* A failure on user input, returned to R, which raises it as a
+   zugeo_<kind>_error through zgo_check() (kind "" for a plain zugeo_error).
+   C never raises a zugeo condition itself; Rf_error() is for misuse of an
+   internal routine and for allocation failures only. */
+SEXP zgo_failure(const char *kind, const char *message);
+
 struct ArrowSchema;
 int zgo_extension_code(const struct ArrowSchema *s);
 int zgo_native_dims(const struct ArrowSchema *s, int geometry_type);
