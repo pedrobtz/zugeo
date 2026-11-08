@@ -187,6 +187,8 @@ test_that("a WKT number takes one sign at most", {
   for (wkt in c("POINT (+-1 2)", "POINT (++1 2)", "POINT (1 +-2)")) {
     expect_error(geo_vctr(wkt), "not valid WKT", label = wkt)
   }
+})
+
 test_that("geo_from_coords() reads only columns named exactly", {
   x <- geo_from_coords(
     data.frame(x = 1:2, y = 1:2, mass = c(10, 20), zone = 3:4, feature_id = 2:1),
