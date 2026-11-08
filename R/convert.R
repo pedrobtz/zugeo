@@ -422,20 +422,21 @@ geo_from_coords <- function(coords, type, n = NULL, crs = NULL, edges = NULL,
     zgo_abort(NULL, "`coords` must be a data frame with `x` and `y`.", call = call)
   }
   rows <- nrow(coords)
+  # `[[` matches exactly: `$` would read a `mass` column as `m`.
   ints <- function(name, default) {
     v <- coords[[name]]
     if (is.null(v)) rep(default, rows) else as.integer(v)
   }
-  feature <- if (is.null(coords$feature) && type == "point") seq_len(rows) else ints("feature", 1L)
+  feature <- if (is.null(coords[["feature"]]) && type == "point") seq_len(rows) else ints("feature", 1L)
   if (is.null(n)) n <- if (rows) max(feature) else 0L
   dbl <- function(v) if (is.null(v)) NULL else as.double(v)
-  z <- dbl(coords$z)
-  m <- dbl(coords$m)
+  z <- dbl(coords[["z"]])
+  m <- dbl(coords[["m"]])
   dims <- 1L + (!is.null(z) && is.null(m)) * 1L + (is.null(z) && !is.null(m)) * 2L +
     (!is.null(z) && !is.null(m)) * 3L
   code <- as.integer(zgo_native_type(zgo_geometry_types[[type]], dims, layout))
   array <- .Call(
-    zgo_c_from_coords, as.double(coords$x), as.double(coords$y), z, m,
+    zgo_c_from_coords, as.double(coords[["x"]]), as.double(coords[["y"]]), z, m,
     feature, ints("part", 1L), ints("ring", 1L), as.integer(n), zgo_geometry_types[[type]],
     code
   )
