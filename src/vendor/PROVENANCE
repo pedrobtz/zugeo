@@ -13,6 +13,7 @@ Vendored dependency: geoarrow-c, with the nanoarrow core it ships
   Local patches: applied in this order, from tools/patches/
                  0001-zufast-numbers.patch
                  0002-wkb-reader-bounds.patch
+                 0003-wkt-reader-depth.patch
 
 src/vendor/geoarrow/geoarrow.h and geoarrow.c are the output of
 upstream's CMake bundler (GEOARROW_BUNDLE=ON) with
@@ -37,7 +38,7 @@ Patches:
 
 SHA-256 of every vendored file:
   c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4  geoarrow/LICENSE
-  3a34ef203cc6392702919f5664b09d2e98d8345aa2afd377173e45a01f73f215  geoarrow/geoarrow.c
+  c560c3e4bd1bcbd14210f4d832887b860aaaf0c6605644bfe767bf21a8b9fc8b  geoarrow/geoarrow.c
   db0cde47d2c73bde8d4e87424daca74a5e9174b1eb80c84632b628ce121d5cac  geoarrow/geoarrow.h
   abdc436530c715318d843424f4f9b7b817f80f592678526942c2070ace3cba71  nanoarrow/LICENSE.txt
   09026abb630fd06cb418815d48535cd46cb102fe6fc307debb586fa2ac49482e  nanoarrow/NOTICE.txt

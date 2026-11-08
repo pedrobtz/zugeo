@@ -94,6 +94,14 @@ test_that("malformed WKB and WKT are errors naming the element", {
   for (n in seq_len(length(wkb) - 1L) - 1L) {
     expect_error(geo_vctr(list(wkb[seq_len(n)])), "not valid WKB", label = n, class = "zugeo_layout_error")
   }
+  # Nested collections stop at patch 0003's 255 levels, never at the C stack.
+  deep <- function(n) {
+    paste0(strrep("GEOMETRYCOLLECTION (", n), "POINT (1 2)", strrep(")", n))
+  }
+  expect_identical(is.na(geo_vctr(deep(255L))), FALSE)
+  expect_identical(geo_coords(geo_vctr(deep(20L)))$y, 2)
+  expect_error(geo_vctr(deep(256L)), "maximum recursion")
+  expect_error(geo_vctr(deep(200000L)), "maximum recursion")
   # A coordinate count whose size overflows 32 bits: 2^31 XY coordinates
   # are 2^35 bytes, which patch 0002 computes in 64 bits. In 32 bits the
   # product wraps to 0 and the linestring read as empty (D22).

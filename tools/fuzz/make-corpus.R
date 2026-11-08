@@ -8,7 +8,10 @@ wkt <- c(
   "MULTIPOINT ((10 40), (40 30))", "MULTILINESTRING ((10 10, 20 20), (40 40, 30 30))",
   "MULTIPOLYGON (((30 20, 45 40, 10 40, 30 20)), ((15 5, 40 10, 10 20, 15 5)))",
   "GEOMETRYCOLLECTION (POINT (40 10), LINESTRING (10 10, 20 20))",
-  "LINESTRING (0.01234567890123456 1e-20, 1.7976931348623157e+308 -0)"
+  "LINESTRING (0.01234567890123456 1e-20, 1.7976931348623157e+308 -0)",
+  # Nested collections, as deep as geoarrow-c's writers convert (patch 0003
+  # refuses past 255 levels when reading).
+  paste0(strrep("GEOMETRYCOLLECTION (", 20), "POINT (1 2)", strrep(")", 20))
 )
 dir <- "tools/fuzz/corpus"
 unlink(list.files(dir, full.names = TRUE))
