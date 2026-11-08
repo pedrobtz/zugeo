@@ -236,6 +236,45 @@ test_that("geo_parquet_info() reads the footer", {
   expect_identical(code$columns$geometry$crs$value, "EPSG:3857")
 })
 
+test_that("a covering column's statistics give the row-group boxes and prune", {
+  skip_without_qio()
+  path <- withr::local_tempfile(fileext = ".parquet")
+  x <- as.double(0:39)
+  df <- data.frame(id = 0:39, bxmin = x, bymin = x, bxmax = x + 0.5, bymax = x + 0.5)
+  df$geometry <- wkb_list(sprintf("POINT (%.1f %.1f)", x + 0.25, x + 0.25))
+  # Plain binary, as GeoParquet 1.1 writes it: no native statistics, so the
+  # covering is the only source of boxes. The paths have one segment here;
+  # a struct column's are two, joined the same way.
+  geo <- zujson::json_write(list(
+    version = "1.1.0", primary_column = "geometry",
+    columns = list(geometry = list(
+      encoding = "WKB", geometry_types = list("Point"),
+      covering = list(bbox = list(
+        xmin = list("bxmin"), ymin = list("bymin"),
+        xmax = list("bxmax"), ymax = list("bymax")
+      ))
+    ))
+  ))
+  qio::write_parquet(df, path, row_group_size = 10, metadata = c(geo = geo))
+  boxes <- as.data.frame(geo_parquet_info(path)$columns$geometry$row_group_bbox)
+  expect_identical(boxes$xmin, c(0, 10, 20, 30))
+  expect_identical(boxes$ymin, c(0, 10, 20, 30))
+  expect_identical(boxes$xmax, c(9.5, 19.5, 29.5, 39.5))
+  expect_identical(boxes$ymax, c(9.5, 19.5, 29.5, 39.5))
+  read <- list()
+  collect <- qio::collect
+  local_mocked_bindings(
+    collect = function(x, ...) {
+      read <<- c(read, list(list(...)$row_groups))
+      collect(x, ...)
+    },
+    .package = "qio"
+  )
+  got <- geo_read_parquet(path, bbox = c(12, 12, 13, 13))
+  expect_identical(read[[1L]], 2L)
+  expect_identical(got$id, 12L)
+})
+
 test_that("the geo key and the native type must agree", {
   skip_without_qio()
   dir <- withr::local_tempdir()
