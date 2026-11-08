@@ -30,3 +30,8 @@ storage types (design section 6.2). A layout the specification forbids
 is a \code{zugeo_layout_error}; malformed metadata is a
 \code{zugeo_metadata_error}.
 }
+\examples{
+x <- geo_vctr("POINT (1 2)", crs = "OGC:CRS84")
+geo_type_of(x)
+geo_type_of(geo_as_native(x))$coord_type
+}

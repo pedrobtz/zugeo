@@ -27,7 +27,7 @@ from the native statistics, or else the \code{covering} column's. It shows
 what \code{bbox} in \code{\link[=geo_read_parquet]{geo_read_parquet()}} would skip. Needs the qio package.
 }
 \examples{
-\dontshow{if (requireNamespace("qio", quietly = TRUE) && getNamespaceVersion("qio") >= "0.1.1.9000") withAutoprint(\{ # examplesIf}
+\dontshow{if (requireNamespace("qio", quietly = TRUE) && package_version(getNamespaceVersion("qio")) >= "0.1.1.9000") withAutoprint(\{ # examplesIf}
 path <- tempfile(fileext = ".parquet")
 geo_write_parquet(geo_points(1:4, 1:4), path, row_group_size = 2)
 geo_parquet_info(path)

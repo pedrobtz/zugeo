@@ -20,3 +20,7 @@ R CMD check --as-cran, through the r-actions workflows (https://github.com/pedro
 * zugeo bundles the C libraries geoarrow-c (Apache-2.0) and the nanoarrow core (Apache-2.0) in `src/vendor/`, with their authors as copyright holders in `Authors@R` and the notices in `inst/COPYRIGHTS`. Its own code is MIT. No system library is needed.
 * The tests that use the geoarrow-data example files skip on CRAN: those files carry no licence, so they are not in the package, and are fetched only when `ZUGEO_FETCH_FIXTURES=true`.
 * The GeoParquet functions need the suggested package qio; their examples run only when it is installed.
+
+## Method References
+
+There are no published references describing the methods in this package. It implements the GeoArrow (<https://geoarrow.org/>) and GeoParquet (<https://geoparquet.org/>) specifications, and its spatial indexes reproduce the byte formats of the flatbush and kdbush JavaScript libraries.

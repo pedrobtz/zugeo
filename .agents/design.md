@@ -920,7 +920,9 @@ checks the export and import tables on every leg.
 
 The R-tree, k-d tree and Hilbert function are zugeo's own C, written
 from flatbush and kdbush (ISC) with credit in `inst/COPYRIGHTS`, and
-tested against their published behaviour and serialised bytes (§9).
+tested against their published behaviour and serialised bytes (§9). *2026-11-08 (CRAN review):* `Authors@R` names Vladimir Agafonkin as
+`cph`, and `inst/COPYRIGHTS` carries their ISC notices; the credit this
+paragraph promised had not been written.
 
 ## 8. Errors
 

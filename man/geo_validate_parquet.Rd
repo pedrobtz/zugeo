@@ -47,7 +47,7 @@ The \code{crs} is checked to be a JSON object or \code{null}, not validated
 against the PROJJSON schema. Needs the qio package.
 }
 \examples{
-\dontshow{if (requireNamespace("qio", quietly = TRUE) && getNamespaceVersion("qio") >= "0.1.1.9000") withAutoprint(\{ # examplesIf}
+\dontshow{if (requireNamespace("qio", quietly = TRUE) && package_version(getNamespaceVersion("qio")) >= "0.1.1.9000") withAutoprint(\{ # examplesIf}
 path <- tempfile(fileext = ".parquet")
 geo_write_parquet(geo_points(1:3, 1:3, crs = "OGC:CRS84"), path)
 geo_validate_parquet(path)

@@ -20,6 +20,10 @@
 #'   `crs` (a `zugeo_crs`), `edges` and `metadata` (the extension metadata
 #'   exactly as given, or `NA`). For a struct, a named list of them.
 #' @export
+#' @examples
+#' x <- geo_vctr("POINT (1 2)", crs = "OGC:CRS84")
+#' geo_type_of(x)
+#' geo_type_of(geo_as_native(x))$coord_type
 geo_type_of <- function(x) {
   call <- sys.call()
   schema <- zgo_as_schema(x, call = call)

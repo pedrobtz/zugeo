@@ -91,7 +91,7 @@ is a \code{zugeo_crs_error} there. The \code{geo} key's \code{bbox} is written f
 planar edges only.
 }
 \examples{
-\dontshow{if (requireNamespace("qio", quietly = TRUE) && getNamespaceVersion("qio") >= "0.1.1.9000") withAutoprint(\{ # examplesIf}
+\dontshow{if (requireNamespace("qio", quietly = TRUE) && package_version(getNamespaceVersion("qio")) >= "0.1.1.9000") withAutoprint(\{ # examplesIf}
 path <- tempfile(fileext = ".parquet")
 df <- data.frame(id = 1:3)
 df$geometry <- geo_points(c(0, 5, 9), c(0, 5, 9), crs = "OGC:CRS84")
