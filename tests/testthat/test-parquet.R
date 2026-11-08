@@ -181,6 +181,35 @@ test_that("bbox skips row groups and filters rows", {
   )
 })
 
+test_that("bbox reads only the row groups whose statistics meet it", {
+  skip_without_qio()
+  dir <- withr::local_tempdir()
+  path <- write_parquet_cases(dir)[["many"]]
+  boxes <- as.data.frame(geo_parquet_info(path)$columns$geometry$row_group_bbox)
+  query <- c(-20, -10, 30, 25)
+  meet <- which(boxes$xmin <= query[3] & boxes$xmax >= query[1] &
+    boxes$ymin <= query[4] & boxes$ymax >= query[2])
+  read <- list()
+  collect <- qio::collect
+  local_mocked_bindings(
+    collect = function(x, ...) {
+      read <<- c(read, list(list(...)$row_groups))
+      collect(x, ...)
+    },
+    .package = "qio"
+  )
+  geo_read_parquet(path, bbox = query)
+  expect_length(read, 1L)
+  expect_identical(read[[1L]], meet)
+  # The point of the statistics: fewer groups than the file has.
+  expect_lt(length(meet), nrow(boxes))
+  expect_gt(length(meet), 0L)
+  # Without bbox, every group.
+  read <- list()
+  geo_read_parquet(path)
+  expect_null(read[[1L]])
+})
+
 test_that("geo_parquet_info() reads the footer", {
   skip_without_qio()
   dir <- withr::local_tempdir()
