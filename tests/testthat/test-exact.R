@@ -33,6 +33,7 @@ test_that("the shortest digits are what WKT prints", {
 })
 
 test_that("every corpus coordinate round-trips through every encoding", {
+  natives <- 0L
   for (file in names(corpus_manifest())) {
     g <- zuarrow::arrow_read(corpus_path(file))$geometry
     want <- geo_coords(g)
@@ -43,8 +44,12 @@ test_that("every corpus coordinate round-trips through every encoding", {
     }
     native <- tryCatch(geo_as_native(g), zugeo_layout_error = function(e) NULL)
     if (!is.null(native)) {
+      natives <- natives + 1L
       expect_identical(geo_coords(native)[c("x", "y")], want[c("x", "y")], label = paste(file, "native"))
       expect_identical(is.na(native), is.na(g), label = paste(file, "native nulls"))
     }
   }
+  # 96 of the pinned corpus's 122 files have one native type; the rest mix
+  # types or hold collections, which only WKB and WKT carry.
+  expect_identical(natives, 96L)
 })

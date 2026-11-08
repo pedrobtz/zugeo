@@ -3,6 +3,7 @@
 # design D20), with its Inf/-Inf for nulls and empties.
 
 test_that("geo_box() equals geoarrow-c's box kernel on the corpus", {
+  compared <- 0L
   for (file in names(corpus_manifest())) {
     g <- zuarrow::arrow_read(corpus_path(file))$geometry
     chunks <- attr(g, "chunks")
@@ -11,6 +12,7 @@ test_that("geo_box() equals geoarrow-c's box kernel on the corpus", {
       error = function(e) NULL
     )
     if (is.null(want)) next
+    compared <- compared + 1L
     got <- as.data.frame(geo_box(g))
     empty <- is.na(got$xmin)
     for (k in c("xmin", "ymin", "xmax", "ymax")) {
@@ -18,6 +20,8 @@ test_that("geo_box() equals geoarrow-c's box kernel on the corpus", {
     }
     expect_true(all(is.infinite(want$xmin[empty])), label = paste(file, "empties"))
   }
+  # geoarrow-c reads every file of the pinned corpus, so none may drop out.
+  expect_identical(compared, length(corpus_manifest()))
 })
 
 test_that("geo_types() and coordinate counts agree with the corpus", {
