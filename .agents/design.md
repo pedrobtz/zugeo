@@ -422,7 +422,7 @@ geo_join_box(index, y)                 # y a geo_vctr, geo_extent or index;
 geo_index_raw(index); geo_index_from_raw(raw)
 
 # GeoParquet, with qio 0.2.0
-geo_read_parquet(path, bbox = NULL, columns = NULL)
+geo_read_parquet(path, bbox = NULL, columns = NULL, lossy = "error")
 geo_write_parquet(x, path, sort = "hilbert", version = "2.0",
                   covering = FALSE)
 geo_parquet_info(path)                 # metadata only; reads no rows
@@ -806,7 +806,10 @@ row-group selection), not 0.2.0, so D12 is not invoked. The signatures
 are `geo_read_parquet(path, bbox = NULL, columns = NULL)` and
 `geo_write_parquet(x, path, sort = "hilbert", version = "2.0",
 row_group_size = 100000L, compression = "zstd")`: the guide's 50,000 to
-200,000 rows and its zstd. `covering` is not an argument yet, and 1.1's
+200,000 rows and its zstd. *2026-11-08 (Review, #31):* `geo_read_parquet()`
+also takes `lossy`, as `geo_box()` does: its `bbox` row filter is planar,
+so on lines and polygons with non-planar edges it is a `zugeo_edges_error`
+unless `lossy` is `"warn"` or `"allow"`. `covering` is not an argument yet, and 1.1's
 native encodings are read as a `zugeo_parquet_error`, because both are
 nested columns qio cannot write or read until its 0.2.0. The CRS rules
 keep D6. A `geo` key must hold PROJJSON, so a CRS given as a code or WKT
