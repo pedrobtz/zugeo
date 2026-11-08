@@ -103,7 +103,9 @@ for R-trees and kdbush's 64 for k-d trees.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Null and empty geometries are left out of an index, and queries return
+    <p>Null and empty geometries are left out of an index, as is any geometry
+whose box has a bound that is not finite (<code>NaN</code> or infinite), which no
+query box could contain and which would make the build undefined. Queries return
 positions in the vector the index was built from. An index read from raw
 bytes numbers its items 1 to n in the order they were added.</p>
     </div>
