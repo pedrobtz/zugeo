@@ -165,7 +165,7 @@ print.zugeo_crs <- function(x, ...) {
 #' geo_crs_equal("OGC:CRS84", "EPSG:4326")
 #' geo_crs_equal("OGC:CRS84", "EPSG:4326", level = "authority")
 geo_crs_equal <- function(x, y, level = c("identical", "structural", "authority")) {
-  level <- match.arg(level)
+  level <- zgo_match_arg(level)
   x <- geo_crs(x)
   y <- geo_crs(y)
   a <- x$value
