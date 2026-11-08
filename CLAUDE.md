@@ -135,8 +135,9 @@ listed in `src/Makevars` (and its copy `Makevars.win`).
   vendored code is a patch in `tools/patches/`, applied in order by the
   derivation, listed in `src/vendor/PROVENANCE` (`tools/update-vendor`
   writes the list) and marked “Modified for the zugeo R package” in the
-  file it changes. Two so far: 0001 numbers through zufast (D18), 0002
-  the WKB reader’s bounds (D22).
+  file it changes. Three so far: 0001 numbers through zufast (D18), 0002
+  the WKB reader’s bounds (D22), 0003 the WKT reader’s nesting depth
+  (D24).
 - **[`geo_hilbert()`](https://pedrobtz.github.io/zugeo/reference/geo_hilbert.md)
   must stay bit-identical to flatbush**: `src/zgo_kernel.c`’s
   `zgo_hilbert()` is flatbush v4.7.0’s function line for line, and the

@@ -108,7 +108,7 @@
 <li>
 <strong>Index bytes stay flatbush- and kdbush-compatible</strong> (D13).</li>
 <li>
-<strong>Never edit <code>src/vendor/</code> by hand.</strong> It is <code>tools/derive-vendor</code>’s output, byte for byte; <code>vendor.yaml</code> fails otherwise. A change to vendored code is a patch in <code>tools/patches/</code>, applied in order by the derivation, listed in <code>src/vendor/PROVENANCE</code> (<code>tools/update-vendor</code> writes the list) and marked “Modified for the zugeo R package” in the file it changes. Two so far: 0001 numbers through zufast (D18), 0002 the WKB reader’s bounds (D22).</li>
+<strong>Never edit <code>src/vendor/</code> by hand.</strong> It is <code>tools/derive-vendor</code>’s output, byte for byte; <code>vendor.yaml</code> fails otherwise. A change to vendored code is a patch in <code>tools/patches/</code>, applied in order by the derivation, listed in <code>src/vendor/PROVENANCE</code> (<code>tools/update-vendor</code> writes the list) and marked “Modified for the zugeo R package” in the file it changes. Three so far: 0001 numbers through zufast (D18), 0002 the WKB reader’s bounds (D22), 0003 the WKT reader’s nesting depth (D24).</li>
 <li>
 <strong><code><a href="reference/geo_hilbert.html">geo_hilbert()</a></code> must stay bit-identical to flatbush</strong>: <code>src/zgo_kernel.c</code>’s <code>zgo_hilbert()</code> is flatbush v4.7.0’s function line for line, and the grid mapping is <code>finish()</code>’s arithmetic in its order. <code>tests/testthat/data/hilbert-flatbush.csv</code> (made by <code>tools/make-hilbert-fixture.js</code> from flatbush’s own source) and DuckDB check it; the index bytes depend on it.</li>
 <li>
