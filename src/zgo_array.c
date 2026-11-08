@@ -176,7 +176,7 @@ SEXP zgo_c_is_na(SEXP chunks, SEXP schema, SEXP chunk, SEXP row) {
   char message[512];
   if (zgo_column_init(scratch, chunks, schema, &col, message, sizeof(message))) {
     zgo_scratch_run(scratch);
-    Rf_error("%s", message);
+    UNPROTECT(2); return zgo_failure("layout", message);
   }
   for (R_xlen_t p = 0; p < n; p++) {
     int64_t r;
@@ -369,7 +369,7 @@ SEXP zgo_c_format(SEXP chunks, SEXP schema, SEXP chunk, SEXP row, SEXP max_bytes
   char message[512];
   if (zgo_column_init(scratch, chunks, schema, &col, message, sizeof(message))) {
     zgo_scratch_run(scratch);
-    Rf_error("%s", message);
+    UNPROTECT(2); return zgo_failure("layout", message);
   }
 
   for (R_xlen_t p = 0; p < n; p++) {
@@ -433,7 +433,7 @@ SEXP zgo_c_format(SEXP chunks, SEXP schema, SEXP chunk, SEXP row, SEXP max_bytes
   if (status != GEOARROW_OK) {
     snprintf(message, sizeof(message), "Could not write WKT: %.400s", error.message);
     zgo_scratch_run(scratch);
-    Rf_error("%s", message);
+    UNPROTECT(2); return zgo_failure("layout", message);
   }
 
   const int32_t *offsets = (const int32_t *)text->buffers[1];
@@ -582,7 +582,7 @@ SEXP zgo_c_take(SEXP chunks, SEXP schema, SEXP chunk, SEXP row) {
   char message[512];
   if (zgo_column_init(scratch, chunks, schema, &col, message, sizeof(message))) {
     zgo_scratch_run(scratch);
-    Rf_error("%s", message);
+    UNPROTECT(1); return zgo_failure("layout", message);
   }
 
   /* The result is owned by its handle before anything is built. */
@@ -631,7 +631,7 @@ SEXP zgo_c_take(SEXP chunks, SEXP schema, SEXP chunk, SEXP row) {
     if (strcmp(failure, "append") == 0) failure = "Could not append to the array.";
     if (failure != message) snprintf(message, sizeof(message), "%s", failure);
     zgo_scratch_run(scratch);
-    Rf_error("%s", message);
+    UNPROTECT(2); return zgo_failure("layout", message);
   }
   zgo_remap_union_ids(dst, col.schema);
   zgo_scratch_run(scratch);

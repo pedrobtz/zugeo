@@ -411,7 +411,7 @@ const struct ArrowSchema *zgo_schema_from_xptr(SEXP x) {
   return s;
 }
 
-static SEXP zgo_failure(const char *kind, const char *message) {
+SEXP zgo_failure(const char *kind, const char *message) {
   const char *names[] = {"kind", "message", ""};
   SEXP out = PROTECT(Rf_mkNamed(VECSXP, names));
   SET_VECTOR_ELT(out, 0, Rf_mkString(kind));

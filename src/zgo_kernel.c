@@ -148,7 +148,7 @@ SEXP zgo_c_info_kernel(SEXP chunks, SEXP schema, SEXP chunk, SEXP row) {
   char message[512];
   if (zgo_column_init(scratch, chunks, schema, &col, message, sizeof(message))) {
     zgo_scratch_run(scratch);
-    Rf_error("%s", message);
+    UNPROTECT(2); return zgo_failure("layout", message);
   }
   if (zgo_readers_init(scratch, &readers)) {
     zgo_scratch_run(scratch);
@@ -173,7 +173,7 @@ SEXP zgo_c_info_kernel(SEXP chunks, SEXP schema, SEXP chunk, SEXP row) {
       snprintf(message, sizeof(message), "Could not read geometry %ld: %.400s",
                (long)(p + 1), error.message);
       zgo_scratch_run(scratch);
-      Rf_error("%s", message);
+      UNPROTECT(2); return zgo_failure("layout", message);
     }
   }
   zgo_scratch_run(scratch);
@@ -429,7 +429,7 @@ SEXP zgo_c_validate(SEXP chunks, SEXP schema, SEXP chunk, SEXP row) {
   char message[512];
   if (zgo_column_init(scratch, chunks, schema, &col, message, sizeof(message))) {
     zgo_scratch_run(scratch);
-    Rf_error("%s", message);
+    UNPROTECT(1); return zgo_failure("layout", message);
   }
   if (zgo_readers_init(scratch, &readers)) {
     zgo_scratch_run(scratch);
@@ -462,7 +462,7 @@ SEXP zgo_c_validate(SEXP chunks, SEXP schema, SEXP chunk, SEXP row) {
       snprintf(message, sizeof(message), "Could not read geometry %ld: %.400s",
                (long)(p + 1), error.message);
       zgo_scratch_run(scratch);
-      Rf_error("%s", message);
+      UNPROTECT(1); return zgo_failure("layout", message);
     }
   }
   const char *names[] = {"row", "code", "part", "ring", ""};
@@ -531,7 +531,7 @@ SEXP zgo_c_geoarrow_box(SEXP array_xptr, SEXP schema_xptr) {
     snprintf(message, sizeof(message), "geoarrow-c's box kernel failed: %.400s",
              error.message);
     zgo_scratch_run(scratch);
-    Rf_error("%s", message);
+    UNPROTECT(1); return zgo_failure("layout", message);
   }
   SEXP result = PROTECT(Rf_allocVector(VECSXP, out->n_children));
   SEXP names = PROTECT(Rf_allocVector(STRSXP, out->n_children));

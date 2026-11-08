@@ -122,7 +122,7 @@ SEXP zgo_c_scan(SEXP chunks, SEXP schema, SEXP chunk, SEXP row) {
   char message[512];
   if (zgo_column_init(scratch, chunks, schema, &col, message, sizeof(message))) {
     zgo_scratch_run(scratch);
-    Rf_error("%s", message);
+    UNPROTECT(1); return zgo_failure("layout", message);
   }
   if (zgo_readers_init(scratch, &readers)) {
     zgo_scratch_run(scratch);
@@ -148,7 +148,7 @@ SEXP zgo_c_scan(SEXP chunks, SEXP schema, SEXP chunk, SEXP row) {
       snprintf(message, sizeof(message), "Could not read geometry %ld: %.400s",
                (long)(p + 1), error.message);
       zgo_scratch_run(scratch);
-      Rf_error("%s", message);
+      UNPROTECT(1); return zgo_failure("layout", message);
     }
   }
   zgo_scratch_run(scratch);
@@ -207,7 +207,7 @@ SEXP zgo_c_write(SEXP chunks, SEXP schema, SEXP chunk, SEXP row, SEXP type_sexp,
   char message[512];
   if (zgo_column_init(scratch, chunks, schema, &col, message, sizeof(message))) {
     zgo_scratch_run(scratch);
-    Rf_error("%s", message);
+    UNPROTECT(1); return zgo_failure("layout", message);
   }
   if (zgo_readers_init(scratch, &readers)) {
     zgo_scratch_run(scratch);
@@ -227,7 +227,7 @@ SEXP zgo_c_write(SEXP chunks, SEXP schema, SEXP chunk, SEXP row, SEXP type_sexp,
       snprintf(message, sizeof(message), "Could not convert geometry %ld: %.400s",
                (long)(p + 1), error.message);
       zgo_scratch_run(scratch);
-      Rf_error("%s", message);
+      UNPROTECT(1); return zgo_failure("layout", message);
     }
   }
   struct ArrowArray *array = (struct ArrowArray *)zgo_scratch_alloc(
@@ -236,7 +236,7 @@ SEXP zgo_c_write(SEXP chunks, SEXP schema, SEXP chunk, SEXP row, SEXP type_sexp,
     snprintf(message, sizeof(message), "Could not finish the conversion: %.400s",
              error.message);
     zgo_scratch_run(scratch);
-    Rf_error("%s", message);
+    UNPROTECT(1); return zgo_failure("layout", message);
   }
 
   if (as_r && (type == GEOARROW_TYPE_WKB || type == GEOARROW_TYPE_WKT)) {
@@ -368,7 +368,7 @@ SEXP zgo_c_from_wkb(SEXP x) {
       snprintf(message, sizeof(message), "Element %ld is not a raw vector or NULL.",
                (long)(i + 1));
       zgo_scratch_run(scratch);
-      Rf_error("%s", message);
+      UNPROTECT(2); return zgo_failure("layout", message);
     } else {
       const uint8_t *bytes = RAW(el);
       int64_t size = Rf_xlength(el);
@@ -386,7 +386,7 @@ SEXP zgo_c_from_wkb(SEXP x) {
       snprintf(message, sizeof(message), "Element %ld is not valid WKB: %.400s",
                (long)(i + 1), error.message);
       zgo_scratch_run(scratch);
-      Rf_error("%s", message);
+      UNPROTECT(2); return zgo_failure("layout", message);
     }
   }
   struct ArrowArray *array = (struct ArrowArray *)zgo_scratch_alloc(
@@ -442,7 +442,7 @@ SEXP zgo_c_from_wkt(SEXP x) {
         snprintf(message, sizeof(message), "Element %ld is not valid WKT: %.400s",
                  (long)(i + 1), error.message);
         zgo_scratch_run(scratch);
-        Rf_error("%s", message);
+        UNPROTECT(1); return zgo_failure("layout", message);
       }
       status = ArrowArrayAppendString(array, ArrowCharView(text));
     }
@@ -480,13 +480,21 @@ SEXP zgo_c_hex_to_raw(SEXP x) {
     if (el == NA_STRING) continue;
     const char *text = CHAR(el);
     size_t len = strlen(text);
-    if (len % 2 != 0) Rf_error("Element %ld is not hex WKB: odd length.", (long)(i + 1));
+    if (len % 2 != 0) {
+      char message[96];
+      snprintf(message, sizeof(message), "Element %ld is not hex WKB: odd length.", (long)(i + 1));
+      UNPROTECT(1);
+      return zgo_failure("layout", message);
+    }
     SEXP bytes = PROTECT(Rf_allocVector(RAWSXP, (R_xlen_t)(len / 2)));
     for (size_t j = 0; j < len / 2; j++) {
       int hi = zgo_hex_digit(text[2 * j]), lo = zgo_hex_digit(text[2 * j + 1]);
       if (hi < 0 || lo < 0) {
-        Rf_error("Element %ld is not hex WKB: '%c%c' is not a hex byte.", (long)(i + 1),
-                 text[2 * j], text[2 * j + 1]);
+        char message[96];
+        snprintf(message, sizeof(message), "Element %ld is not hex WKB: '%c%c' is not a hex byte.",
+                 (long)(i + 1), text[2 * j], text[2 * j + 1]);
+        UNPROTECT(2);
+        return zgo_failure("layout", message);
       }
       RAW(bytes)[j] = (Rbyte)(hi * 16 + lo);
     }
@@ -605,7 +613,7 @@ SEXP zgo_c_coords(SEXP chunks, SEXP schema, SEXP chunk, SEXP row) {
   char message[512];
   if (zgo_column_init(scratch, chunks, schema, &col, message, sizeof(message))) {
     zgo_scratch_run(scratch);
-    Rf_error("%s", message);
+    UNPROTECT(1); return zgo_failure("layout", message);
   }
   if (zgo_readers_init(scratch, &readers)) {
     zgo_scratch_run(scratch);
@@ -640,7 +648,7 @@ SEXP zgo_c_coords(SEXP chunks, SEXP schema, SEXP chunk, SEXP row) {
       snprintf(message, sizeof(message), "Could not read geometry %ld: %.400s",
                (long)(p + 1), error.message);
       zgo_scratch_run(scratch);
-      Rf_error("%s", message);
+      UNPROTECT(1); return zgo_failure("layout", message);
     }
   }
 
@@ -783,11 +791,11 @@ SEXP zgo_c_from_coords(SEXP x, SEXP y, SEXP z, SEXP m, SEXP feature, SEXP part,
   const int *pid = INTEGER(part);
   const int *rid = INTEGER(ring);
   for (R_xlen_t i = 1; i < n; i++) {
-    if (fid[i] < fid[i - 1]) Rf_error("`feature` must be in increasing order.");
+    if (fid[i] < fid[i - 1]) return zgo_failure("", "`feature` must be in increasing order.");
   }
   for (R_xlen_t i = 0; i < n; i++) {
     if (fid[i] == NA_INTEGER || fid[i] < 1 || fid[i] > n_features) {
-      Rf_error("`feature` must be between 1 and the number of features.");
+      return zgo_failure("", "`feature` must be between 1 and the number of features.");
     }
   }
 
@@ -814,7 +822,7 @@ SEXP zgo_c_from_coords(SEXP x, SEXP y, SEXP z, SEXP m, SEXP feature, SEXP part,
   if (failure != NULL) {
     snprintf(message, sizeof(message), "Could not build geometries: %.400s", failure);
     zgo_scratch_run(scratch);
-    Rf_error("%s", message);
+    UNPROTECT(1); return zgo_failure("layout", message);
   }
   struct ArrowArray *array = (struct ArrowArray *)zgo_scratch_alloc(
       scratch, sizeof(struct ArrowArray), zgo_free_array);
@@ -822,7 +830,7 @@ SEXP zgo_c_from_coords(SEXP x, SEXP y, SEXP z, SEXP m, SEXP feature, SEXP part,
     snprintf(message, sizeof(message), "Could not finish the geometries: %.400s",
              error.message);
     zgo_scratch_run(scratch);
-    Rf_error("%s", message);
+    UNPROTECT(1); return zgo_failure("layout", message);
   }
   struct ArrowArray moved;
   ArrowArrayMove(array, &moved);

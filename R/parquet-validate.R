@@ -432,8 +432,8 @@ zgo_pq_check_data <- function(v) {
           box = zgo_extent_parts(geo_box(g, lossy = "allow"))
         )
       },
-      # The WKB reader's failure is a plain error from C.
-      error = function(e) e
+      # WKB that does not parse; anything else is not this finding.
+      zugeo_layout_error = function(e) e
     )
     if (inherits(x, "error")) {
       find(
