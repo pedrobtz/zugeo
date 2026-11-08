@@ -1143,6 +1143,12 @@ any of them.
   truncation test returned garbage coordinates for WKB cut short by a
   few bytes. `tools/patches/0002` fixes both; the fuzz target covers the
   reader from now on. To be reported upstream.
+- **D24 (C, 2026-11-08, Review #34).** `geoarrow-c`'s WKT reader at
+  `b3db89f` reads `GEOMETRYCOLLECTION` by recursion with no depth limit,
+  so 200,000 nested collections overflowed the C stack and ended the R
+  session, from any WKT a caller hands in. `tools/patches/0003` counts the
+  depth and refuses more than 255 levels, the WKB reader's own limit, as a
+  parse error. To be reported upstream with D22.
 - **D17 (maintainer, 2026-11-05).** `geo_parquet_info()` joins the
   GeoParquet functions and shares their gate (D12).
 - **D23 (C, 2026-11-07, Stage 7).** GeoParquet over `qio` 0.1.2; a CRS

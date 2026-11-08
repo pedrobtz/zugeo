@@ -1,0 +1,53 @@
+--- a/geoarrow/geoarrow.c
++++ b/geoarrow/geoarrow.c
+@@ -5714,11 +5714,18 @@
+ 
+ 
+ #define COORD_CACHE_SIZE_COORDS 64
++
++/* Modified for the zugeo R package (tools/patches/0003-wkt-reader-depth.patch):
++   geometry collections nest by recursion, so the reader counts their depth
++   and refuses more than the WKB reader's 255 levels, rather than overflow
++   the C stack on hostile input. */
++#define GEOARROW_WKT_MAX_DEPTH 255
+ 
+ struct WKTReaderPrivate {
+   const char* data;
+   int64_t size_bytes;
+   const char* data0;
++  int depth;
+   double coords[4 * COORD_CACHE_SIZE_COORDS];
+   struct GeoArrowCoordView coord_view;
+ };
+@@ -6090,8 +6097,23 @@
+ static inline int ReadTaggedGeometry(struct WKTReaderPrivate* s,
+                                      struct GeoArrowVisitor* v);
+ 
++static inline int ReadGeometryCollectionParts(struct WKTReaderPrivate* s,
++                                              struct GeoArrowVisitor* v);
++
+ static inline int ReadGeometryCollection(struct WKTReaderPrivate* s,
+                                          struct GeoArrowVisitor* v) {
++  if (s->depth >= GEOARROW_WKT_MAX_DEPTH) {
++    GeoArrowErrorSet(v->error, "WKTReader exceeded maximum recursion");
++    return EINVAL;
++  }
++  s->depth++;
++  int result = ReadGeometryCollectionParts(s, v);
++  s->depth--;
++  return result;
++}
++
++static inline int ReadGeometryCollectionParts(struct WKTReaderPrivate* s,
++                                              struct GeoArrowVisitor* v) {
+   GeoArrowWKTSkipWhitespace(s);
+   if (PeekChar(s) == '(') {
+     GeoArrowWKTAdvanceUnsafe(s, 1);
+@@ -6224,6 +6246,7 @@
+                                          struct GeoArrowStringView src,
+                                          struct GeoArrowVisitor* v) {
+   struct WKTReaderPrivate* s = (struct WKTReaderPrivate*)reader->private_data;
++  s->depth = 0;
+   s->data0 = src.data;
+   s->data = src.data;
+   s->size_bytes = src.size_bytes;

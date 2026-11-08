@@ -90,6 +90,14 @@ test_that("malformed WKB and WKT are errors naming the element", {
   for (n in seq_len(length(wkb) - 1L) - 1L) {
     expect_error(geo_vctr(list(wkb[seq_len(n)])), "not valid WKB", label = n)
   }
+  # Nested collections stop at patch 0003's 255 levels, never at the C stack.
+  deep <- function(n) {
+    paste0(strrep("GEOMETRYCOLLECTION (", n), "POINT (1 2)", strrep(")", n))
+  }
+  expect_identical(is.na(geo_vctr(deep(255L))), FALSE)
+  expect_identical(geo_coords(geo_vctr(deep(20L)))$y, 2)
+  expect_error(geo_vctr(deep(256L)), "maximum recursion")
+  expect_error(geo_vctr(deep(200000L)), "maximum recursion")
   # And every truncation of valid WKT that is not itself valid.
   text <- "POLYGON ((0 0, 1 0, 0 1, 0 0), (0.1 0.1, 0.2 0.1, 0.1 0.2, 0.1 0.1))"
   for (n in seq_len(nchar(text) - 1L)) {
