@@ -34,6 +34,7 @@ SEXP zgo_c_type_of_children(SEXP schema);
 SEXP zgo_c_schema_from_spec(SEXP spec);
 SEXP zgo_c_is_na(SEXP chunks, SEXP schema, SEXP chunk, SEXP row);
 SEXP zgo_c_format(SEXP chunks, SEXP schema, SEXP chunk, SEXP row, SEXP max_bytes);
+SEXP zgo_c_box_values(SEXP chunks, SEXP schema, SEXP chunk, SEXP row);
 SEXP zgo_c_take(SEXP chunks, SEXP schema, SEXP chunk, SEXP row);
 SEXP zgo_c_array_length(SEXP array);
 SEXP zgo_c_scan(SEXP chunks, SEXP schema, SEXP chunk, SEXP row);

@@ -679,7 +679,12 @@ all `NaN` and a null's is `NA`; both are disjoint from everything. A
 `geoarrow.box` column converts to a `geo_extent` and back exactly,
 including `xmin > xmax`, which the specification uses for boxes that
 cross the antimeridian; the set operations raise a `zugeo_edges_error`
-on such a box rather than misread it, until §14's spherical bounds.
+on such a box rather than misread it, until §14's spherical bounds. *2026-11-08 (Review, #93):* `geo_box()` of a box
+column returns its values exactly, so `geo_box_all()`, `geo_hilbert()`,
+`geo_sort()` and `geo_rtree()` take one; the kernels that need geometries
+(`geo_types()`, `geo_dims()`, `geo_n_coords()`, `geo_validate()`,
+`geo_coords()`, the conversions and `geo_kdtree()`) raise a
+`zugeo_layout_error` saying the column holds boxes.
 For `spherical` and the ellipsoidal edges
 a planar box can be wrong for an edge that bulges past its vertices or
 crosses the antimeridian, so on such a column `geo_box()` is a
