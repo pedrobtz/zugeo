@@ -11,8 +11,8 @@
 # packed indexes (Stage 6); qio, DuckDB, gpq and, in its own job, GDAL for
 # GeoParquet (Stage 7).
 on:
-  push:
-    branches: [main]
+  # No `push:`: a pull request already checks its merge with main,
+  # and the schedule checks main (r-actions README, "Pushes to main").
   pull_request:
   workflow_dispatch:
 
