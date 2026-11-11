@@ -4,7 +4,7 @@
 # containers, so this stays off pull requests.
 on:
   schedule:
-    - cron: "0 5 * * 2"
+    - cron: "23 2 * * 0"
   workflow_dispatch:
 
 name: arch

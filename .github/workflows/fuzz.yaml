@@ -3,11 +3,11 @@
 # design section 9). Pull requests get a short run; the weekly run is long,
 # and a finding fails it, with the input uploaded to replay.
 on:
-  push:
-    branches: [main]
+  # No `push:`: a pull request already checks its merge with main,
+  # and the schedule checks main (r-actions README, "Pushes to main").
   pull_request:
   schedule:
-    - cron: "23 5 * * 3"
+    - cron: "33 2 * * 0"
   workflow_dispatch:
 
 name: fuzz
