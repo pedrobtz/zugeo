@@ -6,7 +6,7 @@
 <!-- badges: start -->
 
 [![R-CMD-check](https://github.com/pedrobtz/zugeo/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/pedrobtz/zugeo/actions/workflows/R-CMD-check.yaml)
-[![coverage](https://raw.githubusercontent.com/pedrobtz/zugeo/main/.github/badges/coverage.svg)](https://github.com/pedrobtz/zugeo/actions/workflows/coverage.yaml)
+[![coverage](https://raw.githubusercontent.com/pedrobtz/zugeo/gh-pages/badges/coverage.svg)](https://github.com/pedrobtz/zugeo/actions/workflows/coverage.yaml)
 [![Lifecycle:
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
