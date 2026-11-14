@@ -7,7 +7,7 @@ on:
   # and the schedule checks main (r-actions README, "Pushes to main").
   pull_request:
   schedule:
-    - cron: "33 2 * * 0"
+    - cron: "33 2 * * 4"  # weekly, Thursdays
   workflow_dispatch:
 
 name: fuzz
